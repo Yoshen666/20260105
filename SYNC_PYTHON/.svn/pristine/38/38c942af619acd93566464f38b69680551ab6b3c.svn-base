@@ -1,0 +1,11 @@
+import os
+
+import duckdb
+
+from xinxiang import config
+if __name__ == "__main__":
+    db = duckdb.connect("D:\workspace\SrcData\APS_ETL_FLOW\APS_ETL_FLOW_base.db",read_only=True)
+    db.execute("select 1")
+    aa = db.fetchone()
+    print(aa)
+    db.close()

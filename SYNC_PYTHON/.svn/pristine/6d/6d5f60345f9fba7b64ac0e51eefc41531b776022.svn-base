@@ -1,0 +1,124 @@
+import logging
+
+import warnings
+from datetime import datetime
+
+from xinxiang.util import oracle_to_duck_his
+
+
+def sync_APS_TMP_LOTHISTORY():
+    source_table = "V_ETL_LOTHISTORY"
+    target_table = "APS_TMP_LOTHISTORY_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="CLAIM_TIME",
+                                           # sync_day=180,
+                                           sync_day=180,
+                                           duration_minute=5)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_MID_RSPILOT_RUN_HS():
+    # source_table = "V_RSPILOT_RUN_HS"
+    source_table = "v_rspilot_run_hs"
+    target_table = "APS_MID_RSPILOT_RUN_HS_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="START_DATE",
+                                           sync_day=30,
+                                           duration_minute=5)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_MID_FHOPEHS():
+    # source_table = "V_FHOPEHS"
+    source_table = "V_FHOPEHS"
+    target_table = "APS_MID_FHOPEHS_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="CLAIM_TIME",
+                                           sync_day=60,
+                                           duration_minute=5)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_TMP_MASK_HISTORY():
+    # source_table = "V_ETL_MASK_HISTORY"
+    source_table = "V_ETL_MASK_HISTORY"
+    target_table = "APS_TMP_MASK_HISTORY_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="TIMESTAMP",
+                                           sync_day=90,
+                                           duration_minute=5)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_MID_FHOPEHS_RETICLE():
+    # source_table = "V_FHOPEHS_RETICLE"
+    source_table = "V_FHOPEHS_RETICLE"
+    target_table = "APS_MID_FHOPEHS_RETICLE_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="CLAIM_TIME",
+                                           sync_day=10,
+                                           duration_minute=5)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_TMP_OCS_MAIN_H():
+    # source_table = "VIEW_OCS_MAIN_H"
+    source_table = "VIEW_OCS_MAIN_H"
+    target_table = "APS_TMP_OCS_MAIN_H_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="STATUS_TIME",
+                                           sync_day=40,
+                                           duration_minute=10)
+    logging.info("End " + etl_name)
+
+def sync_APS_MID_OCS_JOB_GROUP_PO_STATE_H():
+    # source_table = "VIEW_OCS_MAIN_H"
+    source_table = "V_OCS_JOB_GROUP_PO_STATE_H"
+    target_table = "APS_MID_OCS_JOB_GROUP_PO_STATE_H_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="END_TIME",
+                                           sync_day=40,
+                                           duration_minute=10)
+    logging.info("End " + etl_name)
+
+
+if __name__ == '__main__':
+    warnings.filterwarnings("ignore")
+    sync_APS_MID_FHOPEHS()

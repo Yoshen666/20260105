@@ -1,0 +1,1745 @@
+from xinxiang.util import my_duck
+
+
+def GetGroupByProdgIdType2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO {tempdb}APS_TMP_ETL_DEMAND_PRODG (                                                                      
+       OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                      
+     WITH SOURCE_DATA AS (                                                                                                                                                                     
+          SELECT L.OPE_NO,                                                                                                 
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                   
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                            
+                 L.CLAIM_TIME,                                                                                             
+                 L.WAFER_QTY                                                                                               
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                               
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                              
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                                 
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                         
+            -- AND (( TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' 
+            AND (STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'
+            -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')           
+            AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')
+            -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 19:30:00'),'YYYY-MM-DD HH24:MI:SS')      
+            AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')
+            )                                                                                                              
+            -- OR TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'  
+            OR ( STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S')  >= '07:30:00'  
+            -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+            AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')
+            -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00'),'YYYY-MM-DD HH24:MI:SS')
+            AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00')         
+            )                                                                                                              
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                     
+     )                                                                                                                     
+     SELECT OPE_NO,PRODG1 AS PRODG_ID,                                                                                     
+            MAX(EQP_ID) AS EQP_ID,                                                                                         
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                               
+            MAX(TECH) AS PRODG_TECH,                                                                                       
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,
+            '2' AS DISPATCH_TYPE,                                                                                          
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN                                                                     
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN
+            --   CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 19:30:00') 
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')                                                       
+            --   ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00') END AS FROM_TIME,
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00') END AS FROM_TIME,                                    
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00')
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                                                           
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 07:30:00') END AS END_TIME,
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') END AS END_TIME,
+             '1' AS TIME_COUNT,                                                                                            
+            '{current_time}' AS UPDATE_TIME                                                                          
+     FROM SOURCE_DATA                                                                                                      
+     GROUP BY OPE_NO,PRODG1                                                                                               
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdgIdType2Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODG")
+
+
+def GetGroupByProdgIdType3T1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODG (                                                    
+       OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                    
+     WITH SOURCE_DATA AS (                                                                                                                                                     
+          SELECT L.OPE_NO,                                                                                               
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                 
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                          
+                 L.CLAIM_TIME,                                                                                           
+                 L.WAFER_QTY                                                                                             
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                             
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                         
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                               
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                       
+            AND (
+                --TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+             (   STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' 
+                -- AND  L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 15:30:00'),'YYYY-MM-DD HH24:MI:SS') 
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 15:30:00')   
+            )                                                                                                            
+            OR
+
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') 
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')           
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 15:30:00'),'YYYY-MM-DD HH24:MI:SS')     
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 15:30:00')   
+            )                                                                                                            
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                     
+     )                                                                                                                   
+     SELECT OPE_NO,PRODG1 AS PRODG_ID,                                                                                   
+            MAX(EQP_ID) AS EQP_ID,                                                                                       
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                             
+            MAX(TECH) AS PRODG_TECH,                                                                                     
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                       
+            '3' AS DISPATCH_TYPE,                                                                                        
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                   
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 15:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 15:30:00')                                                      
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 15:30:00') END AS FROM_TIME, 
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 15:30:00') END AS FROM_TIME,                                  
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                      
+               -- CONCAT(TO_CHAR(SYSDATE-1,'YYYY-MM-DD'),' 23:30:00')  
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 23:30:00')                                                          
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 23:30:00') END AS END_TIME,
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 23:30:00') END AS END_TIME,                                   
+             '1' AS TIME_COUNT,                                                                                          
+             '{current_time}' AS UPDATE_TIME                                                                        
+     FROM SOURCE_DATA                                                                                                    
+     GROUP BY OPE_NO,PRODG1                                       
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdgIdType3T1Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODG")
+
+
+def GetGroupByProdgIdType3T2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODG (                                                     
+          OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                     
+     WITH SOURCE_DATA AS (                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                               
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                 
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                          
+                 L.CLAIM_TIME,                                                                                           
+                 L.WAFER_QTY                                                                                             
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                             
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                     
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                               
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                       
+            AND (
+                    ( 
+                        -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' 
+                        STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'
+                        -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') 
+                        AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')        
+                        -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 23:30:00'),'YYYY-MM-DD HH24:MI:SS')  
+                        AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 23:30:00')   
+                    )                                                                                                            
+                OR 
+                    -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00' 
+                    STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00'
+                    -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                    AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')             
+                    -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 23:30:00'),'YYYY-MM-DD HH24:MI:SS')  
+                    AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 23:30:00')     
+            )                                                                                                            
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                       
+     )                                                                                                                   
+     SELECT OPE_NO,PRODG1 AS PRODG_ID,                                                                                   
+            MAX(EQP_ID) AS EQP_ID,                                                                                       
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                             
+            MAX(TECH) AS PRODG_TECH,                                                                                     
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                         
+            '3' AS DISPATCH_TYPE,                                                                                        
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                   
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 23:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 23:30:00')                                                       
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 23:30:00') END AS FROM_TIME,
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 23:30:00') END AS FROM_TIME,                                   
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                   
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00')
+                  CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                                                      
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 07:30:00') END AS END_TIME, 
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') END AS END_TIME,
+             '2' AS TIME_COUNT,                                                                                          
+            '{current_time}' AS UPDATE_TIME                                                                         
+     FROM SOURCE_DATA                                                                                                    
+     GROUP BY OPE_NO,PRODG1                            
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdgIdType3T2Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODG")
+
+
+def GetGroupByProdgIdType4T1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODG (                                                     
+        OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME                                                                                                       
+    )                                                                                                                     
+     WITH SOURCE_DATA AS (                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                               
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                 
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                          
+                 L.CLAIM_TIME,                                                                                           
+                 L.WAFER_QTY                                                                                             
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                             
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                         
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                               
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                       
+            AND (
+            ( 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')         
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 13:30:00'),'YYYY-MM-DD HH24:MI:SS')    
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 13:30:00')
+            )                                                                                                            
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')             
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 13:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 13:30:00')  
+            )                                                                                                            
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                       
+     )                                                                                                                   
+     SELECT OPE_NO,PRODG1 AS PRODG_ID,                                                                                   
+            MAX(EQP_ID) AS EQP_ID,                                                                                       
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                             
+            MAX(TECH) AS PRODG_TECH,                                                                                     
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                        
+            '4' AS DISPATCH_TYPE,                                                                                        
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                    
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 13:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 13:30:00')                                                       
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 13:30:00') END AS FROM_TIME,
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 13:30:00') END AS FROM_TIME,                                    
+            --CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN 
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                   
+               -- CONCAT(TO_CHAR(SYSDATE-1,'YYYY-MM-DD'),' 19:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')                                                       
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00') END AS END_TIME, 
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00') END AS END_TIME,                                       
+             '1' AS TIME_COUNT,                                                                                          
+            '{current_time}' AS UPDATE_TIME                                                                        
+     FROM SOURCE_DATA                                                                                                    
+     GROUP BY OPE_NO,PRODG1         
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdgIdType4T1Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODG")
+
+
+def GetGroupByProdgIdType4T2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO {tempdb}APS_TMP_ETL_DEMAND_PRODG (                                                     
+         OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                     
+     WITH SOURCE_DATA AS (                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                               
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                 
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                          
+                 L.CLAIM_TIME,                                                                                           
+                 L.WAFER_QTY                                                                                             
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                             
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                         
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                               
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                       
+            AND (
+            ( 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'  
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')   
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')      
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 19:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')    
+            )                                                                                                            
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00'   
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                 
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00')       
+            )                                                                                                            
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                       
+     )                                                                                                                   
+     SELECT OPE_NO,PRODG1 AS PRODG_ID,                                                                                   
+            MAX(EQP_ID) AS EQP_ID,                                                                                       
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                             
+            MAX(TECH) AS PRODG_TECH,                                                                                     
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                       
+            '4' AS DISPATCH_TYPE,                                                                                        
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                   
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 19:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 13:30:00')                                                       
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00') END AS FROM_TIME,
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00') END AS FROM_TIME,                                  
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                   
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 01:30:00')
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 01:30:00')                                                         
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 01:30:00') END AS END_TIME,
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 01:30:00') END AS END_TIME,                                
+             '2' AS TIME_COUNT,                                                                                          
+            '{current_time}' AS UPDATE_TIME                                                                        
+     FROM SOURCE_DATA                                                                                                    
+     GROUP BY OPE_NO,PRODG1                   
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdgIdType4T2Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODG")
+
+
+def GetGroupByProdgIdType4T3Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODG (                                                        
+       OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME                                                                                                           
+    )                                                                                                                        
+      WITH SOURCE_DATA AS (                                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                                  
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                    
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                             
+                 L.CLAIM_TIME,                                                                                              
+                 L.WAFER_QTY                                                                                                
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                                
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                            
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                                  
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                          
+            AND (
+            ( 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 01:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 01:30:00')           
+            )                                                                                                               
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00'  
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')               
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 01:30:00'),'YYYY-MM-DD HH24:MI:SS')   
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 01:30:00')
+            )                                                                                                               
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                       
+     )                                                                                                                      
+     SELECT OPE_NO,PRODG1 AS PRODG_ID,                                                                                      
+            MAX(EQP_ID) AS EQP_ID,                                                                                          
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                                
+            MAX(TECH) AS PRODG_TECH,                                                                                        
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                          
+            '4' AS DISPATCH_TYPE,                                                                                           
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                      
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 01:30:00')
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 01:30:00')                                                            
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 01:30:00') END AS FROM_TIME,  
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 01:30:00') END AS FROM_TIME,
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                      
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00')
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                                                            
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 07:30:00') END AS END_TIME,
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') END AS END_TIME,
+             '3' AS TIME_COUNT,                                                                                             
+            '{current_time}' AS UPDATE_TIME                                                                           
+     FROM SOURCE_DATA                                                                                                       
+     GROUP BY OPE_NO,PRODG1          
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdgIdType4T3Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODG")
+
+
+def GetGroupByProdTechType2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODTECH (                                                    
+         OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                       
+     WITH SOURCE_DATA AS (                                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                                 
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                   
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                            
+                 L.CLAIM_TIME,                                                                                             
+                 L.WAFER_QTY                                                                                               
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                               
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                           
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                                 
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                         
+            AND (
+            ( 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'  
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 19:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME >= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')
+            )                                                                                                              
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')              
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00')          
+            )                                                                                                              
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                       
+     )                                                                                                                     
+     SELECT OPE_NO,MAX(PRODG1) AS PRODG_ID,                                                                                
+            MAX(EQP_ID) AS EQP_ID,                                                                                         
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                               
+            TECH AS PRODG_TECH,                                                                                            
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                         
+            '2' AS DISPATCH_TYPE,                                                                                          
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                      
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 19:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')                                                     
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00') END AS FROM_TIME,
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00') END AS FROM_TIME,                                    
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00')
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                                                         
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 07:30:00') END AS END_TIME,      
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') END AS END_TIME,
+             '1' AS TIME_COUNT,                                                                                            
+            '{current_time}' AS UPDATE_TIME                                                                          
+     FROM SOURCE_DATA                                                                                                      
+     GROUP BY OPE_NO,TECH
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdTechType2Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODTECH")
+
+
+def GetGroupByProdTechType3T1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODTECH (                                                    
+       OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                       
+     WITH SOURCE_DATA AS (                                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                                 
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                   
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                            
+                 L.CLAIM_TIME,                                                                                             
+                 L.WAFER_QTY                                                                                               
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                               
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                           
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                                 
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                         
+            AND (
+            ( 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' 
+                -- AND  L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 15:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME >= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 15:30:00')
+            )                                                                                                              
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')  
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')            
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 15:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 15:30:00')          
+            )                                                                                                              
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                            
+     )                                                                                                                     
+     SELECT OPE_NO,MAX(PRODG1) AS PRODG_ID,                                                                                
+            MAX(EQP_ID) AS EQP_ID,                                                                                         
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                               
+            TECH AS PRODG_TECH,                                                                                            
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                          
+            '3' AS DISPATCH_TYPE,                                                                                          
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 15:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 15:30:00')                                                        
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 15:30:00') END AS FROM_TIME,  
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 15:30:00') END AS FROM_TIME,                                  
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE-1,'YYYY-MM-DD'),' 23:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 23:30:00')                                                          
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 23:30:00') END AS END_TIME,      
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 23:30:00') END AS END_TIME,                              
+             '1' AS TIME_COUNT,                                                                                            
+            '{current_time}' AS UPDATE_TIME                                                                           
+     FROM SOURCE_DATA                                                                                                      
+     GROUP BY OPE_NO,TECH                                                                                                  
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdTechType3T1Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODTECH")
+
+
+def GetGroupByProdTechType3T2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODTECH (                                                    
+       OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                      
+     WITH SOURCE_DATA AS (                                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                                 
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                   
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                            
+                 L.CLAIM_TIME,                                                                                             
+                 L.WAFER_QTY                                                                                               
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                               
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                           
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                                 
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                         
+            AND (
+            (
+                 -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                 STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'  
+                 -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                 AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')
+                 -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 23:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                 AND L.CLAIM_TIME >= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 23:30:00')
+            )                                                                                                              
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 23:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 23:30:00')            
+            )                                                                                                              
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                            
+     )                                                                                                                     
+     SELECT OPE_NO,MAX(PRODG1) AS PRODG_ID,                                                                                
+            MAX(EQP_ID) AS EQP_ID,                                                                                         
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                               
+            TECH AS PRODG_TECH,                                                                                            
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                          
+            '3' AS DISPATCH_TYPE,                                                                                          
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 23:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 23:30:00')                                                         
+               --ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 23:30:00') END AS FROM_TIME, 
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 23:30:00') END AS FROM_TIME,                                   
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00')
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                                                           
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 07:30:00') END AS END_TIME,
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') END AS END_TIME,                                   
+             '2' AS TIME_COUNT,                                                                                            
+            '{current_time}' AS UPDATE_TIME                                                                          
+     FROM SOURCE_DATA                                                                                                      
+     GROUP BY OPE_NO,TECH
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdTechType3T2Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODTECH")
+
+
+def GetGroupByProdTechType4T1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODTECH (                                                    
+       OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                       
+     WITH SOURCE_DATA AS (                                                                                                                                                                     
+          SELECT L.OPE_NO,                                                                                                 
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                   
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                            
+                 L.CLAIM_TIME,                                                                                             
+                 L.WAFER_QTY                                                                                               
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                               
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                           
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                                 
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                         
+            AND (
+            ( 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')           
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 13:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME >= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 13:30:00')      
+            )                                                                                                              
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00'  
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')              
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 13:30:00'),'YYYY-MM-DD HH24:MI:SS')   
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 13:30:00')       
+            )                                                                                                              
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                           
+     )                                                                                                                     
+     SELECT OPE_NO,MAX(PRODG1) AS PRODG_ID,                                                                                
+            MAX(EQP_ID) AS EQP_ID,                                                                                         
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                               
+            TECH AS PRODG_TECH,                                                                                            
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                         
+            '4' AS DISPATCH_TYPE,                                                                                          
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 13:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 13:30:00')                                                        
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 13:30:00') END AS FROM_TIME,                                    
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 13:30:00') END AS FROM_TIME, 
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE-1,'YYYY-MM-DD'),' 19:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')                                                         
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00') END AS END_TIME,     
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00') END AS END_TIME,                                 
+             '1' AS TIME_COUNT,                                                                                            
+            '{current_time}' AS UPDATE_TIME                                                                          
+     FROM SOURCE_DATA                                                                                                      
+     GROUP BY OPE_NO,TECH
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdTechType4T1Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODTECH")
+
+
+def GetGroupByProdTechType4T2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_PRODTECH (                                                    
+       OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME
+    )                                                                                                                       
+     WITH SOURCE_DATA AS (                                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                                 
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                   
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                            
+                 L.CLAIM_TIME,                                                                                             
+                 L.WAFER_QTY                                                                                               
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                               
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                              
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                                 
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                         
+            AND (
+            ( 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 19:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')
+            )                                                                                                              
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00'  
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')   
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')           
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00')          
+            )                                                                                                              
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                            
+     )                                                                                                                     
+     SELECT OPE_NO,MAX(PRODG1) AS PRODG_ID,                                                                                
+            MAX(EQP_ID) AS EQP_ID,                                                                                         
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                               
+            TECH AS PRODG_TECH,                                                                                            
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                         
+            '4' AS DISPATCH_TYPE,                                                                                          
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 19:30:00')
+               CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 19:30:00')                                                         
+               -- ELSE CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 19:30:00') END AS FROM_TIME,
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 19:30:00') END AS FROM_TIME,                                     
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 01:30:00')   
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 01:30:00')                                                        
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 01:30:00') END AS END_TIME,  
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 01:30:00') END AS END_TIME,
+             '2' AS TIME_COUNT,                                                                                            
+            '{current_time}' AS UPDATE_TIME                                                                          
+     FROM SOURCE_DATA                                                                                                      
+     GROUP BY OPE_NO,TECH
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdTechType4T2Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODTECH")
+
+
+def GetGroupByProdTechType4T3Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO {tempdb}APS_TMP_ETL_DEMAND_PRODTECH (                                                    
+            OPE_NO, PRODG_ID, EQP_ID, PRODSPEC_ID, PRODG_TECH, QTY, DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT, UPDATE_TIME                                                                                                         
+    )                                                                                                                       
+     WITH SOURCE_DATA AS (                                                                                                                                                                      
+          SELECT L.OPE_NO,                                                                                                 
+                 L.EQP_ID,L.PRODSPEC_ID,                                                                                   
+                 P.PRODG1,P.GROUP_TECH AS TECH,                                                                            
+                 L.CLAIM_TIME,                                                                                             
+                 L.WAFER_QTY                                                                                               
+          FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                                               
+          INNER JOIN APS_SYNC_PRODUCT.APS_SYNC_PRODUCT P                                                                                           
+          ON P.prodspec_id = L.PRODSPEC_ID                                                                                 
+          WHERE L.OPE_CATEGORY='OperationComplete'                                                                         
+            AND (
+            ( 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE -1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')           
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 01:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 01:30:00')         
+            )                                                                                                              
+            OR 
+                -- TO_CHAR(SYSDATE,'HH24:MI:SS') >= '07:30:00'
+                STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') >= '07:30:00' 
+                -- AND L.PARTKEY > TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME > CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')              
+                -- AND L.PARTKEY <= TO_DATE(CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 01:30:00'),'YYYY-MM-DD HH24:MI:SS')
+                AND L.CLAIM_TIME <= CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 01:30:00')        
+            )                                                                                                              
+            -- AND P.PARTCODE = '"+partCodeList.get(0)+"'                                                                            
+     )                                                                                                                     
+     SELECT OPE_NO,MAX(PRODG1) AS PRODG_ID,                                                                                
+            MAX(EQP_ID) AS EQP_ID,                                                                                         
+            MAX(PRODSPEC_ID) AS PRODSPEC_ID,                                                                               
+            TECH AS PRODG_TECH,                                                                                            
+            -- SUM(WAFER_QTY) AS QTY,
+            SUM(CAST(WAFER_QTY AS DECIMAL)) AS QTY,                                                                                         
+            '4' AS DISPATCH_TYPE,                                                                                          
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                     
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 01:30:00')
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 01:30:00')                                                           
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 01:30:00') END AS FROM_TIME, 
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 01:30:00') END AS FROM_TIME,
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' THEN  
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00' THEN                                                                    
+               -- CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00')
+               CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                                                           
+               -- ELSE CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 07:30:00') END AS END_TIME,
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') END AS END_TIME,                                   
+             '3' AS TIME_COUNT,                                                                                            
+            '{current_time}' AS UPDATE_TIME                                                                          
+     FROM SOURCE_DATA                                                                                                      
+     GROUP BY OPE_NO,TECH
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetGroupByProdTechType4T3Sql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_PRODTECH")
+
+
+def GetDemandSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO {tempdb}APS_TMP_ETL_DEMAND_RTD (                                                                                       
+             PARENTID, TOOLG_ID, TOOL_ID, PRODG_ID, PRODG_TECH, PROD_ID, PLAN_ID, STEP_ID,LOT_TYPE,RECIPE, LOT_ID,LAYER,
+             STAGE, TECH_ID, CUSTOMER, PTY, SEQ, TARGET_QTY, TARGET_SHIFT, TARGET_TIME_FROM,
+             TARGET_TIME, TARGET_MODE, CONTROL_FLAG, UPDATE_TIME, PARTCODE, MAX_MOVE_FLAG,DONE_QTY, WIP_ATTR2                                                                                                                                  
+    )                                                                                                                                              
+     WITH TOOLG AS (                                                                                                                                                                                                                                                                                                                                                                              
+           SELECT EQP_ID AS TOOL_ID,MAX(EQP_G) AS TOOLG_ID                                                                                         
+           FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL                                                                                                                         
+           -- WHERE PARTCODE = '"+partCodeList.get(1)+"'                                                                                                                         
+           GROUP BY EQP_ID                                                                                                                         
+     ),                                                                                                                                            
+     MOVE_TARGET AS (                                                                                                                                                                                                                                     
+         SELECT MT.PRODG1                                                                                                                   
+               ,MT.PRODSPEC_ID                                                                                                              
+               ,MT.OPE_NO                                                                                                                   
+               ,MT.EQP_ID                                                                                                                   
+               ,MT.MOVE_TARGET                                                                                                              
+               ,MT.DISPATCH_TYPE                                                                                                            
+               ,MT.FORCE_FLAG                                                                                                               
+               ,MT.MAX_MOVE_FLAG
+               ,MT.PLAT_FORM
+               ,MT.TECH
+               ,MT.CT_G
+               ,MT.LOCATION                                                                                                             
+         FROM APS_SYNC_RTD_MOVE_TARGET.APS_SYNC_RTD_MOVE_TARGET MT                                                                             
+         WHERE 1=1  AND MT.MOVE_TARGET > 0                                                                                                  
+         AND CURRENT_TIMESTAMP <= CONCAT(STRFTIME(DATE_TRUNC('second', CAST(MT.END_DATE AS DATE)) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')                                                                                        
+         UNION ALL                                                                                                                          
+         SELECT MT.PRODG1                                                                                                                   
+               ,MT.PRODSPEC_ID                                                                                                              
+               ,MT.OPE_NO                                                                                                                   
+               ,MT.EQP_ID                                                                                                                   
+               ,MT.MOVE_TARGET                                                                                                              
+               ,MT.DISPATCH_TYPE                                                                                                            
+               ,MT.FORCE_FLAG                                                                                                               
+               ,MT.MAX_MOVE_FLAG
+               ,MT.PLAT_FORM
+               ,MT.TECH
+               ,MT.CT_G
+               ,MT.LOCATION                                                                                                             
+         FROM APS_SYNC_RTD_MOVE_TARGET.APS_SYNC_RTD_MOVE_TARGET MT                                                                                                          
+         WHERE 1=1  AND MT.MOVE_TARGET = 0 AND MT.MAX_MOVE_FLAG='Y'                                                                                              
+         AND CURRENT_TIMESTAMP <= CONCAT(STRFTIME(DATE_TRUNC('second', CAST(MT.END_DATE AS DATE)) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')                                                                                        
+     ),                                                                                                                                     
+     DEMAN_DATA AS (                                                                                                                               
+         SELECT TL.TOOLG_ID,                                                                                                                       
+            MT.PRODSPEC_ID AS PROD_ID,                                                                                                             
+            '' AS PLAN_ID,                                                                                                                         
+            '' AS STEP_ID,                                                                                                                         
+            '' AS LOT_TYPE,                                                                                                                        
+            '' AS RECIPE,                                                                                                                          
+            -- 根據location調整lot_id內容
+            CASE 
+                WHEN MT.LOCATION = 'N1A1' THEN '!3%'
+                WHEN MT.LOCATION = 'N1A3' THEN '3%'
+                WHEN MT.LOCATION = 'ALL' OR MT.LOCATION IS NULL OR MT.LOCATION = '' THEN ''
+                ELSE ''
+            END AS LOT_ID,
+            -- SUBSTR(MT.OPE_NO, 1, INSTR(MT.OPE_NO,'.',-1)-1) AS LAYER,
+            SUBSTR(MT.OPE_NO, 1, POSITION('.' IN MT.OPE_NO)-1) AS LAYER,
+            -- SUBSTR(MT.OPE_NO, INSTR(MT.OPE_NO,'.',-1)+1) AS STAGE,
+            SUBSTR(MT.OPE_NO, POSITION('.' IN MT.OPE_NO)+1) AS STAGE,                                                                                
+            '' AS TECH_ID,                                                                                                                         
+            -- customer直接使用CT_G，*轉換為%，單獨*忽略
+            CASE 
+                WHEN MT.CT_G = '*' THEN ''
+                WHEN MT.CT_G LIKE '%*%' THEN REPLACE(MT.CT_G, '*', '%')
+                ELSE COALESCE(MT.CT_G, '')
+            END AS CUSTOMER,                                                                                                                        
+            '' AS PTY,                                                                                                                             
+            -- CASE WHEN MT.FORCE_FLAG='Y' THEN (SELECT RANK_NO  FROM "+Constant.GlobalTableName.V_MOVE_TARGET_RANK+" WHERE RANK_TYPE='rtd_manual_target_force' AND PARTCODE = '"+partCodeList.get(3)+"')
+            CASE WHEN MT.FORCE_FLAG='Y' THEN (SELECT RANK_NO  FROM APS_SYNC_MOVE_TARGET_RANK.APS_SYNC_MOVE_TARGET_RANK WHERE RANK_TYPE='rtd_manual_target_force')
+            -- ELSE ((SELECT RANK_NO  FROM "+Constant.GlobalTableName.V_MOVE_TARGET_RANK+" WHERE RANK_TYPE='rtd_manual_target_normal' AND PARTCODE = '"+partCodeList.get(3)+"')) END AS SEQ,
+            ELSE ((SELECT RANK_NO  FROM APS_SYNC_MOVE_TARGET_RANK.APS_SYNC_MOVE_TARGET_RANK WHERE RANK_TYPE='rtd_manual_target_normal')) END AS SEQ,                                                                
+            MT.MOVE_TARGET AS TARGET_QTY,                                                                                                          
+            '' AS TARGET_SHIFT,                                                                                                                    
+            '' AS TARGET_TIME_FROM,                                                                                                                
+            '' AS TARGET_TIME,                                                                                                                     
+            '0' AS TARGET_MODE,                                                                                                                    
+            MT.DISPATCH_TYPE,                                                                                                                      
+            MT.MOVE_TARGET,                                                                                                                        
+            MT.MAX_MOVE_FLAG,                                                                                                                      
+            MT.EQP_ID AS TOOL_ID,                                                                                                                  
+            -- prodg_id和prodg_tech的邏輯調整
+            CASE 
+                -- 如果PRODG1只有3碼且不包含'*'，且TECH為空或為'*'，則視為prodg_tech
+                WHEN LENGTH(MT.PRODG1) = 3 AND MT.PRODG1 NOT LIKE '%*%' 
+                     AND (MT.TECH IS NULL OR MT.TECH = '' OR MT.TECH = '*') THEN ''
+                -- 其他情況直接使用PRODG1，*轉換為%，單獨*忽略
+                WHEN MT.PRODG1 = '*' THEN ''
+                WHEN MT.PRODG1 LIKE '%*%' THEN REPLACE(MT.PRODG1, '*', '%')
+                ELSE MT.PRODG1
+            END AS PRODG_ID,
+            -- prodg_tech邏輯
+            CASE 
+                -- 如果PRODG1只有3碼且不包含'*'，且TECH為空或為'*'，則PRODG1作為prodg_tech
+                WHEN LENGTH(MT.PRODG1) = 3 AND MT.PRODG1 NOT LIKE '%*%' 
+                     AND (MT.TECH IS NULL OR MT.TECH = '' OR MT.TECH = '*') THEN MT.PRODG1
+                -- 其他情況使用TECH，*轉換為%，單獨*忽略
+                WHEN MT.TECH = '*' THEN ''
+                WHEN MT.TECH LIKE '%*%' THEN REPLACE(MT.TECH, '*', '%')
+                ELSE COALESCE(MT.TECH, '')
+            END AS PRODG_TECH,
+            MT.PLAT_FORM,                                                                                                                
+            MT.OPE_NO,                                                                                                                             
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' 
+            --     THEN TO_DATE(CONCAT(TO_CHAR(SYSDATE-1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') 
+            --     ELSE TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') END AS CURRENT_TIME
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'
+                THEN CONCAT(STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIMESTAMP AS DATE)) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') 
+                ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00') END AS CURRENT_TIME                            
+         FROM MOVE_TARGET MT                                                                                                                       
+         LEFT JOIN TOOLG TL                                                                                                                        
+         ON TL.TOOL_ID = MT.EQP_ID                                                                                                                 
+      ),                                                                                                                                           
+      TARGET_DATA AS (                                                                                                                                           
+          SELECT '{uuid}' AS PARENTID,                                                                                                   
+                 TOOLG_ID,
+                 -- DECODE(TOOL_ID,'*','',TOOL_ID) AS TOOL_ID,
+                 CASE WHEN TOOL_ID = '*' THEN '' ELSE TOOL_ID END AS TOOL_ID,                                                                                  
+                 DD.PRODG_ID,                                                              
+                 DD.PRODG_TECH,                                   
+                 -- DECODE(PROD_ID,'*','',PROD_ID) AS PROD_ID,PLAN_ID,
+                 CASE WHEN PROD_ID = '*' THEN '' ELSE PROD_ID END AS PROD_ID,
+                 PLAN_ID,                                                                                   
+                 STEP_ID,LOT_TYPE,RECIPE,                                                                                                             
+                 LOT_ID,LAYER,STAGE,                                                                                                                  
+                 TECH_ID,CUSTOMER,PTY,                                                                                                                
+                 SEQ,                                                                                                                                 
+                 -- TRUNC(TARGET_QTY/DISPATCH_TYPE,2) AS TARGET_QTY,
+                 CAST(CAST(TARGET_QTY AS DECIMAL)/CAST(DISPATCH_TYPE AS DECIMAL) AS DECIMAL(18,2)) AS TARGET_QTY,                                                                                     
+                 TARGET_SHIFT,                                                                                                                        
+                 CASE WHEN (T.DZ = 1) 
+                     --THEN TO_CHAR(CURRENT_TIME,'YYYY-MM-DD HH24:MI:SS') 
+                    THEN STRFTIME(CAST(CURRENT_TIME AS TIMESTAMP), '%Y-%m-%d %H:%M:%S')
+                     --ELSE TO_CHAR((CURRENT_TIME) + CEIL(24/DISPATCH_TYPE)*(T.DZ -1)/24,'YYYY-MM-DD HH24:MI:SS') END AS TARGET_TIME_FROM,
+                    ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL (CEIL(24/cast(DISPATCH_TYPE as integer))*(cast(T.DZ as integer) -1)) hour), '%Y-%m-%d %H:%M:%S')  END AS TARGET_TIME_FROM,                     
+                 CASE WHEN (T.DZ = DD.DISPATCH_TYPE) 
+                   --  THEN TO_CHAR((CURRENT_TIME + 1),'YYYY-MM-DD HH24:MI:SS')
+                    THEN STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '1 day'), '%Y-%m-%d %H:%M:%S')  
+                   --  ELSE TO_CHAR((CURRENT_TIME + 1) - CEIL(24/DISPATCH_TYPE)*(DISPATCH_TYPE -T.DZ)/24,'YYYY-MM-DD HH24:MI:SS') END AS TARGET_TIME,
+                   ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '24 hour' - INTERVAL (CEIL(24/cast(DISPATCH_TYPE as integer))*(cast(DISPATCH_TYPE as integer) -cast(T.DZ as integer))) hour), '%Y-%m-%d %H:%M:%S') END AS TARGET_TIME,
+                 TARGET_MODE,                                                                                                                         
+                 '' AS CONTROL_FLAG,                                                                                                                  
+                 '{current_time}' AS UPDATE_TIME,                                                                                                
+                 '' AS PARTCODE,                                                                                   
+                 DD.MAX_MOVE_FLAG,                                                                                                                 
+                 DD.OPE_NO,DD.DISPATCH_TYPE,
+                 CASE WHEN PLAT_FORM = '*' THEN '' ELSE PLAT_FORM END AS PLAT_FORM                                                                                                       
+          FROM DEMAN_DATA DD                                                                                                                          
+          -- LEFT JOIN (SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 24) T ON T.DZ >= 1 AND T.DZ <= DD.DISPATCH_TYPE
+          LEFT JOIN (WITH RECURSIVE cte(DZ) as ( select 1 as dz union all select dz + 1 from cte where dz < 24) select dz from cte ) T ON T.DZ >= 1 AND T.DZ <= DD.DISPATCH_TYPE                                 
+      ),                                                                                                                                           
+      TECH_COMP_QTY AS (                                                                                                                           
+        SELECT OPE_NO, PRODG_TECH, QTY, UPDATE_TIME,                                                                                               
+               DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT                                                                                      
+        FROM   {tempdb}APS_TMP_ETL_DEMAND_PRODTECH                                                                                                
+        WHERE UPDATE_TIME > FROM_TIME AND  UPDATE_TIME<= END_TIME                                                                                  
+      ),                                                                                                                                           
+      PRODG_COMP_QTY AS (                                                                                                                          
+        SELECT OPE_NO, PRODG_ID, QTY, UPDATE_TIME,                                                                                                 
+               DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT                                                                                      
+        FROM   {tempdb}APS_TMP_ETL_DEMAND_PRODG                                                                                                  
+        WHERE UPDATE_TIME > FROM_TIME AND  UPDATE_TIME<= END_TIME                                                                                  
+      )                                                                                                                                            
+      SELECT  PARENTID,                                                                                                                            
+              TOOLG_ID,TOOL_ID,TD.PRODG_ID,TD.PRODG_TECH,                                                                                          
+              PROD_ID,PLAN_ID,                                                                                                                     
+              STEP_ID,LOT_TYPE,RECIPE,                                                                                                             
+              LOT_ID,LAYER,STAGE,                                                                                                                  
+              TECH_ID,CUSTOMER,PTY,                                                                                                                
+              SEQ,                                                                                                                                 
+              CASE WHEN TQ.OPE_NO IS NULL AND PQ.OPE_NO IS NULL THEN TD.TARGET_QTY                                                                 
+              ELSE                                                                                                                                 
+                  (CASE WHEN  TQ.OPE_NO IS NOT NULL AND TQ.OPE_NO <> '' THEN                                                                                           
+                       (CASE WHEN TARGET_TIME < TQ.UPDATE_TIME THEN TARGET_QTY                                                                     
+                             ELSE                                                                                                                  
+                               -- (CASE WHEN TQ.QTY > TARGET_QTY*TQ.TIME_COUNT
+                               (CASE WHEN CAST(TQ.QTY AS DECIMAL) > CAST(TARGET_QTY AS DECIMAL)*CAST(TQ.TIME_COUNT AS DECIMAL)                                                                        
+                                  -- THEN (CASE WHEN TQ.QTY >= TARGET_QTY*TD.DISPATCH_TYPE THEN 0 ELSE
+                                  THEN (CASE WHEN CAST(TQ.QTY AS DECIMAL) >= CAST(TARGET_QTY AS DECIMAL)*CAST(TD.DISPATCH_TYPE AS DECIMAL) THEN 0 ELSE                                                
+                                       -- TRUNC(((TARGET_QTY*TD.DISPATCH_TYPE) - TQ.QTY)/(TD.DISPATCH_TYPE-(TQ.TIME_COUNT)),2) END) ELSE
+                                       CAST((( CAST(TARGET_QTY AS DECIMAL) * CAST(TD.DISPATCH_TYPE AS DECIMAL) - CAST(TQ.QTY AS DECIMAL) ) / ( CAST(TD.DISPATCH_TYPE AS DECIMAL) - (CAST(TQ.TIME_COUNT AS DECIMAL)))) AS DECIMAL(18,2))  END) ELSE              
+                                        TARGET_QTY  END)                                                                                           
+                               END)                                                                                                                
+                  ELSE                                                                                                                             
+                    (CASE WHEN TARGET_TIME < PQ.UPDATE_TIME THEN TARGET_QTY                                                                        
+                         ELSE                                                                                                                      
+                           -- (CASE WHEN PQ.QTY > TARGET_QTY*PQ.TIME_COUNT
+                           (CASE WHEN CAST(PQ.QTY AS DECIMAL) > CAST(TARGET_QTY AS DECIMAL)*CAST(PQ.TIME_COUNT AS DECIMAL)                                                                              
+                                  -- THEN (CASE WHEN PQ.QTY >= TARGET_QTY*TD.DISPATCH_TYPE THEN 0 ELSE
+                                  THEN (CASE WHEN CAST(PQ.QTY AS DECIMAL) >= CAST(TARGET_QTY AS DECIMAL)*CAST(TD.DISPATCH_TYPE AS DECIMAL) THEN 0 ELSE                                                
+                                       -- TRUNC(((TARGET_QTY*TD.DISPATCH_TYPE) - PQ.QTY)/(TD.DISPATCH_TYPE-(PQ.TIME_COUNT)),2) END) ELSE
+                                       CAST((( CAST(TARGET_QTY AS DECIMAL) * CAST(TD.DISPATCH_TYPE AS DECIMAL) - CAST(PQ.QTY AS DECIMAL) ) / ( CAST(TD.DISPATCH_TYPE AS DECIMAL) - (CAST(PQ.TIME_COUNT AS DECIMAL)))) AS DECIMAL(18,2))  END) ELSE              
+                                        TARGET_QTY  END)                                                                                           
+                           END)                                                                                                                    
+                  END)                                                                                                                             
+              END AS TARGET_QTY,                                                                                                                                                                                                                            
+              TARGET_SHIFT,                                                                                                                        
+              TARGET_TIME_FROM,TARGET_TIME,                                                                                                        
+              TARGET_MODE,                                                                                                                         
+              CONTROL_FLAG,                                                                                                                        
+              TD.UPDATE_TIME,                                                                                                                      
+              PARTCODE,                                                                                                                            
+              MAX_MOVE_FLAG,                                                                                                                       
+              CASE WHEN (TQ.OPE_NO IS NULL OR TQ.OPE_NO = '') AND (PQ.OPE_NO IS NULL OR PQ.OPE_NO = '') THEN 0                                                                             
+                   WHEN TQ.OPE_NO IS NOT NULL AND TQ.OPE_NO <> '' THEN TQ.QTY                                                                                          
+                   WHEN PQ.OPE_NO IS NOT NULL AND PQ.OPE_NO <> '' THEN PQ.QTY                                                                                          
+                     END AS DONE_QTY,
+              TD.PLAT_FORM                                                                                                               
+       FROM TARGET_DATA TD                                                                                                                         
+       LEFT JOIN TECH_COMP_QTY TQ                                                                                                                  
+       ON TQ.OPE_NO = TD.OPE_NO AND TD.PRODG_TECH IS NOT NULL AND TD.PRODG_TECH <> '' AND TQ.PRODG_TECH = TD.PRODG_TECH                                                    
+       AND TD.DISPATCH_TYPE = TQ.DISPATCH_TYPE                                                                                                     
+       LEFT JOIN PRODG_COMP_QTY PQ                                                                                                                 
+       ON PQ.OPE_NO = TD.OPE_NO AND TD.PRODG_ID IS NOT NULL AND TD.PRODG_ID <> '' AND PQ.PRODG_ID = TD.PRODG_ID                                                          
+       AND TD.DISPATCH_TYPE = PQ.DISPATCH_TYPE         
+    """.format(current_time=current_time, uuid=uuid, tempdb=my_duck.get_temp_table_mark())
+    print(sql)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetDemandSql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_RTD")
+
+
+def GetDemandByOtherDaySql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO {tempdb}APS_TMP_ETL_DEMAND_RTD (                                                                                             
+       PARENTID, TOOLG_ID, TOOL_ID, PRODG_ID, PRODG_TECH, PROD_ID, PLAN_ID, STEP_ID,LOT_TYPE,RECIPE, LOT_ID,LAYER,
+       STAGE, TECH_ID, CUSTOMER, PTY, SEQ, TARGET_QTY, TARGET_SHIFT, TARGET_TIME_FROM,
+       TARGET_TIME, TARGET_MODE, CONTROL_FLAG, UPDATE_TIME, PARTCODE, MAX_MOVE_FLAG,DONE_QTY, WIP_ATTR2                                                                                                                                        
+    )                                                                                                                                                        
+     WITH TOOLG AS (                                                                                                                                                                                                                                                                      
+           SELECT EQP_ID AS TOOL_ID,MAX(EQP_G) AS TOOLG_ID                                                                                                         
+           FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL                                                                                                         
+           -- WHERE PARTCODE = '"+partCodeList.get(1)+"'
+           WHERE 1=1                                                                                                       
+           GROUP BY EQP_ID                                                                                                                                        
+     ),                                                                                                                                                               
+     MOVE_TARGET AS (                                                                                                                                                 
+         SELECT MT.PRODG1                                                                                                                           
+               ,MT.PRODSPEC_ID                                                                                                                                
+               ,MT.OPE_NO                                                                                                                                     
+               ,MT.EQP_ID                                                                                                                                     
+               ,MT.MOVE_TARGET                                                                                                                                
+               ,MT.DISPATCH_TYPE                                                                                                                              
+               ,MT.FORCE_FLAG                                                                                                                                 
+               ,MT.MAX_MOVE_FLAG
+               ,MT.PLAT_FORM
+               ,MT.TECH
+               ,MT.CT_G
+               ,MT.LOCATION                                                                                                                            
+         FROM APS_SYNC_RTD_MOVE_TARGET.APS_SYNC_RTD_MOVE_TARGET MT                                                                                                                                
+         WHERE 1=1  AND MT.MOVE_TARGET > 0                                                                                                           
+         AND CURRENT_TIMESTAMP <= CONCAT(STRFTIME(DATE_TRUNC('second', CAST(MT.END_DATE AS DATE)) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')                                                                                                
+         UNION ALL                                                                                                                                   
+         SELECT MT.PRODG1                                                                                                                                         
+               ,MT.PRODSPEC_ID                                                                                                                                
+               ,MT.OPE_NO                                                                                                                                     
+               ,MT.EQP_ID                                                                                                                                     
+               ,MT.MOVE_TARGET                                                                                                                                
+               ,MT.DISPATCH_TYPE                                                                                                                              
+               ,MT.FORCE_FLAG                                                                                                                                 
+               ,MT.MAX_MOVE_FLAG 
+               ,MT.PLAT_FORM
+               ,MT.TECH
+               ,MT.CT_G
+               ,MT.LOCATION                                                                                                                             
+         FROM APS_SYNC_RTD_MOVE_TARGET.APS_SYNC_RTD_MOVE_TARGET MT                                                                                                                                
+         WHERE 1=1  AND MT.MOVE_TARGET = 0  AND MT.MAX_MOVE_FLAG='Y'                                                                                 
+         AND CURRENT_TIMESTAMP <= CONCAT(STRFTIME(DATE_TRUNC('second', CAST(MT.END_DATE AS DATE)) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')                                                                                                
+     ),                                                                                                                                                               
+     DEMAN_DATA AS (                                                                                                                                                  
+         SELECT TL.TOOLG_ID,                                                                                                                                      
+            MT.PRODSPEC_ID AS PROD_ID,                                                                                                                        
+            '' AS PLAN_ID,                                                                                                                         
+            '' AS STEP_ID,                                                                                                                                    
+            '' AS LOT_TYPE,                                                                                                                                   
+            '' AS RECIPE,                                                                                                                                     
+            -- 根據location調整lot_id內容
+            CASE 
+                WHEN MT.LOCATION = 'N1A1' THEN '!3%'
+                WHEN MT.LOCATION = 'N1A3' THEN '3%'
+                WHEN MT.LOCATION = 'ALL' OR MT.LOCATION IS NULL OR MT.LOCATION = '' THEN ''
+                ELSE ''
+            END AS LOT_ID,
+            -- SUBSTR(MT.OPE_NO, 1, INSTR(MT.OPE_NO,'.',-1)-1) AS LAYER,
+            SUBSTR(MT.OPE_NO, 1, POSITION('.' IN MT.OPE_NO)-1) AS LAYER,
+            -- SUBSTR(MT.OPE_NO, INSTR(MT.OPE_NO,'.',-1)+1) AS STAGE,
+            SUBSTR(MT.OPE_NO, POSITION('.' IN MT.OPE_NO)+1) AS STAGE,                                                                                            
+            '' AS TECH_ID,                                                                                                                                    
+            -- customer直接使用CT_G，*轉換為%，單獨*忽略
+            CASE 
+                WHEN MT.CT_G = '*' THEN ''
+                WHEN MT.CT_G LIKE '%*%' THEN REPLACE(MT.CT_G, '*', '%')
+                ELSE COALESCE(MT.CT_G, '')
+            END AS CUSTOMER,                                                                                                                                   
+            '' AS PTY,                                                                                                                                        
+            CASE WHEN MT.FORCE_FLAG='Y' THEN (SELECT RANK_NO  FROM APS_SYNC_MOVE_TARGET_RANK.APS_SYNC_MOVE_TARGET_RANK WHERE RANK_TYPE='rtd_manual_target_force')
+            -- ELSE ((SELECT RANK_NO  FROM "+Constant.GlobalTableName.V_MOVE_TARGET_RANK+" WHERE RANK_TYPE='rtd_manual_target_normal'AND PARTCODE = '"+partCodeList.get(3)+"' )) END AS SEQ,
+            ELSE ((SELECT RANK_NO  FROM APS_SYNC_MOVE_TARGET_RANK.APS_SYNC_MOVE_TARGET_RANK WHERE RANK_TYPE='rtd_manual_target_normal' )) END AS SEQ,
+            MT.MOVE_TARGET AS TARGET_QTY,                                                                                                                     
+            '' AS TARGET_SHIFT,                                                                                                                               
+            '' AS TARGET_TIME_FROM,                                                                                                                           
+            '' AS TARGET_TIME,                                                                                                                     
+            '0' AS TARGET_MODE,                                                                                                                               
+            MT.DISPATCH_TYPE,                                                                                                                                 
+            MT.MOVE_TARGET,                                                                                                                                   
+            MT.MAX_MOVE_FLAG,                                                                                                                                 
+            MT.EQP_ID AS TOOL_ID,                                                                                                                             
+            -- prodg_id和prodg_tech的邏輯調整
+            CASE 
+                -- 如果PRODG1只有3碼且不包含'*'，且TECH為空或為'*'，則視為prodg_tech
+                WHEN LENGTH(MT.PRODG1) = 3 AND MT.PRODG1 NOT LIKE '%*%' 
+                     AND (MT.TECH IS NULL OR MT.TECH = '' OR MT.TECH = '*') THEN ''
+                -- 其他情況直接使用PRODG1，*轉換為%，單獨*忽略
+                WHEN MT.PRODG1 = '*' THEN ''
+                WHEN MT.PRODG1 LIKE '%*%' THEN REPLACE(MT.PRODG1, '*', '%')
+                ELSE MT.PRODG1
+            END AS PRODG_ID,
+            -- prodg_tech邏輯
+            CASE 
+                -- 如果PRODG1只有3碼且不包含'*'，且TECH為空或為'*'，則PRODG1作為prodg_tech
+                WHEN LENGTH(MT.PRODG1) = 3 AND MT.PRODG1 NOT LIKE '%*%' 
+                     AND (MT.TECH IS NULL OR MT.TECH = '' OR MT.TECH = '*') THEN MT.PRODG1
+                -- 其他情況使用TECH，*轉換為%，單獨*忽略
+                WHEN MT.TECH = '*' THEN ''
+                WHEN MT.TECH LIKE '%*%' THEN REPLACE(MT.TECH, '*', '%')
+                ELSE COALESCE(MT.TECH, '')
+            END AS PRODG_TECH,
+            MT.PLAT_FORM,                                                                                                                           
+            -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00' 
+            --     THEN TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') 
+            --     ELSE TO_DATE(CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') END AS CURRENT_TIME
+            CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'
+                THEN CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00') 
+                ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') END AS CURRENT_TIME                                                 
+         FROM MOVE_TARGET MT                                                                                                                                      
+         LEFT JOIN TOOLG TL                                                                                                                                       
+         ON TL.TOOL_ID = MT.EQP_ID                                                                                                                                
+      )                                                                                                                                                               
+      SELECT '{uuid}' AS PARENTID,                                                                                                                       
+             TOOLG_ID,
+             -- DECODE(TOOL_ID,'*','',TOOL_ID) AS TOOL_ID,
+             CASE WHEN TOOL_ID = '*' THEN '' ELSE TOOL_ID END AS TOOL_ID,                                                                                              
+             DD.PRODG_ID,                                                                          
+             DD.PRODG_TECH,                                                
+             -- DECODE(PROD_ID,'*','',PROD_ID) AS PROD_ID,PLAN_ID,
+             CASE WHEN PROD_ID = '*' THEN '' ELSE PROD_ID END AS PROD_ID,                                                                                               
+             PLAN_ID,
+             STEP_ID,LOT_TYPE,RECIPE,                                                                                                                         
+             LOT_ID,LAYER,STAGE,                                                                                                                              
+             TECH_ID,CUSTOMER,PTY,                                                                                                                            
+             SEQ,                                                                                                                                             
+             -- TRUNC(TARGET_QTY/DISPATCH_TYPE,2) AS TARGET_QTY,
+             CAST(CAST(TARGET_QTY AS DECIMAL)/CAST(DISPATCH_TYPE AS DECIMAL) AS DECIMAL(18,2)) AS TARGET_QTY,                                                                                                   
+             TARGET_SHIFT,                                                                                                                                    
+             CASE WHEN (T.DZ = 1) 
+                -- THEN TO_CHAR(CURRENT_TIME,'YYYY-MM-DD HH24:MI:SS')
+                THEN STRFTIME(CAST(CURRENT_TIME AS TIMESTAMP), '%Y-%m-%d %H:%M:%S') 
+                -- ELSE TO_CHAR((CURRENT_TIME) + CEIL(24/DISPATCH_TYPE)*(T.DZ -1)/24,'YYYY-MM-DD HH24:MI:SS') END AS TARGET_TIME_FROM,
+                ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL (CEIL(24/cast(DISPATCH_TYPE as integer))*(cast(T.DZ as integer) -1)) hour),'%Y-%m-%d %H:%M:%S') END AS TARGET_TIME_FROM,
+             CASE WHEN (T.DZ = DD.DISPATCH_TYPE) 
+                -- THEN TO_CHAR((CURRENT_TIME + 1),'YYYY-MM-DD HH24:MI:SS')
+                THEN STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '1 day'), '%Y-%m-%d %H:%M:%S') 
+                -- ELSE TO_CHAR((CURRENT_TIME + 1) - CEIL(24/DISPATCH_TYPE)*(DISPATCH_TYPE -T.DZ)/24,'YYYY-MM-DD HH24:MI:SS') END AS TARGET_TIME, 
+                ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '24 hour' - INTERVAL (CEIL(24/cast(DISPATCH_TYPE as integer))*(cast(DISPATCH_TYPE as integer) -cast(T.DZ as integer))) hour), '%Y-%m-%d %H:%M:%S') END AS TARGET_TIME,                     
+             TARGET_MODE,                                                                                                                                     
+             '' AS CONTROL_FLAG,                                                                                                                              
+             '{current_time}' AS UPDATE_TIME,                                                                                                           
+             '' AS PARTCODE,                                                                                           
+             DD.MAX_MOVE_FLAG,                                                                                                                   
+             '0' AS DONE_QTY,
+             CASE WHEN PLAT_FORM = '*' THEN '' ELSE PLAT_FORM END AS PLAT_FORM                                                                                                                             
+      FROM DEMAN_DATA DD                                                                                                                                              
+      -- LEFT JOIN (SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 24) T ON T.DZ >= 1 AND T.DZ <= DD.DISPATCH_TYPE
+      LEFT JOIN (WITH RECURSIVE cte(DZ) as ( select 1 as dz union all select dz + 1 from cte where dz < 24) select dz from cte ) T ON T.DZ >= 1 AND T.DZ <= DD.DISPATCH_TYPE
+    """.format(current_time=current_time, uuid=uuid, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetDemandByOtherDaySql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_RTD")
+
+
+def GetDemandByProdTechSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO {tempdb}APS_TMP_ETL_DEMAND_TECH (                                                     
+         PARENTID, PRODG_TECH, LAYER, STAGE, TARGET_QTY, SEQ, UPDATE_TIME, PARTCODE, TARGET_TIME_FROM, TARGET_TIME, DONE_QTY, TARGET_MODE,CONTROL_FLAG
+    )                                                                                                                
+     WITH SETTING1 AS (                                                                                                                        
+       SELECT REPLACE(OPE_NO,'*','') AS OPE_NO                                                                   
+       FROM APS_SYNC_SCHE_OPE_NO_MODULE_SETTING.APS_SYNC_SCHE_OPE_NO_MODULE_SETTING                                            
+       WHERE MODULE ='DIFF'                                                                                      
+       AND OPE_NO LIKE '%*%'                                                                                     
+       -- AND PARTCODE = '"+partCodeList.get(4)+"'                                                                  
+     ),                                                                                                          
+     SETTING2 AS (                                                                                               
+       SELECT OPE_NO                                                                                             
+       FROM APS_SYNC_SCHE_OPE_NO_MODULE_SETTING.APS_SYNC_SCHE_OPE_NO_MODULE_SETTING                                            
+       WHERE MODULE ='DIFF'                                                                                      
+       AND OPE_NO NOT LIKE '%*%'                                                                                 
+       --AND PARTCODE = '"+partCodeList.get(4)+"'                                                                  
+     ),                                                                                                          
+     PRODG_TECH_DATA AS (                                                                                        
+        SELECT T1.OPE_NO,T1.MOVE_TARGET,T2.GROUP_TECH,                                                           
+                  CASE WHEN (S1.OPE_NO IS NOT NULL AND S1.OPE_NO <> '' ) OR (S2.OPE_NO IS NOT NULL AND S2.OPE_NO <> '')                                       
+                      THEN 'Y' ELSE 'N' END DF_FLAG                                                                
+        FROM APS_SYNC_DAILY_MOVE_TARGET.APS_SYNC_DAILY_MOVE_TARGET T1                                                                                     
+        INNER JOIN APS_SYNC_PRODUCT_INFO.APS_SYNC_PRODUCT_INFO T2                                                                                    
+        ON T1.PRODG1 = T2.PRODG1                                                                                 
+        -- LEFT JOIN SETTING1 S1 ON S1.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, INSTR(T1.OPE_NO,'.',-1)+1)),1,1)
+        LEFT JOIN SETTING1 S1 ON S1.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, POSITION('.' IN T1.OPE_NO)+1)),1,1)                    
+        -- LEFT JOIN SETTING2 S2 ON S2.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, INSTR(T1.OPE_NO,'.',-1)+1)),1,2)
+        LEFT JOIN SETTING2 S2 ON S2.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, POSITION('.' IN T1.OPE_NO)+1)),1,2)
+        WHERE T1.MOVE_TARGET > 0                                                                                  
+        -- AND T1.PARTCODE = '"+partCodeList.get(5)+"'                                                              
+        -- AND T2.PARTCODE = '"+partCodeList.get(6)+"'                                                              
+        ORDER BY T2.GROUP_TECH                                                                                    
+     ),                                                                                                          
+      DATE_INFO AS (                                                                                                                     
+         SELECT                                                                                                                          
+           -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+           CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'                                                                           
+               -- THEN TO_DATE(CONCAT(TO_CHAR(SYSDATE-1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+               THEN CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')                                        
+               -- ELSE TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') END AS CURRENT_TIME
+               ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00') END AS CURRENT_TIME                                                                                                         
+         -- FROM DUAL
+         FROM (VALUES(1))
+      ),                                                                                                                                 
+      ALL_DATA AS (                                                                                                                      
+          SELECT '{uuid}' AS PARENTID,                                                                                      
+                 --DECODE(GROUP_TECH,'*','',GROUP_TECH) AS PRODG_TECH,
+                 CASE WHEN GROUP_TECH = '*' THEN '' ELSE GROUP_TECH END AS PRODG_TECH,                                                                     
+                 -- SUBSTR(OPE_NO, 1, INSTR(OPE_NO,'.',-1)-1) AS LAYER,
+                 SUBSTR(OPE_NO, 1, POSITION('.' IN OPE_NO)-1) AS LAYER,
+                 -- SUBSTR(OPE_NO, INSTR(OPE_NO,'.',-1)+1) AS STAGE,
+                 SUBSTR(OPE_NO, POSITION('.' IN OPE_NO)+1) AS STAGE,                                                                        
+                 SUM(CAST(MOVE_TARGET AS DECIMAL)) AS TARGET_QTY,                                                                                         
+                 -- ((SELECT RANK_NO  FROM "+Constant.GlobalTableName.V_MOVE_TARGET_RANK+" WHERE RANK_TYPE='daily_move_target_tech' AND PARTCODE = '"+partCodeList.get(3)+"' )) AS SEQ,                            
+                 ((SELECT RANK_NO  FROM APS_SYNC_MOVE_TARGET_RANK.APS_SYNC_MOVE_TARGET_RANK WHERE RANK_TYPE='daily_move_target_tech' )) AS SEQ,
+                  '{current_time}' AS UPDATE_TIME,                                                                                 
+                  '' AS PARTCODE,                                                                     
+                  OPE_NO,MAX(DF_FLAG) AS DF_FLAG                                                                                         
+          FROM PRODG_TECH_DATA                                                                                                           
+          GROUP BY GROUP_TECH,OPE_NO                                                                                                     
+          ORDER BY SUM(CAST(MOVE_TARGET AS DECIMAL))                                                                                                      
+      ),                                                                                                                                 
+      TARGET_DATA AS (                                                                                                                   
+          SELECT PARENTID,                                                                                                               
+                 PRODG_TECH,                                                                                                             
+                 LAYER,                                                                                                                  
+                 STAGE,                                                                                                                  
+                 -- CASE WHEN T.DZ IS NOT NULL THEN TRUNC(TARGET_QTY/4,2) ELSE TARGET_QTY END AS TARGET_QTY,
+                 CASE WHEN T.DZ IS NOT NULL  THEN CAST(CAST(TARGET_QTY AS DECIMAL)/4 AS DECIMAL(18,2)) ELSE TARGET_QTY END AS TARGET_QTY,                                
+                 SEQ,                                                                                                                    
+                 UPDATE_TIME,                                                                                                            
+                 PARTCODE,                                                                                                               
+                 CASE WHEN T.DZ IS NULL 
+                    -- THEN  TO_CHAR(CURRENT_TIME,'YYYY-MM-DD HH24:MI:SS')
+                    THEN STRFTIME(CAST(CURRENT_TIME AS TIMESTAMP), '%Y-%m-%d %H:%M:%S') 
+                    ELSE (                                       
+                        CASE WHEN (T.DZ = 1) 
+                            -- THEN TO_CHAR(CURRENT_TIME,'YYYY-MM-DD HH24:MI:SS')
+                            -- THEN STRFTIME(CURRENT_TIME, '%Y-%m-%d %H:%M:%S') 
+                            THEN STRFTIME(CAST(CURRENT_TIME AS TIMESTAMP), '%Y-%m-%d %H:%M:%S') 
+                            -- ELSE TO_CHAR((CURRENT_TIME) + CEIL(24/4)*(T.DZ -1)/24,'YYYY-MM-DD HH24:MI:SS')
+                            ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL (CEIL(24/4)*(cast(T.DZ as integer) -1)) hour), '%Y-%m-%d %H:%M:%S')                                              
+                         END) END AS TARGET_TIME_FROM,                                                                                                      
+                 CASE WHEN T.DZ IS NULL 
+                    -- THEN TO_CHAR((CURRENT_TIME + 1),'YYYY-MM-DD HH24:MI:SS') 
+                    THEN STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '1 day'), '%Y-%m-%d %H:%M:%S') 
+                    ELSE ( 
+                        CASE WHEN (T.DZ = 4) 
+                        -- THEN TO_CHAR((CURRENT_TIME + 1),'YYYY-MM-DD HH24:MI:SS')
+                        THEN STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '1 day'), '%Y-%m-%d %H:%M:%S')  
+                        -- ELSE TO_CHAR((CURRENT_TIME + 1) - CEIL(24/4)*(4 -T.DZ)/24,'YYYY-MM-DD HH24:MI:SS')
+                        ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '24 hour' - INTERVAL (CEIL(24/4)*(4 -cast(T.DZ as integer))) hour), '%Y-%m-%d %H:%M:%S')  
+                        END) END AS TARGET_TIME,                                                                                        
+                 OPE_NO,                                                                                                                 
+                 T.DZ                                                                                                                    
+          FROM  ALL_DATA AD                                                                                                              
+          -- LEFT JOIN (SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 24) T     
+          LEFT JOIN (WITH RECURSIVE cte(DZ) as ( select 1 as dz union all select dz + 1 from cte where dz < 24) select dz from cte ) T                                                            
+          ON T.DZ >= 1 AND T.DZ <= 4 AND AD.TARGET_QTY > 25 AND AD.DF_FLAG = 'N'                                                         
+          LEFT JOIN DATE_INFO F ON 1=1                                                                                                   
+      ),                                                                                                                                 
+      COMP_QTY AS (                                                                                                                      
+        SELECT OPE_NO, PRODG_TECH, QTY, UPDATE_TIME,                                                                                     
+               DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT                                                                            
+        FROM   {tempdb}APS_TMP_ETL_DEMAND_PRODTECH                                                                                           
+        WHERE UPDATE_TIME > FROM_TIME AND  UPDATE_TIME <= END_TIME                                                                       
+     )                                                                                                                                   
+     SELECT  PARENTID,                                                                                                                   
+             TD.PRODG_TECH,                                                                                                              
+             LAYER,                                                                                                                      
+             STAGE,                                                                                                                      
+             CASE WHEN Q.OPE_NO IS NULL OR TARGET_TIME < Q.UPDATE_TIME                                                                                                 
+                THEN TD.TARGET_QTY ELSE                                                                                                                                  
+                       -- (CASE WHEN Q.QTY > TARGET_QTY*TIME_COUNT
+                       (CASE WHEN Q.QTY > CAST(TARGET_QTY AS DECIMAL)*CAST(TIME_COUNT AS DECIMAL)
+                           -- THEN (CASE WHEN Q.QTY >= TARGET_QTY * 4 THEN 0
+                           THEN (CASE WHEN Q.QTY >= CAST(TARGET_QTY AS DECIMAL) * 4 THEN 0
+                               -- ELSE TRUNC(((TARGET_QTY*4) - Q.QTY)/(4-(TIME_COUNT)),2) END) ELSE
+                               ELSE CAST(((CAST(TARGET_QTY AS DECIMAL)*4) - CAST(Q.QTY AS DECIMAL))/(4-CAST(TIME_COUNT AS DECIMAL)) AS DECIMAL(18,2)) END) ELSE
+                           TARGET_QTY  END)                                                                                              
+              END TARGET_QTY,                                                                                                            
+             SEQ,                                                                                                                        
+             TD.UPDATE_TIME,                                                                                                             
+             PARTCODE,                                                                                                                   
+             TARGET_TIME_FROM,                                                                                                           
+             TARGET_TIME,                                                                                                                
+             CASE WHEN Q.OPE_NO IS NULL THEN 0 ELSE Q.QTY  END AS DONE_QTY,                                          
+             '0' AS TARGET_MODE,                                                                                     
+             '' AS CONTROL_FLAG                                                                                        
+     FROM  TARGET_DATA TD                                                                                                                
+     LEFT JOIN COMP_QTY Q                                                                                                                
+     ON Q.OPE_NO = TD.OPE_NO AND Q.PRODG_TECH = TD.PRODG_TECH  AND Q.DISPATCH_TYPE = 4         
+    """.format(current_time=current_time, uuid=uuid, tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetDemandByProdTechSql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_TECH")
+
+
+def GetProdTechByOtherDaySql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 系统自动产生BY PRODG_TECH的资料, 把当天的目标量作为明日的目标量来显示，防止在真空时期没有目标量限制DF区目标量不拆时段
+    sql = """
+    INSERT  INTO {tempdb}APS_TMP_ETL_DEMAND_TECH (                                                   
+          PARENTID, PRODG_TECH, LAYER, STAGE, TARGET_QTY, SEQ, UPDATE_TIME, PARTCODE, TARGET_TIME_FROM, TARGET_TIME, DONE_QTY, TARGET_MODE,CONTROL_FLAG                                                                                                
+    )                                                                                                              
+     WITH SETTING1 AS (                                                                                                                        
+       SELECT REPLACE(OPE_NO,'*','') AS OPE_NO                                                                   
+       FROM APS_SYNC_SCHE_OPE_NO_MODULE_SETTING.APS_SYNC_SCHE_OPE_NO_MODULE_SETTING                                                                         
+       WHERE MODULE ='DIFF'                                                                                      
+       AND OPE_NO LIKE '%*%'                                                                                     
+       -- AND PARTCODE = '"+partCodeList.get(4)+"'                                                                  
+     ),                                                                                                          
+     SETTING2 AS (                                                                                               
+       SELECT OPE_NO                                                                                             
+       FROM APS_SYNC_SCHE_OPE_NO_MODULE_SETTING.APS_SYNC_SCHE_OPE_NO_MODULE_SETTING                                                                       
+       WHERE MODULE ='DIFF'                                                                                      
+       -- AND PARTCODE = '"+partCodeList.get(4)+"'                                                                  
+       AND OPE_NO NOT LIKE '%*%'                                                                                 
+     ),                                                                                                          
+     PRODG_TECH_DATA AS (                                                                                        
+        SELECT T1.OPE_NO,T1.MOVE_TARGET,T2.GROUP_TECH,                                                           
+                  CASE WHEN (S1.OPE_NO IS NOT NULL AND S1.OPE_NO <> '') OR (S2.OPE_NO IS NOT NULL AND S2.OPE_NO <> '')                                       
+                      THEN 'Y' ELSE 'N' END DF_FLAG                                                                
+        FROM APS_SYNC_DAILY_MOVE_TARGET.APS_SYNC_DAILY_MOVE_TARGET T1                                                                                     
+        INNER JOIN APS_SYNC_PRODUCT_INFO.APS_SYNC_PRODUCT_INFO T2                                                                                    
+        ON T1.PRODG1 = T2.PRODG1                                                                                 
+        -- LEFT JOIN SETTING1 S1 ON S1.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, INSTR(T1.OPE_NO,'.',-1)+1)),1,1)                    
+        LEFT JOIN SETTING1 S1 ON S1.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, POSITION('.' IN T1.OPE_NO)+1)),1,1)
+        -- LEFT JOIN SETTING2 S2 ON S2.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, INSTR(T1.OPE_NO,'.',-1)+1)),1,2)
+        LEFT JOIN SETTING2 S2 ON S2.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, POSITION('.' IN T1.OPE_NO)+1)),1,2)
+        WHERE T1.MOVE_TARGET > 0                                                                                  
+        -- AND T1.PARTCODE = '"+partCodeList.get(5)+"'                                                              
+        -- AND T2.PARTCODE = '"+partCodeList.get(6)+"'                                                              
+        ORDER BY T2.GROUP_TECH                                                                                    
+     ),                                                                                                          
+      DATE_INFO AS (                                                                                               
+         SELECT                                                                                                    
+           -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+           CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'                                                                    
+               -- THEN TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS')
+               THEN CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00')                   
+               -- ELSE TO_DATE(CONCAT(TO_CHAR(SYSDATE+1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') END AS CURRENT_TIME
+               ELSE CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00') END AS CURRENT_TIME
+         -- FROM DUAL
+         FROM (VALUES(1))                                                                                                 
+      ),                                                                                                           
+      ALL_DATA AS (                                                                                                      
+          SELECT '{uuid}' AS PARENTID,                                                                
+                 -- DECODE(GROUP_TECH,'*','',GROUP_TECH) AS PRODG_TECH,
+                 CASE WHEN GROUP_TECH = '*' THEN '' ELSE GROUP_TECH END AS PRODG_TECH,                                                
+                 -- SUBSTR(OPE_NO, 1, INSTR(OPE_NO,'.',-1)-1) AS LAYER,
+                 SUBSTR(OPE_NO, 1, POSITION('.' IN OPE_NO)-1) AS LAYER,                                                 
+                 -- SUBSTR(OPE_NO, INSTR(OPE_NO,'.',-1)+1) AS STAGE,
+                 SUBSTR(OPE_NO, POSITION('.' IN OPE_NO)+1) AS STAGE, 
+                 -- SUM(MOVE_TARGET) AS TARGET_QTY,
+                 SUM(CAST(MOVE_TARGET AS DECIMAL)) AS TARGET_QTY,
+                 -- ((SELECT RANK_NO  FROM "+Constant.GlobalTableName.V_MOVE_TARGET_RANK+" WHERE RANK_TYPE='daily_move_target_tech' AND PARTCODE = '"+partCodeList.get(3)+"')) AS SEQ,      
+                 ((SELECT RANK_NO  FROM APS_SYNC_MOVE_TARGET_RANK.APS_SYNC_MOVE_TARGET_RANK WHERE RANK_TYPE='daily_move_target_tech' )) AS SEQ,
+                 '{current_time}' AS UPDATE_TIME,                                                           
+                 '' AS PARTCODE,                                               
+                 MAX(DF_FLAG) AS DF_FLAG                                                                          
+          FROM PRODG_TECH_DATA                                                                                     
+          GROUP BY GROUP_TECH,OPE_NO                                                                               
+          ORDER BY SUM(CAST(MOVE_TARGET AS DECIMAL))                                                                                
+      )                                                                                                            
+      SELECT PARENTID,                                                                                             
+             PRODG_TECH,                                                                                           
+             LAYER,                                                                                                
+             STAGE,                                                                                                
+             -- CASE WHEN T.DZ IS NOT NULL THEN TRUNC(TARGET_QTY/4,2) ELSE TARGET_QTY END AS TARGET_QTY,              
+             CASE WHEN (T.DZ IS NOT NULL ) THEN CAST(CAST(TARGET_QTY AS DECIMAL)/4 AS DECIMAL(18,2)) ELSE TARGET_QTY END AS TARGET_QTY,
+             SEQ,                                                                                                  
+             UPDATE_TIME,                                                                                          
+             PARTCODE,                                                                                             
+             CASE WHEN T.DZ IS NULL 
+                -- THEN  TO_CHAR(CURRENT_TIME,'YYYY-MM-DD HH24:MI:SS')
+                -- THEN STRFTIME(CURRENT_TIME, '%Y-%m-%d %H:%M:%S') 
+                -- THEN STRFTIME(STRPTIME(substring(CURRENT_TIME,1,position('.' in CURRENT_TIME)-1),'%H:%M:%S'), '%Y-%m-%d %H:%M:%S')
+                THEN CURRENT_TIME 
+                ELSE ( 
+                    CASE WHEN (T.DZ = 1) 
+                        -- THEN TO_CHAR(CURRENT_TIME,'YYYY-MM-DD HH24:MI:SS')
+                        -- THEN STRFTIME(CURRENT_TIME, '%Y-%m-%d %H:%M:%S') 
+                       THEN STRFTIME(CAST(CURRENT_TIME AS TIMESTAMP), '%Y-%m-%d %H:%M:%S') 
+                        -- ELSE TO_CHAR((CURRENT_TIME) + CEIL(24/4)*(T.DZ -1)/24,'YYYY-MM-DD HH24:MI:SS') END) END AS TARGET_TIME_FROM,
+                        -- ELSE STRFTIME(CURRENT_TIME, '%Y-%m-%d %H:%M:%S') END) END AS TARGET_TIME_FROM,
+                        ELSE  STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL (CEIL(24/4)*(cast(T.DZ as integer) -1)) hour), '%Y-%m-%d %H:%M:%S') END) END AS TARGET_TIME_FROM,
+             CASE WHEN T.DZ IS NULL 
+                -- THEN TO_CHAR((CURRENT_TIME + 1),'YYYY-MM-DD HH24:MI:SS') 
+                THEN STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '1 day'), '%Y-%m-%d %H:%M:%S')
+                ELSE ( 
+                    CASE WHEN (T.DZ = 4) 
+                    -- THEN TO_CHAR((CURRENT_TIME + 1),'YYYY-MM-DD HH24:MI:SS')
+                    THEN STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '1 day'), '%Y-%m-%d %H:%M:%S') 
+                    -- ELSE TO_CHAR((CURRENT_TIME + 1) - CEIL(24/4)*(4 -T.DZ)/24,'YYYY-MM-DD HH24:MI:SS') END) END AS TARGET_TIME,
+                    ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '24 hour' - INTERVAL (CEIL(24/4)*(4 -cast(T.DZ as integer))) hour), '%Y-%m-%d %H:%M:%S')  END) END AS TARGET_TIME,
+             '0' AS DONE_QTY,                                                                                     
+             '0' AS TARGET_MODE,                                                                                  
+             '' AS CONTROL_FLAG                                                                                   
+      FROM  ALL_DATA AD                                                                                            
+      -- LEFT JOIN (SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 24) T
+      LEFT JOIN (WITH RECURSIVE cte(DZ) as ( select 1 as dz union all select dz + 1 from cte where dz < 24) select dz from cte ) T                                               
+      ON T.DZ >= 1 AND T.DZ <= 4 AND AD.TARGET_QTY > 25  AND AD.DF_FLAG = 'N'                                      
+      LEFT JOIN DATE_INFO F ON 1=1 
+    """.format(current_time=current_time, uuid=uuid, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetProdTechByOtherDaySql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_DEMAND_TECH")
+
+
+def GetDemandAllSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_ETL_DEMAND (                  
+         PARENTID, TOOLG_ID, TOOL_ID, PRODG_ID, PRODG_TECH, PROD_ID, PLAN_ID, STEP_ID,LOT_TYPE,RECIPE, LOT_ID,LAYER,
+         STAGE, TECH_ID, CUSTOMER, PTY, SEQ, TARGET_QTY, TARGET_SHIFT, TARGET_TIME_FROM,
+         TARGET_TIME, TARGET_MODE, CONTROL_FLAG, UPDATE_TIME, PARTCODE, DONE_QTY, WIP_ATTR2                                                          
+    )                                                                        
+     SELECT  PARENTID, TOOLG_ID, TOOL_ID,                                   
+             PRODG_ID, PRODG_TECH, PROD_ID,                                 
+             PLAN_ID, STEP_ID,LOT_TYPE,RECIPE,                               
+             LOT_ID,LAYER,  STAGE, TECH_ID,                                 
+             CUSTOMER, PTY, SEQ, TARGET_QTY,                                
+             TARGET_SHIFT, TARGET_TIME_FROM,                                
+             TARGET_TIME,                                                   
+             TARGET_MODE,                                                   
+             CONTROL_FLAG,                                                  
+             UPDATE_TIME, PARTCODE,DONE_QTY,
+             WIP_ATTR2                                
+     FROM {tempdb}APS_TMP_ETL_DEMAND_RTD
+    """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetDemandAllSql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_DEMAND")
+
+
+def GetDemandByMaxMoveFlagSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_ETL_DEMAND (                  
+         PARENTID, TOOLG_ID, TOOL_ID, PRODG_ID, PRODG_TECH, PROD_ID, PLAN_ID, STEP_ID,LOT_TYPE,RECIPE, LOT_ID,LAYER,
+         STAGE, TECH_ID, CUSTOMER, PTY, SEQ, TARGET_QTY, TARGET_SHIFT, TARGET_TIME_FROM,
+         TARGET_TIME, TARGET_MODE, CONTROL_FLAG, UPDATE_TIME, PARTCODE, DONE_QTY, WIP_ATTR2                                                          
+    )                                                                        
+     SELECT  PARENTID, TOOLG_ID, TOOL_ID,                                   
+             PRODG_ID, PRODG_TECH, PROD_ID,                                 
+             PLAN_ID, STEP_ID,LOT_TYPE,RECIPE,                               
+             LOT_ID,LAYER,  STAGE, TECH_ID,
+             CUSTOMER, PTY, SEQ, TARGET_QTY,
+             TARGET_SHIFT, TARGET_TIME_FROM,
+             TARGET_TIME,
+             '1' AS TARGET_MODE,
+             'Y' AS CONTROL_FLAG,
+             UPDATE_TIME, PARTCODE,DONE_QTY,
+             WIP_ATTR2
+     FROM {tempdb}APS_TMP_ETL_DEMAND_RTD
+     WHERE MAX_MOVE_FLAG='Y'
+    """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetDemandByMaxMoveFlagSql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_DEMAND")
+
+
+def GetDemandTGTSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_ETL_DEMAND (                  
+         PARENTID, TOOLG_ID, TOOL_ID, PRODG_ID, PRODG_TECH, PROD_ID, PLAN_ID, STEP_ID,LOT_TYPE,RECIPE, LOT_ID,LAYER,
+         STAGE, TECH_ID, CUSTOMER, PTY, SEQ, TARGET_QTY, TARGET_SHIFT, TARGET_TIME_FROM,
+         TARGET_TIME, TARGET_MODE, CONTROL_FLAG, UPDATE_TIME, PARTCODE, DONE_QTY                                                          
+    )                                                                                                                                   
+     WITH DATE_INFO AS (                                                                                                                                                           
+        SELECT                                                                                                                          
+          -- CASE WHEN TO_CHAR(SYSDATE,'HH24:MI:SS') < '07:30:00'
+          CASE WHEN STRFTIME(CURRENT_TIMESTAMP, '%H:%M:%S') < '07:30:00'                                                                                         
+              -- THEN TO_DATE(CONCAT(TO_CHAR(SYSDATE-1,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') 
+              THEN CONCAT(STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day', '%Y-%m-%d'),' 07:30:00')                                        
+              -- ELSE TO_DATE(CONCAT(TO_CHAR(SYSDATE,'YYYY-MM-DD'),' 07:30:00'),'YYYY-MM-DD HH24:MI:SS') END AS CURRENT_TIME
+              ELSE CONCAT(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d'),' 07:30:00') END AS CURRENT_TIME
+        -- FROM DUAL
+        FROM (VALUES(1))                                                                                                                       
+     ),                                                                                                                                 
+     SETTING1 AS (                                                                                                                             
+       SELECT REPLACE(OPE_NO,'*','') AS OPE_NO                                                                   
+       FROM APS_SYNC_SCHE_OPE_NO_MODULE_SETTING.APS_SYNC_SCHE_OPE_NO_MODULE_SETTING                                           
+       WHERE MODULE ='DIFF'                                                                                      
+       AND OPE_NO LIKE '%*%'                                                                                     
+       -- AND PARTCODE = '"+partCodeList.get(4)+"'                                                                                     
+     ),                                                                                                          
+     SETTING2 AS (                                                                                               
+       SELECT OPE_NO                                                                                             
+       FROM APS_SYNC_SCHE_OPE_NO_MODULE_SETTING.APS_SYNC_SCHE_OPE_NO_MODULE_SETTING
+       WHERE MODULE ='DIFF'                                                                                      
+       AND OPE_NO NOT LIKE '%*%'                                                                                 
+       -- AND PARTCODE = '"+partCodeList.get(4)+"'                                                                                     
+     ),                                                                                                          
+     PRODG_DATA AS (                                                                                             
+        SELECT T1.OPE_NO,T1.MOVE_TARGET,T1.PRODG1,P.GROUP_TECH,                                                  
+                  CASE WHEN (S1.OPE_NO IS NOT NULL AND S1.OPE_NO <> '') OR (S2.OPE_NO IS NOT NULL AND S2.OPE_NO <> '')                                       
+                      THEN 'Y' ELSE 'N' END DF_FLAG                                                                
+        FROM APS_SYNC_DAILY_MOVE_TARGET.APS_SYNC_DAILY_MOVE_TARGET T1                                                        
+        INNER JOIN APS_SYNC_PRODUCT_INFO.APS_SYNC_PRODUCT_INFO P                                                 
+        ON P.PRODG1 = T1.PRODG1                                                                                  
+        -- LEFT JOIN SETTING1 S1 ON S1.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, INSTR(T1.OPE_NO,'.',-1)+1)),1,1)
+        LEFT JOIN SETTING1 S1 ON S1.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, POSITION('.' IN T1.OPE_NO)+1)),1,1)                    
+        -- LEFT JOIN SETTING2 S2 ON S2.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, INSTR(T1.OPE_NO,'.',-1)+1)),1,2) 
+        LEFT JOIN SETTING2 S2 ON S2.OPE_NO = SUBSTR((SUBSTR(T1.OPE_NO, POSITION('.' IN T1.OPE_NO)+1)),1,2)
+        WHERE T1.MOVE_TARGET > 0                                                                                  
+        --AND T1.PARTCODE = '"+partCodeList.get(5)+"'                                                              
+        --AND P.PARTCODE = '"+partCodeList.get(6)+"'                                                              
+     ),                                                                                                          
+     TARGET_DATA AS(                                                                                                                    
+         SELECT '{uuid}' AS PARENTID,                                                                                          
+                '' AS TOOLG_ID,                                                                                                                 
+                '' AS TOOL_ID,                                                                                                              
+                TA.PRODG1 AS PRODG_ID,                                                                                                      
+                TA.GROUP_TECH AS PRODG_TECH,                                                                                                 
+                '' AS PROD_ID,                                                                                                              
+                '' AS PLAN_ID,                                                                                                              
+                '' AS STEP_ID,                                                                                                              
+                '' AS LOT_TYPE,                                                                                                             
+                '' AS RECIPE,                                                                                                               
+                '' AS LOT_ID,                                                                                                               
+                -- SUBSTR(TA.OPE_NO, 1, INSTR(TA.OPE_NO,'.',-1)-1) AS LAYER,
+                SUBSTR(TA.OPE_NO, 1, POSITION('.' IN TA.OPE_NO)-1) AS LAYER,
+                -- SUBSTR(TA.OPE_NO, INSTR(TA.OPE_NO,'.',-1)+1) AS STAGE,
+                SUBSTR(TA.OPE_NO, POSITION('.' IN TA.OPE_NO)+1) AS STAGE,
+                '' AS TECH_ID,                                                                                                              
+                '' AS CUSTOMER,                                                                                                             
+                '' AS PTY,                                                                                                                  
+                -- (SELECT RANK_NO  FROM "+Constant.GlobalTableName.V_MOVE_TARGET_RANK+" WHERE RANK_TYPE='daily_move_target_prodg' AND PARTCODE = '"+partCodeList.get(3)+"') AS SEQ,
+                (SELECT RANK_NO  FROM APS_SYNC_MOVE_TARGET_RANK.APS_SYNC_MOVE_TARGET_RANK WHERE RANK_TYPE='daily_move_target_prodg' ) AS SEQ,                             
+                -- CASE WHEN T.DZ IS NOT NULL THEN TRUNC(MOVE_TARGET/4,2) ELSE MOVE_TARGET END AS TARGET_QTY,
+                CASE WHEN (T.DZ IS NOT NULL ) THEN CAST(CAST(MOVE_TARGET AS DECIMAL)/4 AS DECIMAL(18,2)) ELSE MOVE_TARGET END AS TARGET_QTY,
+                'ALL' AS TARGET_SHIFT,                                                                                                  
+                CASE WHEN T.DZ IS NULL 
+                    -- THEN  TO_CHAR(CURRENT_TIME,'YYYY-MM-DD HH24:MI:SS')
+                 -- THEN STRFTIME(STRPTIME(substring(CURRENT_TIME,1,position('.' in CURRENT_TIME)-1),'%H:%M:%S'), '%Y-%m-%d %H:%M:%S') 
+                 THEN CURRENT_TIME
+                    ELSE (                                       
+                        CASE WHEN (T.DZ = 1) 
+                            -- THEN TO_CHAR(CURRENT_TIME,'YYYY-MM-DD HH24:MI:SS')
+                           THEN STRFTIME(CAST(CURRENT_TIME AS TIMESTAMP), '%Y-%m-%d %H:%M:%S') 
+                            -- ELSE TO_CHAR((CURRENT_TIME) + CEIL(24/4)*(T.DZ -1)/24,'YYYY-MM-DD HH24:MI:SS') END) END AS TARGET_TIME_FROM,
+                            ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL (CEIL(24/4)*(cast(T.DZ as integer) -1)) hour), '%Y-%m-%d %H:%M:%S') END) END AS TARGET_TIME_FROM,
+                CASE WHEN T.DZ IS NULL 
+                    -- THEN TO_CHAR((CURRENT_TIME + 1),'YYYY-MM-DD HH24:MI:SS')
+                    THEN STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '1 day'), '%Y-%m-%d %H:%M:%S') 
+                    ELSE (                                  
+                        CASE WHEN (T.DZ = 4) 
+                        -- THEN TO_CHAR((CURRENT_TIME + 1),'YYYY-MM-DD HH24:MI:SS')
+                        THEN STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '1 day'), '%Y-%m-%d %H:%M:%S') 
+                        -- ELSE TO_CHAR((CURRENT_TIME + 1) - CEIL(24/4)*(4 -T.DZ)/24,'YYYY-MM-DD HH24:MI:SS') END) END AS TARGET_TIME,   
+                        ELSE STRFTIME(DATE_TRUNC('second', CAST(CURRENT_TIME AS TIMESTAMP) + INTERVAL '24 hour' - INTERVAL (CEIL(24/4)*(4 -cast(T.DZ as integer))) hour), '%Y-%m-%d %H:%M:%S')  END) END AS TARGET_TIME,                                                                                               
+                '0' AS TARGET_MODE,                                                                                                         
+                '' AS CONTROL_FLAG,                                                                                                         
+                '{current_time}' AS UPDATE_TIME,                                                                                     
+                '' AS PARTCODE,                                                                      
+                T.DZ,                                                                                                                   
+                TA.OPE_NO                                                                                                               
+         FROM PRODG_DATA TA                                                                                                             
+         -- LEFT JOIN (SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 24) T
+         LEFT JOIN (WITH RECURSIVE cte(DZ) as ( select 1 as dz union all select dz + 1 from cte where dz < 24) select dz from cte ) T                                                                 
+         ON T.DZ >= 1 AND T.DZ <= 4 AND TA.MOVE_TARGET > 25 AND TA.DF_FLAG ='N'                                                         
+         LEFT JOIN DATE_INFO F ON 1=1                                                                                                   
+     ),                                                                                                                                 
+     COMP_QTY AS (                                                                                                                      
+        SELECT OPE_NO, PRODG_ID, QTY, UPDATE_TIME,                                                                                                           
+               DISPATCH_TYPE, FROM_TIME, END_TIME, TIME_COUNT                                                                                                
+        FROM  {tempdb}APS_TMP_ETL_DEMAND_PRODG                                                                                                                   
+        WHERE UPDATE_TIME > FROM_TIME AND  UPDATE_TIME <= END_TIME                                                                       
+     )                                                                                                                                  
+     SELECT  PARENTID,                                                                                                                  
+         TOOLG_ID,                                                                                                                      
+         TOOL_ID,                                                                                                                       
+         TD.PRODG_ID,                                                                                                                   
+         TD.PRODG_TECH,                                                                                                                 
+         PROD_ID,                                                                                                                       
+         PLAN_ID,                                                                                                                       
+         STEP_ID,                                                                                                                       
+         LOT_TYPE,                                                                                                                      
+         RECIPE,                                                                                                                        
+         LOT_ID,                                                                                                                        
+         LAYER,                                                                                                                         
+         STAGE,                                                                                                                         
+         TECH_ID,                                                                                                                       
+         CUSTOMER,                                                                                                                      
+         PTY,                                                                                                                           
+         SEQ,                                                                                                                     
+          CASE WHEN Q.OPE_NO IS NULL OR TARGET_TIME < Q.UPDATE_TIME                                                                                                                        
+                THEN TD.TARGET_QTY  ELSE
+                        -- (CASE WHEN Q.QTY > TARGET_QTY*TIME_COUNT
+                        --       THEN (CASE WHEN Q.QTY >= TARGET_QTY * 4 THEN 0
+                        --       ELSE TRUNC(((TARGET_QTY*4) - Q.QTY)/(4-(TIME_COUNT)),2) END) ELSE
+                        --       TARGET_QTY  END)                                                                                                                                                      
+                        (CASE WHEN Q.QTY > CAST(TARGET_QTY AS DECIMAL)*CAST(TIME_COUNT AS DECIMAL)
+                              THEN (CASE WHEN Q.QTY >= CAST(TARGET_QTY AS DECIMAL) * 4 THEN 0
+                              ELSE CAST(((CAST(TARGET_QTY AS DECIMAL)*4) - CAST(Q.QTY AS DECIMAL))/(4-(CAST(TIME_COUNT AS DECIMAL))) AS DECIMAL(18,2)) END) ELSE
+                              TARGET_QTY  END) 
+
+              END TARGET_QTY,                                                                                                              
+         TARGET_SHIFT,                                                                                                                  
+         TARGET_TIME_FROM,                                                                                                              
+         TARGET_TIME,                                                                                                                   
+         TARGET_MODE,                                                                                                                   
+         CONTROL_FLAG,                                                                                                                  
+         TD.UPDATE_TIME,                                                                                                                
+         PARTCODE,                                                                                                                      
+         CASE WHEN Q.OPE_NO IS NULL THEN 0 ELSE Q.QTY  END AS DONE_QTY                                                                  
+     FROM TARGET_DATA TD                                                                                                                
+     LEFT JOIN COMP_QTY Q                                                                                                               
+     ON Q.OPE_NO = TD.OPE_NO AND Q.PRODG_ID = TD.PRODG_ID AND Q.DISPATCH_TYPE = 4 
+    """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetDemandTGTSql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_DEMAND")
+
+
+def GetDemandByProdTechAllSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_ETL_DEMAND (                  
+        PARENTID, PRODG_TECH, LAYER, STAGE, TARGET_QTY, SEQ, UPDATE_TIME, PARTCODE, TARGET_TIME_FROM, TARGET_TIME, DONE_QTY, TARGET_MODE,CONTROL_FLAG
+    )                                                                        
+     SELECT  PARENTID,                                                      
+             PRODG_TECH,                                                     
+             LAYER,STAGE,                                                   
+             TARGET_QTY,SEQ,                                                
+             UPDATE_TIME, PARTCODE,                                         
+             TARGET_TIME_FROM,                                              
+             TARGET_TIME,                                                   
+             DONE_QTY,                                                      
+             TARGET_MODE,                                                   
+             CONTROL_FLAG                                                   
+     FROM {tempdb}APS_TMP_ETL_DEMAND_TECH                                           
+    """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="GetDemandByProdTechAllSql",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_DEMAND")
+
+# def GetDemandByProdTechFlagSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+#     sql = """
+#     INSERT  /*+ append */  INTO APS_ETL_DEMAND (
+#         PARENTID, PRODG_TECH, LAYER, STAGE, TARGET_QTY, SEQ, UPDATE_TIME, PARTCODE, TARGET_TIME_FROM, TARGET_TIME, DONE_QTY, TARGET_MODE,CONTROL_FLAG
+#     )
+#      SELECT  PARENTID,
+#              PRODG_TECH,
+#              LAYER,STAGE,
+#              TARGET_QTY,SEQ,
+#              UPDATE_TIME, PARTCODE,
+#              TARGET_TIME_FROM,
+#              TARGET_TIME,
+#              DONE_QTY,
+#              '1' AS TARGET_MODE,
+#              'Y' AS CONTROL_FLAG
+#      FROM {tempdb}APS_TMP_ETL_DEMAND_TECH  T
+#      WHERE (STAGE LIKE 'PP%' OR STAGE LIKE 'NP%')
+#      -- 加入逻辑如果存在RTD_MOVE_TARGER 卡天花板的情况，则By 平台的不需要卡了
+#      AND NOT EXISTS ( SELECT 1 FROM {tempdb}APS_TMP_ETL_DEMAND_RTD R
+#      WHERE R.MAX_MOVE_FLAG='Y' AND T.PRODG_TECH = R.PRODG_TECH
+#            AND R.LAYER = T.LAYER AND R.STAGE = T.STAGE )
+#     """.format(tempdb=my_duck.get_temp_table_mark())
+#
+#     my_duck.exec_sql(oracle_conn=oracle_conn,
+#                      duck_db_memory=duck_db_memory,
+#                      ETL_Proc_Name=ETL_Proc_Name,
+#                      methodName="GetDemandByProdTechFlagSql",
+#                      sql=sql,
+#                      current_time=current_time,
+#                      update_table="APS_ETL_DEMAND")

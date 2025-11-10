@@ -1,0 +1,102 @@
+import logging
+import os
+import shutil
+import sys
+import time
+from datetime import datetime, timedelta
+
+import duckdb
+
+sys.path.insert(0, os.path.join(sys.path[0], '..'))
+
+from xinxiang import config
+from xinxiang.util import my_date, my_oracle, my_duck, cons_error_code
+import pandas as pd
+
+
+def _base_big_oracle_to_duck(oracle_conn,
+                             source_table,
+                             target_table,
+                             check_date_column,
+                             start,
+                             end,
+                             target_path=config.g_mem_sync_result_path,
+                             create_table_sql=None):
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = target_table
+    target_folder = os.path.join(target_path, 'his_batch_temp', target_table_name)
+    if not os.path.isdir(target_folder):
+        os.makedirs(target_folder)
+
+    # 创建DuckDB的文件
+    _file_name = target_table_name + ".db"
+    target_db_file = os.path.join(target_folder, _file_name)  # 最终文件在inprocess目录上层
+    if config.g_debug_mode:
+        print(target_db_file)
+
+    # 创建DuckDB文件
+    duck_db_cursor = None
+
+    try:
+        if os.path.exists(target_db_file):
+            duck_db_cursor = duckdb.connect(target_db_file)
+        else:
+            create_sql = my_oracle.create_sql_from_oracle_to_duck(oracle_conn, source_table, target_table)
+            print(create_sql)
+            duck_db_cursor = duckdb.connect(target_db_file)
+            duck_db_cursor.sql(create_sql)
+
+
+        query_sql = """
+        select * from {source_table} where 
+        {check_date_column} >= TO_DATE('{start}','YYYY-MM-DD HH24:MI:SS')
+        and {check_date_column} < TO_DATE('{end}','YYYY-MM-DD HH24:MI:SS')
+        """.format(source_table=source_table, check_date_column=check_date_column, start=start, end=end)
+        print(query_sql)
+        pd_result = pd.read_sql(query_sql, oracle_conn)
+
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+        # 插入数据
+        insert_sql = "INSERT INTO {} select * from pd_result".format(target_table)
+        duck_db_cursor.sql(insert_sql)
+
+        del pd_result
+
+    except Exception as e:
+        print(e)
+        if duck_db_cursor is not None:
+            duck_db_cursor.close()
+    finally:
+        if duck_db_cursor is not None:
+            duck_db_cursor.commit()
+            duck_db_cursor.close()
+
+
+if __name__ == '__main__':
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    source_table = 'V_OCS_JOB_GROUP_PO_STATE_H'
+    target_table = 'APS_MID_OCS_JOB_GROUP_PO_STATE_H'
+    check_date_column = "END_TIME"
+    _start_dddd = 5
+
+    _end_dddd = _start_dddd - 5
+    _now = datetime.now()
+    base_date = datetime(year=_now.year, month=_now.month, day=_now.day,
+                         hour=12, minute=0, microsecond=0)
+    _start = base_date - timedelta(days=_start_dddd)
+    _end = base_date - timedelta(days=_end_dddd)
+    _base_big_oracle_to_duck(oracle_conn=oracle_conn, source_table=source_table,
+                             target_table=target_table, check_date_column=check_date_column,
+                             start=_start, end=_end)
+    oracle_conn.close()

@@ -1,0 +1,1379 @@
+import gc
+import logging
+import os
+
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_postgres
+from xinxiang import config
+
+def create_temp_table(duck_db):
+    '''
+    这里在内存中创建使用到的临时表
+    '''
+    sql = """
+    create table APS_TMP_ETL_FLOW_BACKUPEQP
+    (
+        eqp_g     VARCHAR(64),
+        productid VARCHAR(64),
+        openo     VARCHAR(64),
+        routeid   VARCHAR(64),
+        recipe    VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+    sql = """
+    create table APS_TMP_ETL_FLOW_SUB_BACKUPEQP
+    (
+        prod_id    VARCHAR(64),
+        ope_no     VARCHAR(64),
+        toolg_id   VARCHAR(64),
+        plan_id    VARCHAR(64),
+        backup_eqp VARCHAR(512)
+    )
+    """
+    duck_db.sql(sql)
+    sql = """
+    create table APS_TMP_ETL_FLOW_MAIN
+    (
+        prod_id       VARCHAR(64),
+        plan_no       VARCHAR(64),
+        plan_id       VARCHAR(64),
+        step_id       VARCHAR(64),
+        layer         VARCHAR(64),
+        stage         VARCHAR(64),
+        toolg_id      VARCHAR(64),
+        recipe        VARCHAR(64),
+        reticle_group VARCHAR(64),
+        step_type     VARCHAR(64),
+        toolg_type    VARCHAR(64),
+        ope_no        VARCHAR(64),
+        capability    VARCHAR(512),
+        sgs_flag      VARCHAR(64),
+        prodg_id      VARCHAR(64),
+        prodg_tech    VARCHAR(64),
+        process_time  VARCHAR(64),
+        cycle_time    VARCHAR(64),
+        sgs_group     VARCHAR(64),
+        ope_seq       VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+
+    sql = """
+    create table APS_TMP_ETL_FLOW_RWK_SUB
+    (
+        prod_id       VARCHAR(64),
+        plan_no       VARCHAR(64),
+        plan_id       VARCHAR(64),
+        step_id       VARCHAR(64),
+        layer         VARCHAR(64),
+        stage         VARCHAR(64),
+        toolg_id      VARCHAR(64),
+        recipe        VARCHAR(64),
+        reticle_group VARCHAR(64),
+        step_type     VARCHAR(64),
+        toolg_type    VARCHAR(64),
+        ope_no        VARCHAR(64),
+        capability    VARCHAR(512),
+        sgs_flag      VARCHAR(64),
+        prodg_id      VARCHAR(64),
+        prodg_tech    VARCHAR(64),
+        process_time  VARCHAR(64),
+        cycle_time    VARCHAR(64),
+        sgs_group     VARCHAR(64),
+        ope_seq       VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW
+     (
+        prod_id       VARCHAR(64),
+        plan_no       VARCHAR(64),
+        plan_id       VARCHAR(64),
+        step_id       VARCHAR(64),
+        layer         VARCHAR(64),
+        stage         VARCHAR(64),
+        toolg_id      VARCHAR(64),
+        recipe        VARCHAR(64),
+        reticle_group VARCHAR(64),
+        step_type     VARCHAR(64),
+        toolg_type    VARCHAR(64),
+        ope_no        VARCHAR(64),
+        capability    VARCHAR(512),
+        sgs_flag      VARCHAR(64),
+        prodg_id      VARCHAR(64),
+        prodg_tech    VARCHAR(64),
+        process_time  VARCHAR(64),
+        cycle_time    VARCHAR(64),
+        sgs_group     VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_RECIPE
+     (
+        lcrecipe_id VARCHAR(64),
+        ope_no      VARCHAR(64),
+        prodspec_id VARCHAR(64),
+        mnpd_id     VARCHAR(64),
+        eqp_g       VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_REAL_RWK_SUB
+     (
+        prod_id    VARCHAR(64),
+        plan_no    VARCHAR(64),
+        plan_id    VARCHAR(64),
+        step_id    VARCHAR(64),
+        ope_no     VARCHAR(64),
+        eqp_id     VARCHAR(64),
+        recipe     VARCHAR(64),
+        step_type  VARCHAR(64),
+        toolg_id   VARCHAR(64),
+        toolg_type VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_CHANGESEQ
+     (
+        prod_id       VARCHAR(64),
+        plan_no       VARCHAR(64),
+        plan_id       VARCHAR(64),
+        step_id       VARCHAR(64),
+        layer         VARCHAR(64),
+        stage         VARCHAR(64),
+        toolg_id      VARCHAR(64),
+        recipe        VARCHAR(64),
+        reticle_group VARCHAR(64),
+        step_type     VARCHAR(64),
+        toolg_type    VARCHAR(64),
+        ope_no        VARCHAR(64),
+        capability    VARCHAR(512),
+        sgs_flag      VARCHAR(64),
+        prodg_id      VARCHAR(64),
+        prodg_tech    VARCHAR(64),
+        process_time  VARCHAR(64),
+        cycle_time    VARCHAR(64),
+        sgs_group     VARCHAR(64),
+        ope_seq       VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_VIEW_FLOW
+     (
+        mnpd_id           VARCHAR(64) not null,
+        mnpd_vs           VARCHAR(64),
+        prodg1            VARCHAR(64) not null,
+        prodspec_id       VARCHAR(64) not null,
+        ope_no            VARCHAR(64) not null,
+        ope_seq           VARCHAR(64) not null,
+        sche_eqp_g        VARCHAR(64),
+        eqp_g             VARCHAR(64),
+        inline_ct         VARCHAR(64),
+        inline_cyc_acc    VARCHAR(64),
+        inline_cyc_remain VARCHAR(64),
+        tc                VARCHAR(64),
+        update_time       VARCHAR(64),
+        std_ct            VARCHAR(64),
+        sgs_flag          VARCHAR(64),
+        sgs_group         VARCHAR(64),
+        sgs_first_op      VARCHAR(64),
+        sgs_weight        VARCHAR(64),
+        sgs_end_op        VARCHAR(64),
+        sgs_loop_group    VARCHAR(64),
+        inline_proc_time  VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_PO_N1
+     (
+        pos_pdid          VARCHAR(64) not null,
+        mainpd_id         VARCHAR(64) not null,
+        ope_no            VARCHAR(64) not null,
+        ope_seq           VARCHAR(64),
+        multi_group       VARCHAR(64),
+        multi_target_flag VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_EQP_LOAD
+     (
+        eqp_id       VARCHAR(64),
+        lcrecipe_id  VARCHAR(64),
+        pd_id        VARCHAR(64) not null,
+        prodspec_id  VARCHAR(64) not null,
+        eqp_g        VARCHAR(64),
+        eqp_category VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_TYPE11_MEDIAN
+     (
+        cycle_time   VARCHAR(64),
+        process_time VARCHAR(64),
+        prod_id      VARCHAR(64),
+        ope_no       VARCHAR(64),
+        toolg_id     VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_TYPE12_MEDIAN
+     (
+        cycle_time   VARCHAR(64),
+        process_time VARCHAR(64),
+        toolg_id     VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_MASK_GROUP
+     (
+        prodspec_id VARCHAR(64),
+        ope_no      VARCHAR(64),
+        mask_group  VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_FLOW_PROD_DATA
+     (
+        prodg_id    VARCHAR(64),
+        prodg_tech  VARCHAR(64),
+        prodspec_id VARCHAR(64)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+    create table APS_TMP_ETL_FLOW_TOOL_GROUP
+    (
+        toolg_type VARCHAR(64),
+        eqp_g      VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+    sql = """
+        create table APS_TMP_ETL_FLOW_MAIN_RSDATA
+        (
+            recipe      VARCHAR(64),
+            prodspec_id VARCHAR(64),
+            mnpd_id     VARCHAR(64),
+            ope_no      VARCHAR(64),
+            eqp_g       VARCHAR(64),
+            ope_seq     VARCHAR(64),
+            capability  VARCHAR(4000),
+            sgs_flag    VARCHAR(64),
+            toolg_type  VARCHAR(64),
+            sgs_group   VARCHAR(64),
+            ct          VARCHAR(64),
+            pt          VARCHAR(64)
+        )
+        """
+    duck_db.sql(sql)
+    sql = """
+        create table APS_TMP_ETL_FLOW_REWORK_RSDATA
+        (
+            prod_id          VARCHAR(64),
+            plan_no          VARCHAR(64),
+            plan_id          VARCHAR(64),
+            step_id          VARCHAR(64),
+            layer            VARCHAR(64),
+            stage            VARCHAR(64),
+            toolg_id         VARCHAR(64),
+            recipe           VARCHAR(64),
+            reticle_group    VARCHAR(64),
+            step_type        VARCHAR(64),
+            toolg_type       VARCHAR(64),
+            sgs_flag         VARCHAR(64),
+            sgs_group        VARCHAR(64),
+            ope_no           VARCHAR(64),
+            prodg_id         VARCHAR(64),
+            prodg_tech       VARCHAR(64),
+            inline_ct        VARCHAR(64),
+            inline_proc_time VARCHAR(64)
+        )
+        """
+    duck_db.sql(sql)
+    sql = """
+        create table APS_TMP_ETL_FLOW_REWORK_BACKUPEQP_RSDATA
+        (
+            prod_id          VARCHAR(64),
+            plan_no          VARCHAR(64),
+            plan_id          VARCHAR(64),
+            step_id          VARCHAR(64),
+            layer            VARCHAR(64),
+            stage            VARCHAR(64),
+            toolg_id         VARCHAR(64),
+            recipe           VARCHAR(64),
+            reticle_group    VARCHAR(64),
+            step_type        VARCHAR(64),
+            toolg_type       VARCHAR(64),
+            sgs_flag         VARCHAR(64),
+            sgs_group        VARCHAR(64),
+            ope_no           VARCHAR(64),
+            prodg_id         VARCHAR(64),
+            prodg_tech       VARCHAR(64),
+            inline_ct        VARCHAR(64),
+            inline_proc_time VARCHAR(64),
+            backup_eqp       VARCHAR(4000)
+        )
+        """
+    duck_db.sql(sql)
+    sql = """
+        create table APS_TMP_ETL_FLOW_MAIN_MASK_RSDATA
+        (
+            prod_id       VARCHAR(64),
+            plan_no       VARCHAR(64),
+            plan_id       VARCHAR(64),
+            step_id       VARCHAR(64),
+            layer         VARCHAR(64),
+            stage         VARCHAR(64),
+            toolg_id      VARCHAR(64),
+            recipe        VARCHAR(64),
+            reticle_group VARCHAR(64),
+            step_type     VARCHAR(64),
+            toolg_type    VARCHAR(64),
+            ope_no        VARCHAR(64),
+            capability    VARCHAR(4000),
+            sgs_flag      VARCHAR(64),
+            sgs_group     VARCHAR(64),
+            ct            VARCHAR(64),
+            pt            VARCHAR(64),
+            ope_seq       VARCHAR(64)
+        )
+        """
+    duck_db.sql(sql)
+    sql = """
+            create table APS_TMP_ETL_FLOW_MAIN_TOOL_RSDATA
+            (
+                prod_id       VARCHAR(64),
+                plan_no       VARCHAR(64),
+                plan_id       VARCHAR(64),
+                step_id       VARCHAR(64),
+                layer         VARCHAR(64),
+                stage         VARCHAR(64),
+                toolg_id      VARCHAR(64),
+                recipe        VARCHAR(64),
+                reticle_group VARCHAR(64),
+                step_type     VARCHAR(64),
+                toolg_type    VARCHAR(64),
+                ope_no        VARCHAR(64),
+                capability    VARCHAR(4000),
+                sgs_flag      VARCHAR(64),
+                sgs_group     VARCHAR(64),
+                ct            VARCHAR(64),
+                pt            VARCHAR(64),
+                ope_seq       VARCHAR(64)
+            )
+            """
+    duck_db.sql(sql)
+    sql = """
+            create table APS_TMP_ETL_FLOW_MAIN_PROD_RSDATA
+            (
+                prod_id       VARCHAR(64),
+                plan_no       VARCHAR(64),
+                plan_id       VARCHAR(64),
+                step_id       VARCHAR(64),
+                layer         VARCHAR(64),
+                stage         VARCHAR(64),
+                toolg_id      VARCHAR(64),
+                recipe        VARCHAR(64),
+                reticle_group VARCHAR(64),
+                step_type     VARCHAR(64),
+                toolg_type    VARCHAR(64),
+                ope_no        VARCHAR(64),
+                capability    VARCHAR(4000),
+                sgs_flag      VARCHAR(64),
+                prodg_id      VARCHAR(64),
+                prodg_tech    VARCHAR(64),
+                sgs_group     VARCHAR(64),
+                ct            VARCHAR(64),
+                pt            VARCHAR(64),
+                ope_seq       VARCHAR(64)
+            )
+            """
+    duck_db.sql(sql)
+    sql = """
+       create table APS_TMP_ETL_FLOW_PO_N1_RECYCLE
+       (
+            pos_pdid          VARCHAR(64) not null,
+            mainpd_id         VARCHAR(64) not null,
+            ope_no            VARCHAR(64) not null,
+            ope_seq           VARCHAR(64),
+            multi_group       VARCHAR(64),
+            multi_target_flag VARCHAR(64)
+       )
+       """
+    duck_db.sql(sql)
+    sql = """
+       create table APS_TMP_ETL_FLOW_SKIP_FLAG
+       (
+            plan_id VARCHAR(64),
+            ope_no  VARCHAR(64)
+       )
+       """
+    duck_db.sql(sql)
+
+
+
+def biz_method_02(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+            INSERT INTO APS_ETL_FLOW(
+           PARENTID, PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,
+           STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG, PRODG_ID, PRODG_TECH, PROCESS_TIME,
+           CYCLE_TIME, SGS_GROUP, MULTI_GROUP, MULTI_TARGET_FLAG,UPDATE_TIME, PARTCODE)                                                
+         SELECT gen_random_uuid() AS PARENTID,                                                   
+         M.PROD_ID, CAST(M.PLAN_NO AS INTEGER), M.PLAN_ID, M.STEP_ID, M.LAYER, M.STAGE, M.TOOLG_ID,                      
+         M.RECIPE, M.RETICLE_GROUP, M.STEP_TYPE, M.TOOLG_TYPE, M.OPE_NO, M.CAPABILITY,                  
+         M.SGS_FLAG, M.PRODG_ID, M.PRODG_TECH, CAST(M.PROCESS_TIME AS DECIMAL), CAST(M.CYCLE_TIME AS DECIMAL), M.SGS_GROUP,               
+         N.MULTI_GROUP, CAST(N.MULTI_TARGET_FLAG AS INTEGER),                                                            
+         '{current_time}' AS UPDATE_TIME,                                                                                                           
+         '' AS PARTCODE                                                                                                
+         FROM APS_TMP_ETL_FLOW M                                                                                                             
+         LEFT JOIN APS_TMP_ETL_FLOW_PO_N1 N                                                                                                             
+         ON M.OPE_NO = N.OPE_NO AND M.PLAN_ID = N.MAINPD_ID AND (N.MULTI_GROUP IS NOT NULL OR N.MULTI_GROUP <> '' )   
+         LEFT JOIN APS_TMP_ETL_FLOW_SKIP_FLAG F   
+         ON M.OPE_NO = F.OPE_NO AND M.PLAN_ID = F.PLAN_ID                                                                                                   
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_FLOW",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_FLOW")
+
+def biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+         INSERT INTO APS_TMP_ETL_FLOW_TYPE11_MEDIAN(                                          
+                     CYCLE_TIME, PROCESS_TIME, PROD_ID, OPE_NO, TOOLG_ID                                                                        
+        )                                                                                               
+         SELECT CYCLE_TIME,PROCESS_TIME,                                                                                 
+                PROD_ID,OPE_NO,TOOLG_ID                                                                                          
+         FROM APS_TMP_TYPE11_MEDIAN.APS_TMP_TYPE11_MEDIAN                                                                                             
+        """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_TYPE11_MEDIAN",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_TYPE11_MEDIAN")
+    if config.g_debug_mode:
+        print("446")
+    sql = """
+      INSERT INTO APS_TMP_ETL_FLOW_TYPE12_MEDIAN(                                          
+         CYCLE_TIME, PROCESS_TIME, TOOLG_ID                                                                               
+         )                                                                                               
+          SELECT CYCLE_TIME,PROCESS_TIME,                                                                                 
+                 TOOLG_ID                                                                                                         
+          FROM APS_TMP_TYPE12_MEDIAN.APS_TMP_TYPE12_MEDIAN                        
+        """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_TYPE12_MEDIAN",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_TYPE12_MEDIAN")
+    sql = """
+        INSERT INTO APS_TMP_ETL_FLOW_VIEW_FLOW(       
+             MNPD_ID, MNPD_VS, PRODG1, PRODSPEC_ID, OPE_NO, OPE_SEQ,
+             SCHE_EQP_G, EQP_G, INLINE_CT, INLINE_CYC_ACC, INLINE_CYC_REMAIN,
+             TC, UPDATE_TIME, STD_CT, SGS_FLAG, SGS_GROUP, SGS_FIRST_OP, 
+             SGS_WEIGHT, SGS_END_OP, SGS_LOOP_GROUP, INLINE_PROC_TIME                                         
+        )                                                        
+         SELECT                                                 
+               MNPD_ID,MNPD_VS,PRODG1,PRODSPEC_ID,              
+               OPE_NO,OPE_SEQ,
+               --SCHE_EQP_G,EQP_G,     
+               --modify by xiecheng for version up
+                TRIM(REPLACE(SCHE_EQP_G,CHR(49824),'')) AS SCHE_EQP_G,     
+                TRIM(REPLACE(EQP_G,CHR(49824),'')) AS EQP_G,       
+               INLINE_CT,INLINE_CYC_ACC,                        
+               INLINE_CYC_REMAIN,TC,                            
+               '{current_time}' as UPDATE_TIME,STD_CT,SGS_FLAG,                     
+               SGS_GROUP,SGS_FIRST_OP,SGS_WEIGHT,               
+               SGS_END_OP,SGS_LOOP_GROUP, INLINE_PROC_TIME      
+         FROM APS_SYNC_FLOW.APS_SYNC_FLOW                                                                                                         
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_VIEW_FLOW",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_VIEW_FLOW")
+    sql = """
+        INSERT INTO APS_TMP_ETL_FLOW_PO_N1(                           
+          POS_PDID, MAINPD_ID, OPE_NO, OPE_SEQ, MULTI_GROUP, MULTI_TARGET_FLAG                                              
+         )                                                                    
+          SELECT N.POS_PDID,N.MAINPD_ID,N.OPE_NO,N.OPE_SEQ,                   
+                 N.BATCH_NAME,N.BATCH_TARGET_FLAG                                    
+          FROM APS_SYNC_PF_PO_N1.APS_SYNC_PF_PO_N1 N                                                                 
+    """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_PO_N1",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_PO_N1")
+    sql = """
+           INSERT INTO APS_TMP_ETL_FLOW_PO_N1_RECYCLE(                       
+         POS_PDID, MAINPD_ID, OPE_NO, OPE_SEQ, MULTI_GROUP, MULTI_TARGET_FLAG                                                     
+         )                                                                    
+           SELECT N.POS_PDID,N.MAINPD_ID,N.OPE_NO,                            
+                  N.OPE_SEQ,N.MULTI_GROUP,                                    
+                  N.MULTI_TARGET_FLAG                                         
+           FROM  APS_TMP_ETL_FLOW_PO_N1 N                                  
+           WHERE NOT EXISTS (                                                 
+                 SELECT 1                                                     
+                 FROM APS_SYNC_FLOW.APS_SYNC_FLOW F              
+                 WHERE F.MNPD_ID = N.MAINPD_ID                                
+                 AND F.OPE_NO = N.OPE_NO                                                        
+                 )                                                            
+           AND position('B' in N.MAINPD_ID) <> 1                                    
+           AND position('Y' in N.MAINPD_ID) <> 1                                    
+           AND position('DYB' in N.MAINPD_ID) <> 1                                                                                                                                                                                                                       
+         """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_PO_N1_RECYCLE",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_PO_N1_RECYCLE")
+
+    sql = """
+        INSERT INTO APS_TMP_ETL_FLOW_EQP_LOAD(                        
+         EQP_ID, LCRECIPE_ID, PD_ID, PRODSPEC_ID, EQP_G, EQP_CATEGORY                                                          
+        )                                                                       
+         SELECT MAX(L.EQP_ID) AS EQP_ID,MAX(L.LCRECIPE_ID) AS LCRECIPE_ID,                       
+                L.PD_ID,L.PRODSPEC_ID,T.EQP_G,                                  
+                MAX(T.EQP_CATEGORY) AS EQP_CATEGORY                                      
+         FROM APS_SYNC_PD_RECIPE_EQP_MAIN.APS_SYNC_PD_RECIPE_EQP_MAIN L               
+         INNER JOIN APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL T                  
+         ON T.EQP_ID = L.EQP_ID                                                 
+         WHERE T.HOST_EQP_FLAG='Y'     
+         GROUP BY L.PRODSPEC_ID,T.EQP_G,L.PD_ID 
+        --modify by xiecheng for version up                             
+         --UNION                                                                  
+        -- SELECT MAX(L.EQP_ID) AS EQP_ID,MAX(L.LCRECIPE_ID) AS LCRECIPE_ID,                       
+           --     L.PD_ID,L.PRODSPEC_ID,T.EQP_G,                                  
+            --    MAX(T.EQP_CATEGORY) AS EQP_CATEGORY                                      
+      --   FROM APS_SYNC_PD_RECIPE_EQP_REWORK.APS_SYNC_PD_RECIPE_EQP_REWORK L               
+        -- INNER JOIN APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL T                  
+       --  ON T.EQP_ID = L.EQP_ID                                                 
+       --  WHERE T.HOST_EQP_FLAG='Y'     
+       --  GROUP BY L.PRODSPEC_ID,T.EQP_G,L.PD_ID                                                                                                                                                                                        
+     """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_EQP_LOAD",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_EQP_LOAD")
+    sql = """
+    INSERT INTO APS_TMP_ETL_FLOW_BACKUPEQP(                                             
+                EQP_G, PRODUCTID, OPENO, ROUTEID, RECIPE                                                                   
+        )                                                                                                
+         WITH BACK_EQPG AS (                                                                            
+           SELECT  (CASE WHEN (SUBSTRING(SUBSTRING(N.OPE_NO, POSITION('.' IN N.OPE_NO)),3,1)='Q' AND            
+             L.EQP_G IN ('PK_KrF','PH_ArF','PU_I-Line')) THEN 'None' ELSE L.EQP_G END) AS EQP_G,        
+             L.PRODSPEC_ID,                                                                             
+             N.OPE_NO,                                                                                  
+             N.MAINPD_ID,                                                                               
+             L.LCRECIPE_ID                                                                              
+           FROM APS_TMP_ETL_FLOW_PO_N1 N, APS_TMP_ETL_FLOW_EQP_LOAD L,                            
+               APS_TMP_ETL_FLOW_VIEW_FLOW F                                                         
+           WHERE N.POS_PDID = L.PD_ID                                                                   
+           AND F.MNPD_ID = N.MAINPD_ID AND F.PRODSPEC_ID = L.PRODSPEC_ID                                
+           AND F.OPE_NO = N.OPE_NO                                                                      
+         )                                                                                              
+         SELECT EQP_G,                                                                                  
+                PRODSPEC_ID,                                                                            
+                OPE_NO,                                                                                 
+                MAINPD_ID,                                                                              
+                MAX(LCRECIPE_ID) AS LCRECIPE_ID                                                         
+         FROM BACK_EQPG CT                                                                              
+         GROUP BY EQP_G,PRODSPEC_ID,OPE_NO,MAINPD_ID                                                                            
+    """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_BACKUPEQP",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_BACKUPEQP")
+    sql = """
+        INSERT INTO APS_TMP_ETL_FLOW_REAL_RWK_SUB(                              
+             PROD_ID, PLAN_NO, PLAN_ID, STEP_ID,OPE_NO,EQP_ID,RECIPE,STEP_TYPE,TOOLG_ID,TOOLG_TYPE                                                                     
+             )                                                                                    
+              SELECT BB.PRODSPEC_ID AS PROD_ID,                                                                                                            
+                        '1' AS PLAN_NO,                                                                                                                      
+                        AA.MAINPD_ID AS PLAN_ID,                                                                                                             
+                        '.'|| LPAD(CAST(MAX(AA.OPE_SEQ) AS STRING),4,'0') || '.0000' AS STEP_ID,                                                                          
+                        AA.OPE_NO,                                                                                                                            
+                        MAX(BB.EQP_ID) EQP_ID,                                                                                                               
+                        MAX(BB.LCRECIPE_ID) AS RECIPE,                                                                                                       
+                        CASE WHEN SUBSTRING(AA.MAINPD_ID,1,1) = 'B' THEN 'I' ELSE 'R' END AS STEP_TYPE,  
+                        BB.EQP_G AS TOOLG_ID,                                                     
+                        MAX(BB.EQP_CATEGORY) AS TOOLG_TYPE                                                                                                                
+              FROM APS_TMP_ETL_FLOW_PO_N1 AA                                                                                                           
+              INNER JOIN APS_TMP_ETL_FLOW_EQP_LOAD BB                                                                                                  
+              ON AA.POS_PDID = BB.PD_ID                                                                                                                             
+              WHERE  POSITION('B' IN AA.MAINPD_ID) = 1 OR POSITION('Y' IN AA.MAINPD_ID) = 1                                                                       
+              GROUP BY AA.MAINPD_ID,AA.OPE_NO,BB.PRODSPEC_ID,BB.EQP_G                                                                                                                                                
+        """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_REAL_RWK_SUB",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_REAL_RWK_SUB")
+
+    sql = """
+           INSERT INTO APS_TMP_ETL_FLOW_REAL_RWK_SUB(                              
+                PROD_ID, PLAN_NO, PLAN_ID, STEP_ID,OPE_NO,EQP_ID,RECIPE,STEP_TYPE,TOOLG_ID,TOOLG_TYPE                                                                     
+                )                                                                                    
+                 SELECT BB.PRODSPEC_ID AS PROD_ID,                                                                                                            
+                           '1' AS PLAN_NO,                                                                                                                      
+                           AA.MAINPD_ID AS PLAN_ID,                                                                                                             
+                           -- '.'||TRIM(' ' from   FORMAT(CAST(MAX(AA.OPE_SEQ) AS DECIMAL), '0000.0000')) AS STEP_ID,
+                          '.'|| LPAD(CAST(MAX(AA.OPE_SEQ) AS STRING),4,'0') || '.0000' AS STEP_ID,                                                                         
+                           AA.OPE_NO,                                                                                                                           
+                           MAX(BB.EQP_ID) EQP_ID,                                                                                                               
+                           MAX(BB.LCRECIPE_ID) AS RECIPE,                                                                                                       
+                           'N' AS STEP_TYPE, 
+                           BB.EQP_G AS TOOLG_ID,                                                     
+                           MAX(BB.EQP_CATEGORY) AS TOOLG_TYPE                                                                                                                
+                 FROM APS_TMP_ETL_FLOW_PO_N1_RECYCLE AA                                                                                                           
+                 INNER JOIN APS_TMP_ETL_FLOW_EQP_LOAD BB                                                                                                  
+                 ON AA.POS_PDID = BB.PD_ID                                                                                                                                                                                                  
+                 GROUP BY AA.MAINPD_ID,AA.OPE_NO,BB.PRODSPEC_ID,BB.EQP_G                                                                                                                                                
+           """.format()
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_REAL_RWK_SUB",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_REAL_RWK_SUB")
+
+    sql = """
+        INSERT INTO APS_TMP_ETL_FLOW_SUB_BACKUPEQP(                                   
+             PROD_ID, OPE_NO, TOOLG_ID, PLAN_ID, BACKUP_EQP                                                                               
+            )                                                                                             
+             WITH SUB_REWORK_DATA AS (                                                                    
+                 SELECT DISTINCT PROD_ID,OPE_NO,TOOLG_ID,PLAN_ID                                                                                       
+                 FROM APS_TMP_ETL_FLOW_REAL_RWK_SUB                                              
+             ),                                                                                           
+             BACKUP_EQP_DATA AS (                                                                         
+                  SELECT PROD_ID,OPE_NO,TOOLG_ID,PLAN_ID,     
+                   -- REPLACE( STRING_AGG(TOOLG_ID,',' OVER(PARTITION BY PROD_ID,OPE_NO,PLAN_ID ORDER BY TOOLG_ID)) , TOOLG_ID) AS BACKUP_EQP   
+                   REPLACE(STRING_AGG(TOOLG_ID,',') OVER (PARTITION BY PROD_ID,OPE_NO,PLAN_ID ORDER BY TOOLG_ID), TOOLG_ID, '') AS BACKUP_EQP   
+                   FROM SUB_REWORK_DATA                                                                   
+             )                                                                                            
+             SELECT PROD_ID,OPE_NO,TOOLG_ID,PLAN_ID,                                                      
+                    CASE WHEN BA.BACKUP_EQP = ',' THEN NULL                                               
+                       WHEN POSITION(',' IN BA.BACKUP_EQP) =1 THEN SUBSTRING(BA.BACKUP_EQP,2,LENGTH(BA.BACKUP_EQP))  
+                       WHEN BA.BACKUP_EQP LIKE '%,' THEN SUBSTRING(BA.BACKUP_EQP,0,LENGTH(BA.BACKUP_EQP))  
+                       WHEN BA.BACKUP_EQP LIKE '%,,%' THEN REPLACE (BA.BACKUP_EQP,',,',',')               
+                       ELSE BA.BACKUP_EQP END AS BACKUP_EQP                                               
+             FROM BACKUP_EQP_DATA BA                                                                                     
+    """.format()
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_SUB_BACKUPEQP",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_SUB_BACKUPEQP")
+
+    sql = """
+        INSERT INTO APS_TMP_ETL_FLOW_RECIPE(   
+        LCRECIPE_ID, OPE_NO, PRODSPEC_ID, MNPD_ID, EQP_G                                   
+        )                                                   
+         SELECT MAX(P.RECIPE) AS RECIPE,                   
+                P.OPENO,                                   
+                P.PRODUCTID,                               
+                P.ROUTEID,                                 
+                P.EQP_G                                    
+         FROM APS_TMP_ETL_FLOW_BACKUPEQP P            
+         GROUP BY P.OPENO,P.PRODUCTID,                     
+                  P.ROUTEID,P.EQP_G                                                                                                                                                                    
+    """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_RECIPE",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_RECIPE")
+
+    sql = """
+        INSERT INTO APS_TMP_ETL_FLOW_MASK_GROUP(                                                
+         PRODSPEC_ID, OPE_NO, MASK_GROUP                                                                            
+         )                                                                                           
+          SELECT M.PRODSPEC_ID ,M.OPE_NO, MAX(M.RTCL_GROUP) AS MASK_GROUP                           
+          FROM APS_SYNC_MASK_GROUP_MAPPLING.APS_SYNC_MASK_GROUP_MAPPLING M                                                                             
+          GROUP BY M.PRODSPEC_ID ,M.OPE_NO                                                                                                                                                    
+       """.format()
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_MASK_GROUP",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_MASK_GROUP")
+
+    sql = """
+        INSERT INTO APS_TMP_ETL_FLOW_PROD_DATA(                                                 
+             PRODG_ID, PRODG_TECH, PRODSPEC_ID                                                            
+           )                                                                                           
+            SELECT MAX(PRODG1) AS PRODG_ID, MAX(GROUP_TECH) AS PRODG_TECH,PRODSPEC_ID                 
+            FROM APS_SYNC_PRODUCT.APS_SYNC_PRODUCT                                                                                           
+            GROUP BY PRODSPEC_ID                                            
+          """.format()
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_PROD_DATA",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_PROD_DATA")
+
+    sql = """      
+      INSERT INTO APS_TMP_ETL_FLOW_TOOL_GROUP(                                                 
+         TOOLG_TYPE, EQP_G                                                                   
+       )                                                                                            
+        SELECT MAX(EQP_CATEGORY) AS TOOLG_TYPE,EQP_G                                               
+        FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL                                                                                         
+        GROUP BY EQP_G                                                                                        
+          """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_TOOL_GROUP",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_TOOL_GROUP")
+
+    sql = """      
+         INSERT  /*+ append */ INTO APS_TMP_ETL_FLOW_MAIN_RSDATA(                                           
+           RECIPE, PRODSPEC_ID, MNPD_ID, OPE_NO, EQP_G,OPE_SEQ, CAPABILITY, SGS_FLAG, TOOLG_TYPE, SGS_GROUP, CT, PT                                                                              
+          )                                                                                            
+           WITH FLOW AS (                                                                                                                                     
+               SELECT CC.PRODSPEC_ID AS PRODSPEC_ID,                                                                                                          
+               CC.MNPD_ID,CC.OPE_NO,                                                                                                                          
+               (CASE WHEN (SUBSTRING(SUBSTRING(CC.OPE_NO, position('.' in CC.OPE_NO)),3,1)='Q' AND                                                                   
+               CC.EQP_G IN ('PK_KrF','PH_ArF','PU_I-Line')) THEN 'None' ELSE CC.EQP_G END) AS EQP_G,                                                          
+               (CASE WHEN (SUBSTRING(SUBSTRING(CC.OPE_NO, position('.' in CC.OPE_NO)),3,1)='Q' AND                                                                   
+               CC.EQP_G IN ('PK_KrF','PH_ArF','PU_I-Line')) THEN 'M' ELSE '' END) AS TOOLG_TYPE,                                                              
+               CC.OPE_SEQ,                                                                                                                                    
+               CASE WHEN CC.SGS_FLAG='Y' AND CC.SGS_FIRST_OP='Y' THEN 'YF' ELSE (CASE WHEN CC.SGS_FLAG='Y'                                                    
+               AND (CC.SGS_FIRST_OP IS NULL OR CC.SGS_FIRST_OP ='' OR CC.SGS_FIRST_OP <> 'Y') THEN 'Y' ELSE '' END) END AS SGS_FLAG,                                                 
+               CC.SGS_GROUP,CC.INLINE_CT,CC.INLINE_PROC_TIME                                                                                                  
+               FROM APS_TMP_ETL_FLOW_VIEW_FLOW CC                                                                                                          
+               WHERE SUBSTR(CC.PRODSPEC_ID,LENGTH(CC.PRODSPEC_ID)) <> '_'                                                                                     
+            )                                                                                                                                                 
+              SELECT MAX(AA.LCRECIPE_ID) AS RECIPE,CC.PRODSPEC_ID,CC.MNPD_ID,                                                                                 
+              CC.OPE_NO AS OPE_NO,MAX(CC.EQP_G) AS EQP_G, CC.OPE_SEQ,                                                                                         
+                  REGEXP_REPLACE( STRING_AGG(BA.EQP_G,',') ,'([^,]+)(,\\1)*(,|$)','$1$3') AS CAPABILITY,                     
+              MAX(CC.SGS_FLAG) AS SGS_FLAG, MAX(CC.TOOLG_TYPE) AS TOOLG_TYPE,                                                                                 
+              MAX(CC.SGS_GROUP) AS  SGS_GROUP,                                                                                                                
+              MAX(CC.INLINE_CT) AS CT,                                                                                                                        
+              MAX(CC.INLINE_PROC_TIME) AS PT                                                                                                                  
+              FROM FLOW CC                                                                                                                                    
+              LEFT JOIN  APS_TMP_ETL_FLOW_RECIPE AA                                                                                                  
+              ON CC.MNPD_ID = AA.MNPD_ID AND CC.OPE_NO = AA.OPE_NO                                                                                            
+              AND CC.PRODSPEC_ID = AA.PRODSPEC_ID AND CC.EQP_G = AA.EQP_G                                                                                     
+              LEFT JOIN APS_TMP_ETL_FLOW_BACKUPEQP BA                                                                                                
+              ON BA.PRODUCTID = CC.PRODSPEC_ID AND BA.OPENO = CC.OPE_NO                                                                                       
+              AND BA.EQP_G <> CC.EQP_G AND BA.ROUTEID = CC.MNPD_ID                                                                                         
+              GROUP BY CC.PRODSPEC_ID,CC.OPE_NO,CC.MNPD_ID,CC.OPE_SEQ,BA.EQP_G 
+              ORDER BY BA.EQP_G                                                                            
+              """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_MAIN_RSDATA",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_MAIN_RSDATA")
+
+    sql = """      
+        INSERT  /*+ append */ INTO APS_TMP_ETL_FLOW_MAIN_MASK_RSDATA(                                           
+        PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID, RECIPE, RETICLE_GROUP, 
+        STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG, SGS_GROUP, CT, PT, OPE_SEQ                                                                             
+        )                                                                                            
+              SELECT FL.PRODSPEC_ID AS PROD_ID, '1' AS PLAN_NO, FL.MNPD_ID AS PLAN_ID,                                                                      
+              --TRIM(FORMAT(CAST(FL.OPE_SEQ AS DECIMAL), '0000.0000')) AS STEP_ID,   
+              '.'||LPAD(CAST(FL.OPE_SEQ AS STRING),4,'0') || '.0000' AS STEP_ID,                                                                                         
+              SUBSTRING(FL.OPE_NO, 1, POSITION('.' IN FL.OPE_NO)-1) AS LAYER,                                                                                     
+              SUBSTRING(FL.OPE_NO, POSITION('.' IN FL.OPE_NO)+1) AS STAGE,                                                                                        
+              COALESCE(FL.EQP_G,'None') AS TOOLG_ID, FL.RECIPE AS RECIPE, MI.MASK_GROUP AS RETICLE_GROUP,                                                        
+              'N' AS STEP_TYPE, FL.TOOLG_TYPE,                                                                                                   
+              FL.OPE_NO AS OPE_NO, FL.CAPABILITY AS CAPABILITY, FL.SGS_FLAG,                                                       
+              FL.SGS_GROUP,FL.CT,FL.PT,FL.OPE_SEQ                                                                                  
+              FROM APS_TMP_ETL_FLOW_MAIN_RSDATA FL                                                                         
+              LEFT JOIN APS_TMP_ETL_FLOW_MASK_GROUP MI ON FL.PRODSPEC_ID = MI.PRODSPEC_ID AND FL.OPE_NO = MI.OPE_NO                                                                                                              
+           """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_MAIN_MASK_RSDATA",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_MAIN_MASK_RSDATA")
+
+    sql = """      
+        INSERT  /*+ append */ INTO APS_TMP_ETL_FLOW_MAIN_TOOL_RSDATA(                                            
+             PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID, RECIPE, RETICLE_GROUP, 
+             STEP_TYPE, TOOLG_TYPE,OPE_NO, CAPABILITY, SGS_FLAG, SGS_GROUP, CT, PT, OPE_SEQ                                                                              
+             )                                                                                             
+                   SELECT FL.PROD_ID, FL.PLAN_NO, FL.PLAN_ID,                                                                       
+                   FL.STEP_ID,                                                                                              
+                   FL.LAYER,                                                                                      
+                   FL.STAGE,                                                                                         
+                   FL.TOOLG_ID, FL.RECIPE, FL.RETICLE_GROUP,                                                         
+                   FL.STEP_TYPE, ( CASE WHEN FL.TOOLG_TYPE IS NOT NULL THEN FL.TOOLG_TYPE ELSE  
+                    --modify by xiecheng for version up 
+                   (CASE WHEN TL.TOOLG_TYPE= 'Process' THEN 'P' 
+                         WHEN TL.TOOLG_TYPE='Measurement' THEN 'M'
+                         WHEN TL.TOOLG_TYPE='Internal Buffer' THEN 'P'
+                         WHEN TL.TOOLG_TYPE='Wafer Bonding' THEN 'P'
+                         WHEN TL.TOOLG_TYPE='Wafer Sorter' THEN 'M' ELSE ''  END) END) AS TOOLG_TYPE,                                                                                               
+                   FL.OPE_NO, FL.CAPABILITY, FL.SGS_FLAG,                                                                                                         
+                   FL.SGS_GROUP,FL.CT,FL.PT,FL.OPE_SEQ                                                                                                            
+                   FROM APS_TMP_ETL_FLOW_MAIN_MASK_RSDATA FL                                                                                                   
+                   LEFT JOIN APS_TMP_ETL_FLOW_TOOL_GROUP TL ON FL.TOOLG_ID = TL.EQP_G                                                                                                                                                                                 
+               """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_MAIN_TOOL_RSDATA",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_MAIN_TOOL_RSDATA")
+
+    sql = """      
+        INSERT  /*+ append */ INTO APS_TMP_ETL_FLOW_MAIN_PROD_RSDATA(                                           
+             PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID, RECIPE, RETICLE_GROUP, 
+             STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG, PRODG_ID, PRODG_TECH, SGS_GROUP, CT, PT, OPE_SEQ                                                                      
+             )                                                                                            
+                   SELECT FL.PROD_ID, FL.PLAN_NO, FL.PLAN_ID,                                                                      
+                   FL.STEP_ID,                                                                                             
+                   FL.LAYER,                                                                                     
+                   FL.STAGE,                                                                                        
+                   FL.TOOLG_ID, FL.RECIPE, FL.RETICLE_GROUP,                                                        
+                   FL.STEP_TYPE,                                                                
+                   FL.TOOLG_TYPE,                                                               
+                   FL.OPE_NO, FL.CAPABILITY, FL.SGS_FLAG, P.PRODG_ID, P.PRODG_TECH,             
+                   FL.SGS_GROUP,FL.CT,FL.PT,FL.OPE_SEQ                                                                                                           
+                   FROM APS_TMP_ETL_FLOW_MAIN_TOOL_RSDATA FL                                                                                                  
+                   LEFT JOIN APS_TMP_ETL_FLOW_PROD_DATA P ON P.PRODSPEC_ID = FL.PROD_ID                                                                                                                                                                                
+                   """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_MAIN_PROD_RSDATA",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_MAIN_PROD_RSDATA")
+
+    sql = """      
+        INSERT  /*+ append */ INTO APS_TMP_ETL_FLOW_REWORK_RSDATA(                                            
+             PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID, RECIPE, RETICLE_GROUP, STEP_TYPE, TOOLG_TYPE,
+             SGS_FLAG, SGS_GROUP, OPE_NO, PRODG_ID, PRODG_TECH, INLINE_CT, INLINE_PROC_TIME                                                                              
+             )                                                                                           
+               SELECT F.PROD_ID,                                                                                                                            
+                      F.PLAN_NO,                                                                                                                            
+                      F.PLAN_ID,                                                                                                                            
+                      F.STEP_ID,                                                                                                                            
+                      SUBSTRING(F.OPE_NO, 1, POSITION('.' IN F.OPE_NO) -1) AS LAYER,                                                                               
+                      SUBSTRING(F.OPE_NO, POSITION('.' IN F.OPE_NO) +1) AS STAGE,                                                                                  
+                      F.TOOLG_ID,                                                                                                                           
+                      F.RECIPE,                                                                                                                             
+                      M.MASK_GROUP AS RETICLE_GROUP,                                                                                                                      
+                      F.STEP_TYPE,     
+                      --modify by xiecheng for version up                                                                                                                  
+                      (CASE WHEN F.TOOLG_TYPE= 'Process' THEN 'P' 
+                             WHEN F.TOOLG_TYPE='Measurement' THEN 'M'
+                             WHEN F.TOOLG_TYPE='Internal Buffer' THEN 'P'
+                             WHEN F.TOOLG_TYPE='Wafer Bonding' THEN 'P' 
+                             WHEN F.TOOLG_TYPE='Wafer Sorter' THEN 'M' ELSE '' END) AS TOOLG_TYPE,                     
+                      CASE WHEN FL.SGS_FLAG='Y' AND FL.SGS_FIRST_OP='Y' THEN 'YF' ELSE (CASE WHEN FL.SGS_FLAG='Y'                                           
+                      AND (FL.SGS_FIRST_OP IS NULL OR FL.SGS_FIRST_OP ='' OR FL.SGS_FIRST_OP <> 'Y') THEN 'Y' ELSE '' END) END AS SGS_FLAG,                                        
+                      FL.SGS_GROUP,                                                                                                                         
+                      F.OPE_NO,                                                                                                                             
+                      P.PRODG_ID,                                                                                                                           
+                      P.PRODG_TECH,                                                                                                                         
+                      FL.INLINE_CT,                                                                                                                         
+                      FL.INLINE_PROC_TIME                                                                                                                   
+               FROM APS_TMP_ETL_FLOW_REAL_RWK_SUB F                                                                                                   
+               LEFT JOIN APS_TMP_ETL_FLOW_MASK_GROUP M                                                                                                   
+               ON M.PRODSPEC_ID = F.PROD_ID                                                                                                                 
+               AND M.OPE_NO = F.OPE_NO                                                                                                                      
+               LEFT JOIN APS_TMP_ETL_FLOW_PROD_DATA P                                                                                                    
+               ON P.PRODSPEC_ID = F.PROD_ID                                                                                                                 
+               LEFT JOIN APS_TMP_ETL_FLOW_VIEW_FLOW FL                                                                                                   
+               ON FL.PRODSPEC_ID = F.PROD_ID  AND FL.OPE_NO = F.OPE_NO                                                                                                                                                                                
+               """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_REWORK_RSDATA",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_REWORK_RSDATA")
+
+    sql = """      
+        INSERT  /*+ append */ INTO APS_TMP_ETL_FLOW_REWORK_BACKUPEQP_RSDATA(                                            
+            PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID, RECIPE, RETICLE_GROUP, STEP_TYPE, TOOLG_TYPE,
+            SGS_FLAG, SGS_GROUP, OPE_NO, PRODG_ID, PRODG_TECH, INLINE_CT, INLINE_PROC_TIME, BACKUP_EQP                                                                              
+         )                                                                                             
+            SELECT F.PROD_ID,                                                                                                                            
+                  F.PLAN_NO,                                                                                                                            
+                  F.PLAN_ID,                                                                                                                            
+                  F.STEP_ID,                                                                                                                            
+                  F.LAYER,                                                                               
+                  F.STAGE,                                                                                  
+                  F.TOOLG_ID,                                                                                                                           
+                  F.RECIPE,                                                                                                                             
+                  F.RETICLE_GROUP,                                                                                                                      
+                  F.STEP_TYPE,                                                                                                                          
+                  F.TOOLG_TYPE,                                      
+                  F.SGS_FLAG,                                        
+                  F.SGS_GROUP,                                                                                                                         
+                  F.OPE_NO,                                                                                                                             
+                  F.PRODG_ID,                                                                                                                           
+                  F.PRODG_TECH,                                                                                                                         
+                  F.INLINE_CT,                                                                                                                         
+                  F.INLINE_PROC_TIME,                                                                                                                  
+                  BA.BACKUP_EQP                                                                                                                         
+           FROM APS_TMP_ETL_FLOW_REWORK_RSDATA F                                                                                                   
+           LEFT JOIN APS_TMP_ETL_FLOW_SUB_BACKUPEQP BA                                                                                         
+           ON BA.PROD_ID = F.PROD_ID AND BA.OPE_NO = F.OPE_NO                                                                                           
+           AND BA.TOOLG_ID = F.TOOLG_ID AND BA.PLAN_ID = F.PLAN_ID                                                                                                                                                                                                   
+           """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_REWORK_BACKUPEQP_RSDATA",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_REWORK_BACKUPEQP_RSDATA")
+
+    sql = """      
+          INSERT /*+ append */ INTO APS_TMP_ETL_FLOW(                                                                                        
+             PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,
+             STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG, PRODG_ID, PRODG_TECH, PROCESS_TIME,
+             CYCLE_TIME, SGS_GROUP                                                                                                                                      
+         )                                                                                                                                                    
+          SELECT FD.PROD_ID, FD.PLAN_NO, FD.PLAN_ID,                                                                                                          
+               FD.STEP_ID,                                                                                                                                    
+               FD.LAYER,                                                                                                                                      
+               FD.STAGE,                                                                                                                                      
+               FD.TOOLG_ID, FD.RECIPE, FD.RETICLE_GROUP,                                                                                                      
+               FD.STEP_TYPE, FD.TOOLG_TYPE,                                                                                                                   
+               FD.OPE_NO,
+               CASE WHEN LENGTH(FD.CAPABILITY) > 512 THEN SUBSTRING(FD.CAPABILITY,0,512) ELSE FD.CAPABILITY END AS CAPABILITY,                        
+               FD.SGS_FLAG, FD.PRODG_ID, FD.PRODG_TECH,                                                                                                       
+               CASE WHEN ZWS.OPE_NO IS NOT NULL THEN ZWS.PROCESS_TIME ELSE COALESCE(ZWS2.PROCESS_TIME,0) END AS PROCESS_TIME,                                      
+               CASE WHEN ZWS.OPE_NO IS NOT NULL THEN ZWS.CYCLE_TIME ELSE COALESCE(ZWS2.CYCLE_TIME,0) END AS CYCLE_TIME,                                            
+               FD.SGS_GROUP                                                                                                                                   
+               FROM APS_TMP_ETL_FLOW_MAIN_PROD_RSDATA FD                                                                                                                              
+               LEFT JOIN APS_TMP_ETL_FLOW_TYPE11_MEDIAN ZWS                                                                                                
+               ON ZWS.PROD_ID = FD.PROD_ID AND ZWS.OPE_NO = FD.OPE_NO AND ZWS.TOOLG_ID = FD.TOOLG_ID                                                          
+               LEFT JOIN APS_TMP_ETL_FLOW_TYPE12_MEDIAN ZWS2                                                                                               
+               ON ZWS2.TOOLG_ID = FD.TOOLG_ID                                                                                                                                                                                                        
+               """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW")
+
+    sql = """      
+            INSERT /*+ append */ INTO APS_TMP_ETL_FLOW(                                                    
+                 PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,
+                 STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG, PRODG_ID, PRODG_TECH, PROCESS_TIME,
+                 CYCLE_TIME, SGS_GROUP                                                                                                   
+             )                                                                                                                 
+            WITH ALLFLOW_DATA AS (                                                                                                                             
+                 SELECT F.PROD_ID,                                                                                                                          
+                        F.PLAN_NO,                                                                                                                          
+                        F.PLAN_ID,    
+                        --modify by xiecheng for version up                                                                                                                      
+                        F.STEP_ID,                                                                                                          
+                        F.LAYER,                                                                                                              
+                        F.STAGE,                                                                                                              
+                        F.TOOLG_ID,                                                                                                        
+                        F.RECIPE,                                                                                                            
+                        F.RETICLE_GROUP,                                                                                              
+                        F.STEP_TYPE,                                                                                                      
+                        F.TOOLG_TYPE,                                                                                                    
+                        F.SGS_FLAG,                                                                                                        
+                        F.SGS_GROUP,                                                                                                      
+                        F.OPE_NO,                                                                                                                           
+                        F.BACKUP_EQP AS CAPABILITY,                                                                                                    
+                        F.PRODG_ID,                                                                                                        
+                        F.PRODG_TECH,                                                                                                    
+                        F.INLINE_CT AS CT,                                                                                                               
+                        F.INLINE_PROC_TIME AS PT,
+                        ROW_NUMBER() OVER (PARTITION BY F.PROD_ID,F.PLAN_NO,F.PLAN_ID, F.OPE_NO ORDER BY F.TOOLG_ID DESC) AS SN                                                                                                         
+                 FROM APS_TMP_ETL_FLOW_REWORK_BACKUPEQP_RSDATA F                                                                                                                                                                                  
+              )                                                                                                                                             
+              SELECT FD.PROD_ID, FD.PLAN_NO, FD.PLAN_ID,                                                                                                    
+                   FD.STEP_ID,                                                                                                                              
+                   FD.LAYER,                                                                                                                                
+                   FD.STAGE,                                                                                                                                
+                   FD.TOOLG_ID, FD.RECIPE, FD.RETICLE_GROUP,                                                                                                
+                   FD.STEP_TYPE, FD.TOOLG_TYPE,                                                                                                             
+                   FD.OPE_NO, CASE WHEN LENGTH(FD.CAPABILITY) > 512 THEN SUBSTRING(FD.CAPABILITY,0,512) ELSE FD.CAPABILITY END AS CAPABILITY,                  
+                   FD.SGS_FLAG, FD.PRODG_ID, FD.PRODG_TECH,                                                                                                 
+                   CASE WHEN ZWS.OPE_NO IS NOT NULL THEN ZWS.PROCESS_TIME ELSE COALESCE(ZWS2.PROCESS_TIME,0) END AS PROCESS_TIME,                              
+                   CASE WHEN ZWS.OPE_NO IS NOT NULL THEN ZWS.CYCLE_TIME ELSE COALESCE(ZWS2.CYCLE_TIME,0) END AS CYCLE_TIME,                                    
+                   FD.SGS_GROUP                                                                                                                             
+               FROM ALLFLOW_DATA FD                                                                                                                                                                                                                                      
+                   LEFT JOIN APS_TMP_ETL_FLOW_TYPE11_MEDIAN ZWS                                                                                                
+                   ON ZWS.PROD_ID = FD.PROD_ID AND ZWS.OPE_NO = FD.OPE_NO AND ZWS.TOOLG_ID = FD.TOOLG_ID                                                          
+                   LEFT JOIN APS_TMP_ETL_FLOW_TYPE12_MEDIAN ZWS2                                                                                               
+                   ON ZWS2.TOOLG_ID = FD.TOOLG_ID    
+               WHERE FD.SN=1                                                                                                                                                                                                    
+                  """.format()
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW2",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW")
+
+    sql = """
+    INSERT /*+ append */ INTO APS_TMP_ETL_FLOW_CHANGESEQ(                
+          PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,
+          STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG, PRODG_ID, PRODG_TECH, PROCESS_TIME, CYCLE_TIME,
+          SGS_GROUP, OPE_SEQ                                                                         
+       )                                                                                  
+        WITH ALL_DATA AS (                                                                
+           SELECT * FROM APS_TMP_ETL_FLOW_MAIN                                
+           UNION ALL                                                                      
+           SELECT * FROM APS_TMP_ETL_FLOW_RWK_SUB                                 
+        )                                                                                 
+        SELECT PROD_ID, PLAN_NO, PLAN_ID,                                                 
+               CASE WHEN STEP_ID IS NULL OR STEP_ID ='' THEN NULL ELSE (                                 
+                 CASE WHEN STEP_ID < MAX(STEP_ID) OVER(PARTITION BY PROD_ID, PLAN_ID      
+                                ORDER BY OPE_SEQ ROWS BETWEEN                             
+                                       UNBOUNDED PRECEDING AND CURRENT ROW)               
+                   THEN NULL ELSE STEP_ID END                                             
+               )END AS STEP_ID,                                                           
+               LAYER, STAGE, TOOLG_ID,  RECIPE,                                           
+               RETICLE_GROUP, STEP_TYPE, TOOLG_TYPE, OPE_NO,                              
+               CAPABILITY, SGS_FLAG, PRODG_ID,                                            
+              PRODG_TECH, PROCESS_TIME,                                                   
+              CYCLE_TIME, SGS_GROUP, OPE_SEQ                                              
+        FROM ALL_DATA                                                                        
+        """.format()
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_CHANGESEQ",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_CHANGESEQ")
+    sql = """
+        INSERT /*+ append */ INTO APS_TMP_ETL_FLOW(                                                                         
+                PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,
+                STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG, PRODG_ID, PRODG_TECH, PROCESS_TIME,
+                CYCLE_TIME, SGS_GROUP                                                                                                                       
+        )                                                                                                                                      
+          WITH ALL_DATA AS (                                                                                                                                                                                                   
+              SELECT PROD_ID, PLAN_NO, PLAN_ID,                                                                                                
+                    COALESCE(STEP_ID,                                                                                                              
+                     (CAST(LAST_VALUE(SUBSTRING(STEP_ID,2,LENGTH(CAST(STEP_ID AS DECIMAL))-1) IGNORE NULLS )                                                            
+                   OVER(PARTITION BY PROD_ID, PLAN_ID ORDER BY OPE_SEQ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)  AS DECIMAL)+                     
+                     CAST(FIRST_VALUE(SUBSTRING(STEP_ID,2,LENGTH(CAST(STEP_ID AS DECIMAL))-1) IGNORE NULLS )                                                            
+                   OVER(PARTITION BY PROD_ID, PLAN_ID ORDER BY OPE_SEQ ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING ) AS DECIMAL)                     
+                     )/2                                                                                                                       
+                     ) AS STEP_ID,                                                                                                           
+                     LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,                                                                           
+                     STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG,                                                                      
+                     PRODG_ID, PRODG_TECH, PROCESS_TIME, CYCLE_TIME, SGS_GROUP, OPE_SEQ,                                                       
+                     FIRST_VALUE(SUBSTRING(STEP_ID,2,LENGTH(CAST(STEP_ID AS DECIMAL))-1) IGNORE NULLS )                                                            
+                   OVER(PARTITION BY PROD_ID, PLAN_ID ORDER BY OPE_SEQ ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING ) AS LAST_STEP,        
+                   LAST_VALUE(SUBSTRING(STEP_ID,2,LENGTH(CAST(STEP_ID AS DECIMAL))-1) IGNORE NULLS )                                                               
+                   OVER(PARTITION BY PROD_ID, PLAN_ID ORDER BY OPE_SEQ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS FIRST_STEP         
+              FROM APS_TMP_ETL_FLOW_CHANGESEQ                                                                                         
+          ),                                                                                                                                   
+          REPEAT_CHECK_DATA AS (SELECT PROD_ID, PLAN_NO, PLAN_ID,                                                                              
+                     CASE WHEN STEP_ID IS NOT NULL THEN STEP_ID ELSE                                                                           
+                     (CASE WHEN ((LAST_STEP IS NULL OR LAST_STEP = '') AND (FIRST_STEP IS NULL OR FIRST_STEP='')) 
+                     THEN OPE_SEQ ELSE (CASE WHEN ((LAST_STEP IS NULL OR LAST_STEP = '') AND (FIRST_STEP IS NOT NULL OR FIRST_STEP <>'')) 
+                     THEN CONCAT(CAST((CAST(FIRST_STEP AS DECIMAL)+0.01) AS STRING),'A') 
+                     ELSE CONCAT(CAST((CAST(LAST_STEP AS DECIMAL)-0.01) AS STRING),'A') END) END) END AS STEP_ID,                                                                                        
+                     LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,                                                                           
+                     STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG,                                                                      
+                     PRODG_ID, PRODG_TECH, PROCESS_TIME, CYCLE_TIME, SGS_GROUP, OPE_SEQ,                                                                                         
+                     LAST_STEP,FIRST_STEP                                                                                                      
+              FROM ALL_DATA                                                                                                                    
+          ),                                                                                                                                   
+          ROW_NUMBER_DATA AS (                                                                                                                 
+              SELECT PROD_ID, PLAN_NO, PLAN_ID,                                                                                                
+                     STEP_ID,                                                                                                                  
+                     LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,                                                                           
+                     STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG,                                                                      
+                     PRODG_ID, PRODG_TECH, PROCESS_TIME, CYCLE_TIME, SGS_GROUP, OPE_SEQ,                                                       
+                     COUNT(STEP_ID) OVER(PARTITION BY PROD_ID,PLAN_ID,STEP_ID) AS N_NUM,                                                       
+                     LAST_STEP,FIRST_STEP                                                                                                      
+              FROM REPEAT_CHECK_DATA                                                                                                           
+          ),                                                                                                                                   
+          NULL_ROW_LESS AS (                                                                                                                   
+                SELECT PROD_ID, PLAN_NO, PLAN_ID,                                                                                              
+                     CASE WHEN LENGTH(STEP_ID)<10 THEN '.'|| LPAD(CAST(STEP_ID AS STRING),4,'0') || '.0000' ELSE STEP_ID END AS STEP_ID,                    
+                     LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,                                                                           
+                     STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG,                                                                      
+                     PRODG_ID, PRODG_TECH, PROCESS_TIME, CYCLE_TIME, SGS_GROUP, OPE_SEQ                                                        
+                FROM  ROW_NUMBER_DATA                                                                                                          
+                WHERE N_NUM <= 1 AND NOT REGEXP_MATCHES(STEP_ID,'A')                                                                              
+          ),                                                                                                                                                                                                                                                                   
+          MIDDLE_ROW_THAN AS (                                                                                                                 
+               SELECT A.PROD_ID, A.PLAN_NO, A.PLAN_ID,                                                                                         
+                     A.STEP_ID,                                                                                                                
+                     LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,                                                                           
+                     STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG,                                                                      
+                     PRODG_ID, PRODG_TECH, PROCESS_TIME, CYCLE_TIME, SGS_GROUP, OPE_SEQ,                                                       
+                     LAST_STEP,FIRST_STEP,                                                                                                     
+                     ROW_NUMBER() OVER (PARTITION BY A.PROD_ID,A.PLAN_ID,A.STEP_ID ORDER BY OPE_SEQ) AS ROW_NUM,                               
+                     ROW_NUMBER() OVER (PARTITION BY A.PROD_ID,A.PLAN_ID,A.STEP_ID ORDER BY OPE_SEQ DESC) AS ROW_NUM1,                         
+                     A.N_NUM AS N_COUNT                                                                                                               
+                FROM  ROW_NUMBER_DATA  A                                                                                                                                                                                                         
+                WHERE N_NUM > 1 OR REGEXP_MATCHES(STEP_ID,'A')                                                                                    
+          ),                                                                                                                                   
+          ROW_THEN_CHANGE AS (                                                                                                                 
+               SELECT PROD_ID, PLAN_NO, PLAN_ID,                                                                                               
+                     CASE WHEN (FIRST_STEP IS NULL OR FIRST_STEP = '') THEN '.'|| LPAD(CAST((cast(LAST_STEP as decimal) - (1/(cast(N_COUNT as decimal)+1)*cast(ROW_NUM1 as decimal))) AS STRING),4,'0') || '.0000'  ELSE             
+                       (CASE WHEN (LAST_STEP IS NULL OR LAST_STEP = '') THEN  '.'|| LPAD(CAST((cast(FIRST_STEP as decimal) + (1/(cast(N_COUNT as decimal)+1)*cast(ROW_NUM as decimal))) AS STRING),4,'0') || '.0000'   ELSE          
+                        ('.'|| LPAD(CAST((CAST(FIRST_STEP as decimal) + ((cast(LAST_STEP as decimal) - cast(FIRST_STEP as decimal))/(cast(N_COUNT as decimal)+1)*cast(ROW_NUM as decimal))) AS STRING),4,'0') || '.0000'  ) END)END AS STEP_ID,      
+                     LAYER, STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,                                                                           
+                     STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY, SGS_FLAG,                                                                      
+                     PRODG_ID, PRODG_TECH, PROCESS_TIME, CYCLE_TIME, SGS_GROUP, OPE_SEQ                                                        
+                FROM  MIDDLE_ROW_THAN                                                                                                          
+          )                                                                                                                                    
+          SELECT PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER,                                                                                    
+                 STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,                                                                                      
+                 STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY,                                                                                    
+                 SGS_FLAG, PRODG_ID, PRODG_TECH, PROCESS_TIME,                                                                                 
+                 CYCLE_TIME, SGS_GROUP                                                                                                         
+           FROM ROW_THEN_CHANGE                                                                                                                
+           UNION ALL                                                                                                                           
+           SELECT PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, LAYER,                                                                                   
+                 STAGE, TOOLG_ID,  RECIPE, RETICLE_GROUP,                                                                                      
+                 STEP_TYPE, TOOLG_TYPE, OPE_NO, CAPABILITY,                                                                                    
+                 SGS_FLAG, PRODG_ID, PRODG_TECH, PROCESS_TIME,                                                                                 
+                 CYCLE_TIME, SGS_GROUP                                                                                                         
+          FROM NULL_ROW_LESS                                                                       
+        """.format()
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW")
+
+    sql = """
+       INSERT  /*+ append */ INTO APS_TMP_ETL_FLOW_SKIP_FLAG(
+            PLAN_ID, OPE_NO
+       )
+        SELECT DISTINCT F.MAINPD_ID,F.OPE_NO
+         FROM APS_SYNC_CSFLOWSAMPLINGCFG.APS_SYNC_CSFLOWSAMPLINGCFG F
+          WHERE F.SAMPLING_GROUP1 = '0'                                              
+            """.format()
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_FLOW_SKIP_FLAG",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_FLOW_SKIP_FLAG")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_ETL_FLOW_720M"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_ETL_FLOW"
+    used_table_list = ['APS_SYNC_FLOW',
+                       'APS_SYNC_PF_PO_N1',
+                       'APS_SYNC_PD_RECIPE_EQP_MAIN',
+                       'APS_SYNC_ETL_TOOL',
+                       'APS_TMP_TYPE11_MEDIAN',
+                       'APS_TMP_TYPE12_MEDIAN',
+                       'APS_SYNC_MASK_GROUP_MAPPLING',
+                       'APS_SYNC_PRODUCT',
+                       'APS_SYNC_CSFLOWSAMPLINGCFG'
+                       ]
+    target_table_sql = """
+        create table {}APS_ETL_FLOW
+        (
+            parentid          VARCHAR(60) not null,
+            prod_id           VARCHAR(60) not null,
+            plan_no           INTEGER not null,
+            plan_id           VARCHAR(60) not null,
+            step_id           VARCHAR(60) not null,
+            layer             VARCHAR(60),
+            stage             VARCHAR(60),
+            toolg_id          VARCHAR(60) not null,
+            recipe            VARCHAR(60),
+            reticle_group     VARCHAR(60),
+            step_type         VARCHAR(1),
+            toolg_type        VARCHAR(1),
+            process_time      DECIMAL not null,
+            cycle_time        DECIMAL not null,
+            update_time       VARCHAR(60) not null,
+            ope_no            VARCHAR(60),
+            capability        VARCHAR(500),
+            sgs_flag          VARCHAR(2),
+            prodg_id          VARCHAR(60),
+            prodg_tech        VARCHAR(60),
+            partcode          VARCHAR(60) not null,
+            sgs_group         VARCHAR(60),
+            batch_name        VARCHAR(64),
+            batch_target_flag VARCHAR(64),
+            multi_group       VARCHAR(64),
+            multi_target_flag INTEGER
+        )
+    """.format("")  # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_memory.sql('SET threads TO 4')
+            # 加上TMP目录:LQN:2023/08/21
+            duck_db_memory.execute("SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+        # 创建Temp表
+        create_temp_table(duck_db_memory)
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+
+        biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        row_count = my_duck.get_row_count_in_duckdb(duck_db=duck_db_memory, tableName="APS_TMP_ETL_FLOW")
+        if row_count == 0:
+            my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time,
+                                       "APS_TMP_ETL_FLOW没有数据，请及时确认一下！！")
+            return
+
+        biz_method_02(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        if config.g_copy_to_pg:
+            select_sql_in_duck = """select  parentid, prodg_id, prodg_tech,prod_id,plan_no,plan_id, step_id,layer,stage,toolg_id,recipe,reticle_group,step_type,toolg_type,process_time,
+                                            cycle_time,capability,sgs_flag,update_time,sgs_group,batch_name, batch_target_flag,multi_group,multi_target_flag  from APS_ETL_FLOW
+                                        """
+            postgres_table_define = """etl_flow(parentid, prodg_id, prodg_tech,prod_id,plan_no,plan_id, step_id,layer,stage,toolg_id,recipe,reticle_group,step_type,toolg_type,process_time,
+                                                cycle_time,capability,sgs_flag,update_time,sgs_group,batch_name, batch_target_flag,multi_group,multi_target_flag)
+                                    """
+            my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                                duckdb=duck_db_memory,
+                                                table_name_in_duckdb=target_table,
+                                                table_name_in_pg="etl_flow",  # 要小写
+                                                select_sql_in_duck=select_sql_in_duck,
+                                                postgres_table_define=postgres_table_define)
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+                                                                                  target_table,
+                                                                                  target_table_sql.format("file_db."),
+                                                                                  current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file,
+                                   cons_error_code.APS_ETL_LOTHISTORY_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            # 删除TMP目录:LQN:2023/08/21
+            if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+                os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

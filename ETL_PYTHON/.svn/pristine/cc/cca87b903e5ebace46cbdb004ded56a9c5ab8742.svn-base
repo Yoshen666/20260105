@@ -1,0 +1,614 @@
+import os
+
+import duckdb
+
+from xinxiang import config
+from xinxiang.jobs_etl import aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN, aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN
+from xinxiang.util import my_file, my_oracle, my_date
+import pandas as pd
+
+
+def sync_APS_ETL_FLOW():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_ETL_FLOW")
+    if last_duckdb_file is not None:
+        print("APS_ETL_FLOW 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+
+    last_aps_etl_flow_partcode = my_oracle.GetLastPartCodeData(oracle_conn, "APS_ETL_FLOW")
+    ora_query_sql = " select * from APS_ETL_FLOW where PARTCODE = '{partcode}' ".format(partcode=last_aps_etl_flow_partcode)
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_ETL_FLOW"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_ETL_FLOW
+        (
+            parentid          VARCHAR(60) not null,
+            prod_id           VARCHAR(60) not null,
+            plan_no           INTEGER not null,
+            plan_id           VARCHAR(60) not null,
+            step_id           VARCHAR(60) not null,
+            layer             VARCHAR(60),
+            stage             VARCHAR(60),
+            toolg_id          VARCHAR(60) not null,
+            recipe            VARCHAR(60),
+            reticle_group     VARCHAR(60),
+            step_type         VARCHAR(1),
+            toolg_type        VARCHAR(1),
+            process_time      DECIMAL not null,
+            cycle_time        DECIMAL not null,
+            update_time       VARCHAR(60) not null,
+            ope_no            VARCHAR(60),
+            capability        VARCHAR(500),
+            sgs_flag          VARCHAR(2),
+            prodg_id          VARCHAR(60),
+            prodg_tech        VARCHAR(60),
+            partcode          VARCHAR(60) not null,
+            sgs_group         VARCHAR(60),
+            batch_name        VARCHAR(64),
+            batch_target_flag VARCHAR(64),
+            multi_group       VARCHAR(64),
+            multi_target_flag INTEGER,
+            SKIP_FLAG         VARCHAR(64),
+            PRIMARY KEY (PARENTID, PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, PARTCODE)
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def sync_APS_TR_TYPE11():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_TR_TYPE11")
+    if last_duckdb_file is not None:
+        print("APS_TR_TYPE11 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+
+    ora_query_sql = " select * from APS_TR_TYPE11"
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_TR_TYPE11"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_TR_TYPE11
+        (
+          prod_id   VARCHAR(60) not null,
+          toolg_id  VARCHAR(60) not null,
+          recipe    VARCHAR(60),
+          arrival   VARCHAR(60),
+          track_in  VARCHAR(60) not null,
+          track_out VARCHAR(60),
+          guid      VARCHAR(60) not null,
+          partkey   VARCHAR(60) not null,
+          ope_no    VARCHAR(60) not null,
+          bank_time decimal
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def sync_APS_TR_TYPE12():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_TR_TYPE12")
+    if last_duckdb_file is not None:
+        print("APS_TR_TYPE12 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+
+    ora_query_sql = " select * from APS_TR_TYPE12"
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_TR_TYPE12"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_TR_TYPE12
+        (
+         toolg_id  VARCHAR(60) not null,
+          arrival   VARCHAR(60),
+          track_in  VARCHAR(60) not null,
+          track_out VARCHAR(60),
+          guid      VARCHAR(60) not null,
+          partkey   VARCHAR(60) not null,
+          bank_time DECIMAL
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def sync_APS_TR_TYPE3():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_TR_TYPE3")
+    if last_duckdb_file is not None:
+        print("APS_TR_TYPE3 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+
+    ora_query_sql = " select * from APS_TR_TYPE3"
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_TR_TYPE3"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_TR_TYPE3
+        (
+            module_id     VARCHAR(60),
+          toolg_id      VARCHAR(60),
+          tool_id       VARCHAR(60),
+          ppid          VARCHAR(60),
+          qty           VARCHAR(60),
+          process_start VARCHAR(60),
+          process_end   VARCHAR(60),
+          guid          VARCHAR(60) not null,
+          partkey       VARCHAR(60)
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def sync_APS_TR_TYPE21():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_TR_TYPE21")
+    if last_duckdb_file is not None:
+        print("APS_TR_TYPE21 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+
+    ora_query_sql = " select * from APS_TR_TYPE21"
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_TR_TYPE21"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_TR_TYPE21
+        (
+            module_id          VARCHAR(60) not null,
+          toolg_id           VARCHAR(60) not null,
+          tool_id            VARCHAR(60) not null,
+          ppid               VARCHAR(60) not null,
+          process_start      VARCHAR(60) not null,
+          scanner_start      VARCHAR(60),
+          scanner_end        VARCHAR(60),
+          process_end        VARCHAR(60),
+          qty                VARCHAR(60),
+          guid               VARCHAR(60) not null,
+          partkey            VARCHAR(60) not null,
+          operation_complete VARCHAR(64)
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def sync_APS_TR_TYPE22():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_TR_TYPE22")
+    if last_duckdb_file is not None:
+        print("APS_TR_TYPE22 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+    ora_query_sql = " select * from APS_TR_TYPE22"
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_TR_TYPE22"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_TR_TYPE22
+        (
+          module_id          VARCHAR(60) not null,
+          toolg_id           VARCHAR(60) not null,
+          ppid               VARCHAR(60) not null,
+          process_start      VARCHAR(60) not null,
+          scanner_start      VARCHAR(60),
+          scanner_end        VARCHAR(60),
+          process_end        VARCHAR(60),
+          qty                VARCHAR(60),
+          guid               VARCHAR(60) not null,
+          partkey            VARCHAR(60) not null,
+          operation_complete VARCHAR(64)
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def sync_APS_TR_TYPE31():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_TR_TYPE31")
+    if last_duckdb_file is not None:
+        print("APS_TR_TYPE31 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+
+    ora_query_sql = " select * from APS_TR_TYPE31"
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_TR_TYPE31"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_TR_TYPE31
+        (
+              module_id     VARCHAR(60),
+          toolg_id      VARCHAR(60),
+          tool_id       VARCHAR(60),
+          plan_id       VARCHAR(60),
+          qty           VARCHAR(60),
+          process_start VARCHAR(60),
+          process_end   VARCHAR(60),
+          guid          VARCHAR(60) not null,
+          partkey       VARCHAR(60) not null
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def sync_APS_TR_TYPE32():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_TR_TYPE32")
+    if last_duckdb_file is not None:
+        print("APS_TR_TYPE32 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+
+    ora_query_sql = " select * from APS_TR_TYPE32"
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_TR_TYPE32"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_TR_TYPE32
+        (
+          module_id     VARCHAR(60),
+          toolg_id      VARCHAR(60),
+          qty           VARCHAR(60),
+          process_start VARCHAR(60),
+          process_end   VARCHAR(60),
+          guid          VARCHAR(60) not null,
+          partkey       VARCHAR(60) not null
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def sync_APS_TR_TYPE221():
+    oracle_conn = my_oracle.oracle_get_connection()
+
+    last_duckdb_file = my_file.get_last_db_file(oracle_conn, "APS_TR_TYPE221")
+    if last_duckdb_file is not None:
+        print("APS_TR_TYPE221 數據已經存在，不執行第一次從Oracle拉取數據")
+        return
+
+    ora_query_sql = " select * from APS_TR_TYPE221"
+    pd_result = pd.read_sql(ora_query_sql, oracle_conn)
+
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = "APS_TR_TYPE221"
+    in_process_db_file = os.path.join(config.g_mem_sync_result_path, target_table_name, target_table_name + "_base.db")
+    if not os.path.exists(os.path.join(config.g_mem_sync_result_path, target_table_name)):
+        os.makedirs(os.path.join(config.g_mem_sync_result_path, target_table_name))
+    if os.path.exists(in_process_db_file):
+        os.remove(in_process_db_file)
+
+    # 追加最新的数据
+    result_count = pd_result.shape[0]
+    if result_count > 0:
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+    duck_db_cursor = duckdb.connect(in_process_db_file)
+
+    create_table_sql = """
+    create table APS_TR_TYPE221
+        (
+          module_id          VARCHAR(60) not null,
+          toolg_id           VARCHAR(60) not null,
+          tool_id            VARCHAR(60) not null,
+          ch_cnt             VARCHAR(60) not null,
+          process_start      VARCHAR(60) not null,
+          scanner_start      VARCHAR(60),
+          scanner_end        VARCHAR(60),
+          process_end        VARCHAR(60),
+          qty                VARCHAR(60),
+          guid               VARCHAR(60) not null,
+          partkey            VARCHAR(60) not null,
+          operation_complete VARCHAR(64)
+        )
+    """
+    duck_db_cursor.sql(create_table_sql)
+
+    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table_name)
+    duck_db_cursor.sql(insert_sql)
+    duck_db_cursor.close()
+
+    if result_count > 0:
+        # 記錄版本號
+        my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), target_table_name, in_process_db_file)
+
+    oracle_conn.close()
+
+
+def init():
+    """
+    這裏只執行未依賴任何其他ETL產出的ETL
+    """
+
+    # 檢查是否存在 APS_ETL_FLOW的結果,若沒有則手動Sync現在的Oracle結果到DuckDB文件中
+
+    # sync_APS_TR_TYPE11()
+    # sync_APS_TR_TYPE12()
+    # sync_APS_ETL_FLOW()
+    # sync_APS_TR_TYPE21()
+    sync_APS_TR_TYPE22()
+    # sync_APS_TR_TYPE31()
+    # sync_APS_TR_TYPE32()
+    # sync_APS_TR_TYPE221()
+    #
+    # aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN.execute()
+    # aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN.execute()
+
+
+if __name__ == '__main__':
+    init()

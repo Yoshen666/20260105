@@ -1,0 +1,63 @@
+import gc
+import logging
+from xinxiang import config
+from xinxiang.util import my_oracle, my_date
+
+
+def execute():
+    ETL_Proc_Name = "APS_ETL_BR.ETL_EXEC_LOG_HIST"
+    current_time = my_date.date_time_second_str()
+    oracle_conn = None
+    dbcursor = None
+    try:
+        if config.g_debug_mode:
+            oracle_conn = my_oracle.oracle_get_connection_local()
+        else:
+            oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+
+        # 正常每天记录，删除在另外一边进行删除，保存180天
+        sql = """
+            INSERT INTO ETL_EXEC_LOG_HIST
+            ( ETL_NAME,START_TIME,END_TIME,DURATION,REC_COUNT,END_MESSAGE,EVENT_NAME,PARTKEY )
+            SELECT ETL_NAME,START_TIME,END_TIME,
+                   CASE WHEN DURATION IS NULL THEN 0 ELSE DURATION END AS DURATION, 
+                   CASE WHEN REC_COUNT IS NULL THEN -1 ELSE REC_COUNT END AS REC_COUNT,
+                   END_MESSAGE,EVENT_NAME,PARTKEY 
+            FROM ETL_EXEC_LOG L
+            WHERE L.PARTKEY >= SYSDATE - 5
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM ETL_EXEC_LOG_HIST H
+                WHERE H.PARTKEY >= SYSDATE - 10
+                AND H.ETL_NAME = L.ETL_NAME
+                AND H.PARTKEY = L.PARTKEY
+                AND H.END_MESSAGE = L.END_MESSAGE
+            )"""
+
+        dbcursor = oracle_conn.cursor()
+        dbcursor.execute(sql)
+
+        ################################################################################################################
+        ## 写入log
+        ################################################################################################################
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+
+    except Exception as e:
+        # 写警告日志
+        # my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, "XETL076")
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        # dbcursor.close()
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

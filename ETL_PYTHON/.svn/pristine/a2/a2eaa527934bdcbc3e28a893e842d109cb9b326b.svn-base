@@ -1,0 +1,17 @@
+from xinxiang.jobs_etl import aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN, aps_tr_type11_30m, aps_tr_type12_30m
+
+
+def init():
+    """
+    這裏只執行未依賴任何其他ETL產出的ETL
+    """
+
+    aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN.execute()
+    aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN.execute()
+    aps_tr_type11_30m.execute()
+    aps_tr_type12_30m.execute()
+
+
+if __name__ == '__main__':
+    init()

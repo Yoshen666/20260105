@@ -1,0 +1,341 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.jobs_etl.helper import aps_etl_demand_60m_helper
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_postgres, my_runner
+
+
+def create_temp_table(duck_db):
+    table_type = ""
+    if not config.g_debug_mode:
+        table_type = 'TEMP'
+    sql = """
+    create {table_type} table APS_TMP_ETL_DEMAND_RTD
+    (
+      parentid         VARCHAR(60) not null,
+      toolg_id         VARCHAR(60),
+      tool_id          VARCHAR(60),
+      prodg_id         VARCHAR(60),
+      prodg_tech       VARCHAR(60),
+      prod_id          VARCHAR(60),
+      plan_id          VARCHAR(60),
+      step_id          VARCHAR(60),
+      lot_type         VARCHAR(30),
+      recipe           VARCHAR(60),
+      lot_id           VARCHAR(60),
+      layer            VARCHAR(60),
+      stage            VARCHAR(60),
+      tech_id          VARCHAR(60),
+      customer         VARCHAR(60),
+      pty              VARCHAR(60),
+      seq              VARCHAR(60),
+      target_qty       VARCHAR(60) not null,
+      target_shift     VARCHAR(3),
+      target_time_from VARCHAR(60),
+      target_time      VARCHAR(60),
+      target_mode      VARCHAR(60),
+      update_time      VARCHAR(60) not null,
+      partcode         VARCHAR(60) not null,
+      control_flag     VARCHAR(1),
+      max_move_flag    VARCHAR(1),
+      done_qty         VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_DEMAND_TECH
+    (
+      parentid         VARCHAR(60) not null,
+      toolg_id         VARCHAR(60),
+      tool_id          VARCHAR(60),
+      prodg_id         VARCHAR(60),
+      prodg_tech       VARCHAR(60),
+      prod_id          VARCHAR(60),
+      plan_id          VARCHAR(60),
+      step_id          VARCHAR(60),
+      lot_type         VARCHAR(30),
+      recipe           VARCHAR(60),
+      lot_id           VARCHAR(60),
+      layer            VARCHAR(60),
+      stage            VARCHAR(60),
+      tech_id          VARCHAR(60),
+      customer         VARCHAR(60),
+      pty              VARCHAR(60),
+      seq              VARCHAR(60),
+      target_qty       VARCHAR(60) not null,
+      target_shift     VARCHAR(3),
+      target_time_from VARCHAR(60),
+      target_time      VARCHAR(60),
+      target_mode      VARCHAR(60),
+      update_time      VARCHAR(60) not null,
+      partcode         VARCHAR(60) not null,
+      control_flag     VARCHAR(1),
+      max_move_flag    VARCHAR(1),
+      done_qty         VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_DEMAND_PRODG
+    (
+      ope_no        VARCHAR(60),
+      prodg_id      VARCHAR(60),
+      eqp_id        VARCHAR(60),
+      prodspec_id   VARCHAR(60),
+      prodg_tech    VARCHAR(60),
+      qty           VARCHAR(60),
+      update_time   VARCHAR(60),
+      dispatch_type VARCHAR(60),
+      from_time     VARCHAR(60),
+      end_time      VARCHAR(60),
+      time_count    VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_DEMAND_PRODTECH
+    (
+      ope_no        VARCHAR(60),
+      prodg_id      VARCHAR(60),
+      eqp_id        VARCHAR(60),
+      prodspec_id   VARCHAR(60),
+      prodg_tech    VARCHAR(60),
+      qty           VARCHAR(60),
+      update_time   VARCHAR(60),
+      dispatch_type VARCHAR(60),
+      from_time     VARCHAR(60),
+      end_time      VARCHAR(60),
+      time_count    VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+
+
+def execute():
+    # 设置目标量----某个时间段完成的最小的目标量排程
+
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_ETL_DEMAND_60M"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_ETL_DEMAND"
+    used_table_list = ['APS_TMP_LOTHISTORY_VIEW',
+                       'APS_SYNC_PRODUCT',
+                       'APS_SYNC_RTD_MOVE_TARGET',
+                       'APS_SYNC_MOVE_TARGET_RANK',
+                       'APS_SYNC_SCHE_OPE_NO_MODULE_SETTING',
+                       'APS_SYNC_DAILY_MOVE_TARGET',
+                       'APS_SYNC_PRODUCT_INFO',
+                       'APS_SYNC_ETL_TOOL']
+    target_table_sql = """
+        create table {}APS_ETL_DEMAND
+        (
+          parentid         VARCHAR(60) not null,
+          toolg_id         VARCHAR(60),
+          tool_id          VARCHAR(60),
+          prodg_id         VARCHAR(60),
+          prodg_tech       VARCHAR(60),
+          prod_id          VARCHAR(60),
+          plan_id          VARCHAR(60),
+          step_id          VARCHAR(60),
+          lot_type         VARCHAR(30),
+          recipe           VARCHAR(60),
+          lot_id           VARCHAR(60),
+          layer            VARCHAR(60),
+          stage            VARCHAR(60),
+          tech_id          VARCHAR(60),
+          customer         VARCHAR(60),
+          pty              VARCHAR(60),
+          seq              VARCHAR(60),
+          target_qty       VARCHAR(60) not null,
+          target_shift     VARCHAR(3),
+          target_time_from VARCHAR(60),
+          target_time      VARCHAR(60),
+          target_mode      VARCHAR(60),
+          update_time      VARCHAR(60) not null,
+          partcode         VARCHAR(60) not null,
+          control_flag     VARCHAR(1),
+          done_qty         VARCHAR(60)
+        )
+    """.format("") # 注意:这里一定要这么写 [create {table_type} table 表名] => [create {table_type} table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+    # -------------------------- 内存模式改成文件模式
+    _temp_db_path = os.path.join(config.g_mem_speed_etl_output_path, target_table, "inprocess")
+    if not os.path.exists(_temp_db_path):
+        os.makedirs(_temp_db_path)
+
+    temp_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + "_temp.db")
+    # 处理中文件
+    in_process_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + ".db")
+    # 结果文件
+    target_db_file = os.path.join(config.g_mem_etl_output_path, target_table,
+                                  target_table + "_" + current_time_short + ".db")
+    # --------------------------
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+
+        # -------------------------- 内存模式改成文件模式
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_file(_temp_db_path, in_process_db_file, target_table_sql)
+        duck_db_memory.sql('SET threads TO 4')
+        if not os.path.exists(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)):
+            os.makedirs(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid))
+        duck_db_memory.execute(
+            "SET temp_directory='{}'".format(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)))
+
+        if not config.g_debug_mode:
+            create_temp_table(duck_db_memory)
+        else:
+            duck_db_temp = my_duck.create_duckdb_for_temp_table(_temp_db_path, temp_db_file)
+            # 创建Temp表
+            create_temp_table(duck_db_temp)
+            duck_db_temp.commit()
+            duck_db_temp.close()
+            my_duck.attach_temp_db_write_able(duck_db_memory, "TEMPDB", temp_db_file)
+        # --------------------------
+
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+        # 现在累计完成WIP数，只有TrcakOut才算
+        # ①OPE_NO和PRODG_ID 组合
+
+        aps_etl_demand_60m_helper.GetGroupByProdgIdType2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdgIdType3T1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdgIdType3T2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdgIdType4T1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdgIdType4T2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdgIdType4T3Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        # ②OPE_NO和PROD_TECH 组合
+        aps_etl_demand_60m_helper.GetGroupByProdTechType2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdTechType3T1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdTechType3T2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdTechType4T1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdTechType4T2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetGroupByProdTechType4T3Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        
+        # 获取DemandSql信息,放入TEMP表
+        aps_etl_demand_60m_helper.GetDemandSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        aps_etl_demand_60m_helper.GetDemandByOtherDaySql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 获取系统自动产生By Prod_tech资料信息
+        aps_etl_demand_60m_helper.GetDemandByProdTechSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 次日的By Prod_tech资料信息
+        aps_etl_demand_60m_helper.GetProdTechByOtherDaySql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        # 获取DemandSql信息，全部放入
+        aps_etl_demand_60m_helper.GetDemandAllSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 获取DemandSql信息，全部为MAX_MOVE_FLAG='Y'
+        aps_etl_demand_60m_helper.GetDemandByMaxMoveFlagSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 获取系统自动产生的TGT资料信息
+        aps_etl_demand_60m_helper.GetDemandTGTSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 获取系统自动产生By Prod_tech资料信息，全部放入
+        aps_etl_demand_60m_helper.GetDemandByProdTechAllSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 获取系统自动产生By Prod_tech资料信息，只针对黄光区域的控货
+        aps_etl_demand_60m_helper.GetDemandByProdTechFlagSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        ################################################################################################################
+        ## 写入log
+        ################################################################################################################
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file, current_time_short)
+        # 加入ETL执行结束的时间更新
+        my_oracle.Update_ETL_HandlingVerControl(oracle_conn, uuid, target_table, target_db_file, current_time_short)
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        if config.g_copy_to_pg and my_runner.judge_main_server(oracle_conn):
+            select_sql_in_duck = """select parentid,
+                                           CASE WHEN TOOLG_ID='' THEN NULL ELSE TOOLG_ID END AS TOOLG_ID,
+                                           CASE WHEN prodg_id='' THEN NULL ELSE prodg_id END AS prodg_id,
+                                           CASE WHEN prodg_tech='' THEN NULL ELSE prodg_tech END AS prodg_tech,
+                                           CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id,
+                                           CASE WHEN plan_id='' THEN NULL ELSE plan_id END AS plan_id,
+                                           CASE WHEN step_id='' THEN NULL ELSE step_id END AS step_id,
+                                           CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                           CASE WHEN lot_type='' THEN NULL ELSE lot_type END AS lot_type,   
+                                           CASE WHEN recipe='' THEN NULL ELSE recipe END AS recipe, 
+                                           CASE WHEN lot_id='' THEN NULL ELSE lot_id END AS lot_id, 
+                                           CASE WHEN layer='' THEN NULL ELSE layer END AS layer, 
+                                           CASE WHEN stage='' THEN NULL ELSE stage END AS stage, 
+                                           CASE WHEN tech_id='' THEN NULL ELSE tech_id END AS tech_id,
+                                           CASE WHEN customer='' THEN NULL ELSE customer END AS customer,
+                                           CASE WHEN pty='' THEN NULL ELSE pty END AS pty,
+                                           CASE WHEN seq='' THEN NULL ELSE seq END AS seq,
+                                           CASE WHEN target_qty='' THEN NULL ELSE target_qty END AS target_qty,
+                                           CASE WHEN target_shift='' THEN NULL ELSE target_shift END AS target_shift,
+                                           CASE WHEN target_time_from='' THEN NULL ELSE target_time_from END AS target_time_from,
+                                           CASE WHEN target_time='' THEN NULL ELSE target_time END AS target_time,
+                                           CASE WHEN target_mode='' THEN NULL ELSE target_mode END AS target_mode,
+                                           update_time,
+                                           CASE WHEN control_flag='' THEN NULL ELSE control_flag END AS control_flag 
+                                       from APS_ETL_DEMAND
+                                 """
+            postgres_table_define = """etl_demand(parentid,toolg_id,prodg_id,prodg_tech,prod_id,plan_id,step_id,tool_id,lot_type,   
+                                                  recipe, lot_id, layer, stage, tech_id,customer,pty,seq,target_qty,target_shift,
+                                                  target_time_from,target_time,target_mode,update_time,control_flag)
+                                    """
+            my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                                duckdb=duck_db_memory,
+                                                table_name_in_duckdb=target_table,
+                                                table_name_in_pg="etl_demand",  # 要小写
+                                                select_sql_in_duck=select_sql_in_duck,
+                                                postgres_table_define=postgres_table_define,
+                                                oracle_conn=oracle_conn,
+                                                ETL_Proc_Name=ETL_Proc_Name)
+
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                                   in_process_db_file=in_process_db_file,
+                                                                                   target_table=target_table,
+                                                                                   current_time=current_time_short)
+        # 加入PG执行结束的时间更新
+        my_oracle.Update_PG_HandlingVerControl(oracle_conn, uuid, target_table, target_db_file, current_time_short)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, cons_error_code.APS_ETL_DEMAND_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        # 导出到目标文件中
+        my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                  in_process_db_file=in_process_db_file,
+                                                                  target_table=target_table,
+                                                                  current_time=current_time_short)
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        # 删除TMP目录:LQN:2023/08/21
+        if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+            os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        if os.path.exists(temp_db_file) and not config.g_debug_mode:
+            os.remove(temp_db_file)
+        gc.collect() # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

@@ -1,0 +1,1097 @@
+import logging
+
+import duckdb
+
+from xinxiang import config
+from xinxiang.util import my_postgres, my_date, my_oracle
+
+import pandas as pd
+
+
+def export_to_test_APS_ETL_DEMAND(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,
+                                               CASE WHEN TOOLG_ID='' THEN NULL ELSE TOOLG_ID END AS TOOLG_ID,
+                                               CASE WHEN prodg_id='' THEN NULL ELSE prodg_id END AS prodg_id,
+                                               CASE WHEN prodg_tech='' THEN NULL ELSE prodg_tech END AS prodg_tech,
+                                               CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id,
+                                               CASE WHEN plan_id='' THEN NULL ELSE plan_id END AS plan_id,
+                                               CASE WHEN step_id='' THEN NULL ELSE step_id END AS step_id,
+                                               CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                               CASE WHEN lot_type='' THEN NULL ELSE lot_type END AS lot_type,   
+                                               CASE WHEN recipe='' THEN NULL ELSE recipe END AS recipe, 
+                                               CASE WHEN lot_id='' THEN NULL ELSE lot_id END AS lot_id, 
+                                               CASE WHEN layer='' THEN NULL ELSE layer END AS layer, 
+                                               CASE WHEN stage='' THEN NULL ELSE stage END AS stage, 
+                                               CASE WHEN tech_id='' THEN NULL ELSE tech_id END AS tech_id,
+                                               CASE WHEN customer='' THEN NULL ELSE customer END AS customer,
+                                               CASE WHEN pty='' THEN NULL ELSE pty END AS pty,
+                                               CASE WHEN seq='' THEN NULL ELSE seq END AS seq,
+                                               CASE WHEN target_qty='' THEN NULL ELSE target_qty END AS target_qty,
+                                               CASE WHEN target_shift='' THEN NULL ELSE target_shift END AS target_shift,
+                                               CASE WHEN target_time_from='' THEN NULL ELSE target_time_from END AS target_time_from,
+                                               CASE WHEN target_time='' THEN NULL ELSE target_time END AS target_time,
+                                               CASE WHEN target_mode='' THEN NULL ELSE target_mode END AS target_mode,
+                                               update_time,
+                                               CASE WHEN control_flag='' THEN NULL ELSE control_flag END AS control_flag 
+                                           from APS_ETL_DEMAND
+                                     """
+    postgres_table_define = """etl_demand(parentid,toolg_id,prodg_id,prodg_tech,prod_id,plan_id,step_id,tool_id,lot_type,   
+                                                      recipe, lot_id, layer, stage, tech_id,customer,pty,seq,target_qty,target_shift,
+                                                      target_time_from,target_time,target_mode,update_time,control_flag)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_demand",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_FLOW(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid, prodg_id, prodg_tech,prod_id,plan_no,plan_id, step_id,layer,stage,toolg_id,recipe,reticle_group,step_type,toolg_type,process_time,
+                                                cycle_time,capability,sgs_flag,update_time,sgs_group,batch_name, batch_target_flag,multi_group,multi_target_flag, SKIP_FLAG,main_plan_id,entry_step_id,retn_step_id  from APS_ETL_FLOW
+                                            """
+    postgres_table_define = """etl_flow(parentid, prodg_id, prodg_tech,prod_id,plan_no,plan_id, step_id,layer,stage,toolg_id,recipe,reticle_group,step_type,toolg_type,process_time,
+                                                    cycle_time,capability,sgs_flag,update_time,sgs_group,batch_name, batch_target_flag,multi_group,multi_target_flag, SKIP_FLAG,main_plan_id,entry_step_id,retn_step_id)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_flow",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_HOLD_RLS(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid, 
+                                                CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id, 
+                                                CASE WHEN lot_id='' THEN NULL ELSE lot_id END AS lot_id, 
+                                                CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id, 
+                                                CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                                CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                                CASE WHEN hold_time='' THEN NULL ELSE hold_time END AS hold_time, 
+                                                update_time  from APS_ETL_HOLD_RLS
+                                     """
+    postgres_table_define = """etl_hold_rls(parentid, toolg_id, lot_id, prod_id, layer,stage,hold_time, update_time)
+                                  """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_hold_rls",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_LOT_OP_HIST(table_name, file_name):
+    current_time = my_date.date_time_second_str()
+    current_time_min = my_date.date_time_min_second_str()
+
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    uuid = my_oracle.UUID()
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    # sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    # duck_db_memory.execute(sql_query)
+    # uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    pg_conn = my_postgres.decide_postgres_db_connection(export_to_pg_prod_test=False,
+                                                        pg_table_name="etl_lot_op_hist")
+    sql_key_in_pg = """
+                                SELECT DISTINCT LOT_ID, TOOLG_ID, TOOL_ID, PROD_ID,PLAN_ID, TRACK_IN
+                                FROM yth.etl_lot_op_hist
+                                where track_in >= timestamp '{current_time}' - INTERVAL '1 day'
+                            """.format(current_time=current_time)
+    pg_exist_result = pd.read_sql(sql_key_in_pg, pg_conn)
+    print(pg_exist_result)
+
+    select_sql_in_duck = """select  lot_id, 
+                                                toolg_id, 
+                                                tool_id, 
+                                                prod_id, 
+                                                plan_id,
+                                                CASE WHEN step_id='' THEN NULL ELSE step_id END AS step_id,
+                                                CASE WHEN lot_type='' THEN NULL ELSE lot_type END AS lot_type, 
+                                                cast(pty as integer),
+                                                cast(shr_flag as integer),
+                                                CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                                CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                                CASE WHEN recipe='' THEN NULL ELSE recipe END AS recipe,
+                                                CASE WHEN ppid='' THEN NULL ELSE ppid END AS ppid,
+                                                qty,
+                                                CASE WHEN reticle_id='' THEN NULL ELSE reticle_id END AS reticle_id,
+                                                arrival,
+                                                CASE WHEN job_prepare='' THEN NULL ELSE job_prepare END AS job_prepare,
+                                                track_in,
+                                                CASE WHEN process_start='' THEN NULL ELSE process_start END AS process_start,
+                                                update_time  
+                                          FROM APS_ETL_LOT_OP_HIST t
+                                          WHERE track_in >= DATE_TRUNC('second', CAST('{current_time}' AS TIMESTAMP)) - INTERVAL '1 day'
+                                          AND NOT EXISTS (
+                                                SELECT 1 
+                                                FROM   pg_exist_result pd
+                                                WHERE  T.LOT_ID      = PD.LOT_ID
+                                                AND    T.TOOLG_ID    = PD.TOOLG_ID
+                                                AND    T.TOOL_ID     = PD.TOOL_ID
+                                                AND    T.PROD_ID     = PD.PROD_ID
+                                                AND    T.PLAN_ID     = PD.PLAN_ID
+                                                AND    T.TRACK_IN    = PD.TRACK_IN
+                                        )
+                                     """.format(current_time=current_time_min)
+
+    postgres_table_define = """etl_lot_op_hist(lot_id, toolg_id, tool_id, prod_id, plan_id,step_id,lot_type, pty,shr_flag,layer, stage,recipe,ppid,
+                                                                        qty,reticle_id,arrival,job_prepare,track_in,process_start,update_time)
+                                              """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_lot_op_hist",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    copy_to_yto=False,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_LOTHISTORY(table_name, file_name):
+    current_time = my_date.date_time_second_str()
+    current_time_min = my_date.date_time_min_second_str()
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    uuid = my_oracle.UUID()
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    # sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    # duck_db_memory.execute(sql_query)
+    # uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    pg_conn = my_postgres.decide_postgres_db_connection(export_to_pg_prod_test=False,
+                                                        pg_table_name="etl_lothistory")
+
+    sql_key_in_pg = """
+                                SELECT DISTINCT LOT_ID, TOOLG_ID, TOOL_ID, PROD_ID,PLAN_ID,TRACK_IN
+                                FROM yth.etl_lothistory
+                                where track_out >= timestamp '{current_time}' - INTERVAL '1 day'
+                            """.format(current_time=current_time)
+    pg_exist_result = pd.read_sql(sql_key_in_pg, pg_conn)
+    print(pg_exist_result)
+
+    select_sql_in_duck = """select  lot_id, toolg_id, tool_id, prod_id, plan_id,
+                                            CASE WHEN step_id='' THEN NULL ELSE step_id END AS step_id, 
+                                            CASE WHEN prodg_id='' THEN NULL ELSE prodg_id END AS prodg_id,
+                                            CASE WHEN prodg_tech='' THEN NULL ELSE prodg_tech END AS prodg_tech,
+                                            CASE WHEN lot_type='' THEN NULL ELSE lot_type END AS lot_type, 
+                                            pty,shr_flag,
+                                            CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                            CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                            CASE WHEN recipe='' THEN NULL ELSE recipe END AS recipe,
+                                            CASE WHEN ppid='' THEN NULL ELSE ppid END AS ppid,qty,
+                                            CASE WHEN reticle_id='' THEN NULL ELSE reticle_id END AS reticle_id,
+                                            CASE WHEN tech_id='' THEN NULL ELSE tech_id END AS tech_id, 
+                                            CASE WHEN customer='' THEN NULL ELSE customer END AS customer,
+                                            arrival,job_prepare,track_in,process_start, process_end,track_out,
+                                            CASE WHEN rework_flag='' THEN NULL ELSE rework_flag END AS rework_flag,
+                                            CASE WHEN backup_flag='' THEN NULL ELSE backup_flag END AS backup_flag,
+                                            update_time,
+                                            CASE WHEN scanner_start='' THEN NULL ELSE scanner_start END AS scanner_start,
+                                            CASE WHEN scanner_end='' THEN NULL ELSE scanner_end END AS scanner_end, 
+                                            CASE WHEN recipe_setup='' THEN NULL ELSE recipe_setup END AS recipe_setup,
+                                            CASE WHEN ch_set='' THEN NULL ELSE ch_set END AS ch_set
+                                            from APS_ETL_LOTHISTORY t
+                                            WHERE CAST(track_out AS TIMESTAMP) >= DATE_TRUNC('second', CAST('{current_time}' AS TIMESTAMP)) - INTERVAL '1 day'
+                                    AND NOT EXISTS(
+                                        select 1 
+                                        from pg_exist_result pd
+                                        where t.LOT_ID = pd.LOT_ID
+                                        and   t.TOOLG_ID = pd.TOOLG_ID
+                                        and   t.TOOL_ID = pd.TOOL_ID
+                                        and   t.PROD_ID = pd.PROD_ID
+                                        and   t.PLAN_ID = pd.PLAN_ID
+                                        and   t.TRACK_IN = pd.TRACK_IN
+                                    )
+                                """.format(current_time=current_time_min)
+
+    postgres_table_define = """etl_lothistory(lot_id, toolg_id, tool_id, prod_id, plan_id,step_id, prodg_id,prodg_tech,lot_type, pty,shr_flag,layer, stage,recipe,ppid,
+                                                                      qty,reticle_id,tech_id, customer,arrival,job_prepare,track_in,process_start, process_end,track_out, rework_flag,
+                                                                      backup_flag,update_time, scanner_start,scanner_end, recipe_setup, ch_set )
+                                                     """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_lothistory",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection(),
+                                                    copy_to_yto=False)
+
+
+def export_to_test_APS_ETL_MASK_HISTORY(table_name, file_name):
+    current_time = my_date.date_time_second_str()
+    current_time_min = my_date.date_time_min_second_str()
+
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    uuid = my_oracle.UUID()
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    # sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    # duck_db_memory.execute(sql_query)
+    # uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    pg_conn = my_postgres.decide_postgres_db_connection(export_to_pg_prod_test=False,
+                                                        pg_table_name="etl_mask_history")
+
+    sql_key_in_pg = """
+                    SELECT DISTINCT RETICLE_ID, EVENT_TIME
+                    FROM yth.etl_mask_history
+                    where event_time >= timestamp '{current_time}' - INTERVAL '1 day'
+                    ORDER BY RETICLE_ID ASC, EVENT_TIME ASC
+                """.format(current_time=current_time)
+    pg_exist_result = pd.read_sql(sql_key_in_pg, pg_conn)
+    print(pg_exist_result)
+
+    select_sql_in_duck = """select 
+                            CASE WHEN reticle_group='' THEN NULL ELSE reticle_group END AS reticle_group,
+                            CASE WHEN reticle_id='' THEN NULL ELSE reticle_id END AS reticle_id,
+                            CASE WHEN status='' THEN NULL ELSE status END AS status,
+                            CASE WHEN position_from='' THEN NULL ELSE position_from END AS position_from,
+                            CASE WHEN position='' THEN NULL ELSE position END AS position,
+                            CASE WHEN event='' THEN NULL ELSE event END AS event,
+                            CASE WHEN event_time='' THEN NULL ELSE event_time END AS event_time,
+                            CASE WHEN update_time='' THEN NULL ELSE update_time END AS update_time
+                        FROM APS_ETL_MASK_HISTORY t
+                        WHERE event_time >= DATE_TRUNC('second', CAST('{current_time}' AS TIMESTAMP)) - INTERVAL '1 day'
+                        AND NOT EXISTS(
+                            select 1 
+                            from pg_exist_result pd
+                            where t.reticle_id = pd.reticle_id
+                            and   t.event_time = pd.event_time
+                        )
+                    """.format(current_time=current_time_min)
+    postgres_table_define = """etl_mask_history(reticle_group,reticle_id,status,position_from,position,event,event_time,update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_mask_history",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    copy_to_yto=False,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_MASK_INFO(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,
+                                               CASE WHEN reticle_group='' THEN NULL ELSE reticle_group END AS reticle_group,
+                                               CASE WHEN reticle_id='' THEN NULL ELSE reticle_id END AS reticle_id,
+                                               reticle_count, 
+                                               CASE WHEN position='' THEN NULL ELSE position END AS position, 
+                                               position_time, 
+                                               CASE WHEN reticle_status='' THEN NULL ELSE reticle_status END AS reticle_status,
+                                               inspection_time, 
+                                               run_qty,run_lbound,run_ubound,update_time,
+                                               CASE WHEN last_position='' THEN NULL ELSE last_position END AS last_position 
+                                               from APS_ETL_MASK_INFO
+                                            """
+    postgres_table_define = """etl_mask_info(parentid,reticle_group,reticle_id,reticle_count,position, position_time, reticle_status,inspection_time, 
+                                                         run_qty,run_lbound,run_ubound,update_time,last_position)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_mask_info",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_MONITOR(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select CASE WHEN parentid='' THEN NULL ELSE parentid END AS parentid,
+                                               CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id,
+                                               CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                               CASE WHEN ch_id='' THEN NULL ELSE ch_id END AS ch_id,
+                                               CASE WHEN job_id='' THEN NULL ELSE job_id END AS job_id,
+                                               CASE WHEN start_date='' THEN NULL ELSE start_date END AS start_date,
+                                               CASE WHEN end_date='' THEN NULL ELSE end_date END AS end_date,
+                                               CASE WHEN process_time='' THEN NULL ELSE process_time END AS process_time,
+                                               CASE WHEN reticle_id='' THEN NULL ELSE reticle_id END AS reticle_id,
+                                               CASE WHEN recipe='' THEN NULL ELSE recipe END AS recipe,
+                                               CASE WHEN job_status='' THEN NULL ELSE job_status END AS job_status,
+                                               CASE WHEN track_in='' THEN NULL ELSE track_in END AS track_in,
+                                               CASE WHEN update_time='' THEN NULL ELSE update_time END AS update_time,
+                                               CASE WHEN foup_id='' THEN NULL ELSE foup_id END AS foup_id,
+                                               CASE WHEN job_type='' THEN NULL ELSE job_type END AS job_type,
+                                               CASE WHEN tool_code='' THEN NULL ELSE tool_code END AS tool_code,
+                                               CASE WHEN fixed_flag='' THEN NULL ELSE fixed_flag END AS fixed_flag,
+                                               CASE WHEN fixed_time='' THEN NULL ELSE fixed_time END AS fixed_time,
+                                               CASE WHEN process_start ='' THEN NULL ELSE process_start  END AS process_start 
+                                         from APS_ETL_MONITOR
+                                         """
+    postgres_table_define = """etl_monitor(parentid,toolg_id,tool_id,ch_id,job_id, start_date,end_date,
+                                                       process_time,reticle_id,recipe,job_status,track_in,update_time,
+                                                        foup_id,job_type,tool_code,fixed_flag,fixed_time,process_start)
+                                             """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_monitor",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_PIRUN(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,toolg_id,tool_id,
+                                               CASE WHEN ch_id='' THEN NULL ELSE ch_id END AS ch_id,
+                                               CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id, 
+                                               CASE WHEN plan_id='' THEN NULL ELSE plan_id END AS plan_id,
+                                               CASE WHEN step_id='' THEN NULL ELSE step_id END AS step_id,
+                                               CASE WHEN recipe='' THEN NULL ELSE recipe END AS recipe,
+                                               CASE WHEN ppid='' THEN NULL ELSE ppid END AS ppid,
+                                               CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                               CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                               CASE WHEN tech='' THEN NULL ELSE tech END AS tech,
+                                               CASE WHEN customer='' THEN NULL ELSE customer END AS customer,
+                                               CASE WHEN lot_id='' THEN NULL ELSE lot_id END AS lot_id, 
+                                               CASE WHEN reticle_id='' THEN NULL ELSE reticle_id END AS reticle_id, 
+                                               CASE WHEN pre_tool_id='' THEN NULL ELSE pre_tool_id END AS pre_tool_id, 
+                                               rule_name,
+                                               CASE WHEN remaining_count='' THEN NULL ELSE remaining_count END AS remaining_count,
+                                               CASE WHEN remaining_time='' THEN NULL ELSE remaining_time END AS remaining_time,
+                                               CASE WHEN recover_time='' THEN NULL ELSE recover_time END AS recover_time, 
+                                               CASE WHEN valid_recipe='' THEN NULL ELSE valid_recipe END AS valid_recipe, 
+                                               CASE WHEN valid_time='' THEN NULL ELSE valid_time END AS valid_time, 
+                                               CASE WHEN hold_time='' THEN NULL ELSE hold_time END AS hold_time, 
+                                               update_time, 
+                                               CASE WHEN valid_lot='' THEN NULL ELSE valid_lot END AS valid_lot,
+                                               CASE WHEN count_unit='' THEN NULL ELSE count_unit END AS count_unit,
+                                               CASE WHEN current_count='' THEN NULL ELSE current_count END AS current_count,
+                                               CASE WHEN lsl='' THEN NULL ELSE lsl END AS lsl,
+                                               CASE WHEN usl='' THEN NULL ELSE usl END AS usl,
+                                               CASE WHEN process_time='' THEN NULL ELSE process_time END AS process_time,
+                                               CASE WHEN job_id='' THEN NULL ELSE job_id END AS job_id,
+                                               CASE WHEN split_qty='' THEN NULL ELSE split_qty END AS split_qty,
+                                               CASE WHEN parameter='' THEN NULL ELSE parameter END AS parameter,
+                                               CASE WHEN prodg_id='' THEN NULL ELSE prodg_id END AS prodg_id,
+                                               CASE WHEN all_ch_flag='' THEN NULL ELSE all_ch_flag END AS all_ch_flag,
+                                               valid_count,
+                                               CASE WHEN clean_acc_flag='' THEN NULL ELSE clean_acc_flag END AS clean_acc_flag, 
+                                               clean_mon_time,
+                                               CASE WHEN clean_group='' THEN NULL ELSE clean_group END AS clean_group, 
+                                               CASE WHEN clean_fix_flag='' THEN NULL ELSE clean_fix_flag END AS clean_fix_flag
+                                               from APS_ETL_PIRUN
+                                    """
+    postgres_table_define = """etl_pirun(parentid,toolg_id,tool_id,ch_id,prod_id, plan_id,step_id,recipe,ppid,layer,stage,
+                                                     tech,customer,lot_id, reticle_id, pre_tool_id, rule_name,remaining_count,remaining_time,
+                                                     recover_time, valid_recipe, valid_time, hold_time, update_time, valid_lot,count_unit,current_count,
+                                                     lsl,usl,process_time,job_id,split_qty,parameter, prodg_id,all_ch_flag,valid_count,clean_acc_flag,
+                                                     clean_mon_time,clean_group,clean_fix_flag)
+                                                   """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_pirun",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_QTIME_HOLD(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,prod_id, plan_id,step_id,layer,stage,tool_id,
+                                               ch_id, case when used_tc = '' then NULL ELSE used_tc END AS used_tc,
+                                               case when virtual_time_tc = '' then NULL ELSE virtual_time_tc END AS virtual_time_tc, 
+                                                case when hold_flag = '' then NULL ELSE hold_flag END AS hold_flag, 
+                                                case when update_time = '' then NULL ELSE update_time END AS update_time from APS_ETL_QTIME_HOLD
+                                     """
+    postgres_table_define = """etl_qtime_hold(parentid,prod_id, plan_id,step_id,layer,stage,tool_id,
+                                                          ch_id,used_tc,virtual_time_tc, hold_flag, update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_qtime_hold",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_QTIME_SPEC(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,prod_id, plan_id,
+                                             CASE WHEN step_id_from='' THEN NULL ELSE step_id_from END AS step_id_from,
+                                             CASE WHEN step_id_to='' THEN NULL ELSE step_id_to END AS step_id_to,
+                                             timelimit,update_time,
+                                             CASE WHEN grade='' THEN NULL ELSE grade END AS grade 
+                                             from APS_ETL_QTIME_SPEC
+                                   """
+    postgres_table_define = """etl_qtime_spec(parentid,prod_id, plan_id,step_id_from,step_id_to,
+                                                        timelimit,update_time,grade)
+                                      """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_qtime_spec",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_RLS(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,lot_id,target_step_id,target_plan_id,toolg_id,tool_id,recipe,ppid,reticle_id,
+                                               CASE WHEN ch_set='' THEN NULL ELSE ch_set END AS ch_set,
+                                               CASE WHEN set_status='' THEN NULL ELSE set_status END AS set_status,
+                                               max_batch_size,min_batch_size,non_process_runtime,process_runtime,update_time,
+                                               other_min_batch_size,
+                                               CASE WHEN recipe_setup='' THEN NULL ELSE recipe_setup END AS recipe_setup,
+                                               CASE WHEN target_OPE_NO ='' THEN NULL ELSE target_OPE_NO END AS target_OPE_NO 
+                                               from APS_ETL_RLS
+                                         """
+    postgres_table_define = """etl_rls(parentid,lot_id,target_step_id,target_plan_id,toolg_id,tool_id,recipe,ppid,reticle_id,ch_set,
+                                                   set_status,max_batch_size,min_batch_size,non_process_runtime,process_runtime,update_time,
+                                                   other_min_batch_size,recipe_setup,target_OPE_NO)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_rls",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_SAMPLING_LOT(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select CASE WHEN parentid='' THEN NULL ELSE parentid END AS parentid,
+                                               CASE WHEN lot_id='' THEN NULL ELSE lot_id END AS lot_id,
+                                               CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id,
+                                               CASE WHEN plan_no='' THEN NULL ELSE plan_no END AS plan_no,
+                                               CASE WHEN plan_id='' THEN NULL ELSE plan_id END AS plan_id,
+                                               CASE WHEN step_id='' THEN NULL ELSE step_id END AS step_id,
+                                               CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                               CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                               update_time 
+                                        from APS_ETL_SAMPLING_LOT
+                                     """
+    postgres_table_define = """etl_sampling_lot(parentid,lot_id,prod_id,plan_no,plan_id,step_id,layer,stage,update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_sampling_lot",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_SEASON_RULE(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  CASE WHEN parentid='' THEN NULL ELSE parentid END AS parentid,
+                                                CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id,
+                                                CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                                CASE WHEN ch_id='' THEN NULL ELSE ch_id END AS ch_id,
+                                                seq,
+                                                CASE WHEN process_time='' THEN NULL ELSE process_time END AS process_time,
+                                                CASE WHEN lot_type='' THEN NULL ELSE lot_type END AS lot_type,
+                                                CASE WHEN recipe_last='' THEN NULL ELSE recipe_last END AS recipe_last,
+                                                CASE WHEN recipe_last_mode='' THEN NULL ELSE recipe_last_mode END AS recipe_last_mode,
+                                                CASE WHEN recipe_next='' THEN NULL ELSE recipe_next END AS recipe_next,
+                                                CASE WHEN recipe_next_mode='' THEN NULL ELSE recipe_next_mode END AS recipe_next_mode,
+                                                CASE WHEN idletime_from='' THEN NULL ELSE idletime_from END AS idletime_from,
+                                                CASE WHEN idletime_to='' THEN NULL ELSE idletime_to END AS idletime_to,
+                                                CASE WHEN run_limit='' THEN NULL ELSE run_limit END AS run_limit,
+                                                CASE WHEN run_qty='' THEN NULL ELSE run_qty END AS run_qty,
+                                                CASE WHEN update_time='' THEN NULL ELSE update_time END AS update_time,
+                                                CASE WHEN ppid_last='' THEN NULL ELSE ppid_last END AS ppid_last,
+                                                CASE WHEN ppid_last_mode='' THEN NULL ELSE ppid_last_mode END AS ppid_last_mode,
+                                                CASE WHEN ppid_next='' THEN NULL ELSE ppid_next END AS ppid_next,
+                                                CASE WHEN ppid_next_mode='' THEN NULL ELSE ppid_next_mode END AS ppid_next_mode, 
+                                                CASE WHEN recipe_setup_last='' THEN NULL ELSE recipe_setup_last END AS recipe_setup_last,
+                                                CASE WHEN recipe_setup_last_mode='' THEN NULL ELSE recipe_setup_last_mode END AS recipe_setup_last_mode,
+                                                CASE WHEN recipe_setup_next='' THEN NULL ELSE recipe_setup_next END AS recipe_setup_next,
+                                                CASE WHEN recipe_setup_next_mode='' THEN NULL ELSE recipe_setup_next_mode END AS recipe_setup_next_mode,
+                                                CASE WHEN prod_id_last='' THEN NULL ELSE prod_id_last END AS prod_id_last,
+                                                CASE WHEN prod_id_last_mode='' THEN NULL ELSE prod_id_last_mode END AS prod_id_last_mode,
+                                                CASE WHEN prod_id_next='' THEN NULL ELSE prod_id_next END AS prod_id_next,
+                                                CASE WHEN prod_id_next_mode='' THEN NULL ELSE prod_id_next_mode END AS prod_id_next_mode,
+                                                CASE WHEN lot_id_last='' THEN NULL ELSE lot_id_last END AS lot_id_last,
+                                                CASE WHEN lot_id_last_mode='' THEN NULL ELSE lot_id_last_mode END AS lot_id_last_mode,
+                                                CASE WHEN lot_id_next='' THEN NULL ELSE lot_id_next END AS lot_id_next,
+                                                CASE WHEN lot_id_next_mode='' THEN NULL ELSE lot_id_next_mode END AS lot_id_next_mode,
+                                                CASE WHEN prodg_id_last='' THEN NULL ELSE prodg_id_last END AS prodg_id_last,
+                                                CASE WHEN prodg_id_last_mode='' THEN NULL ELSE prodg_id_last_mode END AS prodg_id_last_mode,
+                                                CASE WHEN prodg_id_next='' THEN NULL ELSE prodg_id_next END AS prodg_id_next,
+                                                CASE WHEN prodg_id_next_mode='' THEN NULL ELSE prodg_id_next_mode END AS prodg_id_next_mode,
+                                                CASE WHEN layer_last='' THEN NULL ELSE layer_last END AS layer_last,
+                                                CASE WHEN layer_last_mode='' THEN NULL ELSE layer_last_mode END AS layer_last_mode,
+                                                CASE WHEN layer_next='' THEN NULL ELSE layer_next END AS layer_next,
+                                                CASE WHEN layer_next_mode='' THEN NULL ELSE layer_next_mode END AS layer_next_mode,
+                                                CASE WHEN stage_last='' THEN NULL ELSE stage_last END AS stage_last,
+                                                CASE WHEN stage_last_mode='' THEN NULL ELSE stage_last_mode END AS stage_last_mode,
+                                                CASE WHEN stage_next='' THEN NULL ELSE stage_next END AS stage_next,
+                                                CASE WHEN stage_next_mode='' THEN NULL ELSE stage_next_mode END AS stage_next_mode,
+                                                CASE WHEN consec_unit='' THEN NULL ELSE consec_unit END AS consec_unit,
+                                                CASE WHEN consec_cnt='' THEN NULL ELSE consec_cnt END AS consec_cnt,
+                                                CASE WHEN consec_cnt_mode='' THEN NULL ELSE consec_cnt_mode END AS consec_cnt_mode,
+                                                CASE WHEN rule_name='' THEN NULL ELSE rule_name END AS rule_name 
+                                            from APS_ETL_SEASON_RULE
+                                     """
+    postgres_table_define = """etl_season_rule( parentid,toolg_id,tool_id,ch_id,seq,process_time,lot_type,recipe_last,recipe_last_mode,
+                                                            recipe_next,recipe_next_mode,idletime_from,idletime_to,run_limit,run_qty,update_time,
+                                                            ppid_last, ppid_last_mode,ppid_next,ppid_next_mode, recipe_setup_last,recipe_setup_last_mode,
+                                                            recipe_setup_next,recipe_setup_next_mode,prod_id_last,prod_id_last_mode, prod_id_next,prod_id_next_mode,
+                                                            lot_id_last,lot_id_last_mode,lot_id_next,lot_id_next_mode,prodg_id_last,prodg_id_last_mode,prodg_id_next,
+                                                            prodg_id_next_mode,layer_last,layer_last_mode,layer_next,layer_next_mode,stage_last,stage_last_mode,stage_next,
+                                                            stage_next_mode,consec_unit,consec_cnt,consec_cnt_mode,rule_name)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_season_rule",  # 要小写
+                                                    csv_delimiter="<",
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_SGS_RLS(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  CASE WHEN parentid='' THEN NULL ELSE parentid END AS parentid,
+                                                CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id,
+                                                CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id,
+                                                CASE WHEN plan_id='' THEN NULL ELSE plan_id END AS plan_id,
+                                                CASE WHEN step_id='' THEN NULL ELSE step_id END AS step_id,
+                                                CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                                CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                                CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                                CASE WHEN create_time='' THEN NULL ELSE create_time END AS create_time,
+                                                CASE WHEN pass_flg_prc='' THEN NULL ELSE pass_flg_prc END AS pass_flg_prc,
+                                                CASE WHEN prc_update_time='' THEN NULL ELSE prc_update_time END AS prc_update_time,
+                                                CASE WHEN pass_flg_mfg='' THEN NULL ELSE pass_flg_mfg END AS pass_flg_mfg,
+                                                CASE WHEN mfg_update_time='' THEN NULL ELSE mfg_update_time END AS mfg_update_time,
+                                                CASE WHEN update_time='' THEN NULL ELSE update_time END AS update_time 
+                                            from APS_ETL_SGS_RLS
+                                            """
+    postgres_table_define = """etl_sgs_rls(parentid,toolg_id,prod_id,plan_id,step_id,layer,stage,tool_id,create_time,pass_flg_prc,
+                                                       prc_update_time,pass_flg_mfg,mfg_update_time,update_time)
+                                               """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_sgs_rls",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_SGS_RULE(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,
+                                                CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                                CASE WHEN prodg_id='' THEN NULL ELSE prodg_id END AS prodg_id,
+                                                CASE WHEN from_layer='' THEN NULL ELSE from_layer END AS from_layer,
+                                                CASE WHEN from_stage='' THEN NULL ELSE from_stage END AS from_stage,
+                                                CASE WHEN to_layer='' THEN NULL ELSE to_layer END AS to_layer,
+                                                CASE WHEN to_stage='' THEN NULL ELSE to_stage END AS to_stage,
+                                                CASE WHEN update_time='' THEN NULL ELSE update_time END AS update_time   
+                                                from APS_ETL_SGS_RULE
+                                     """
+    postgres_table_define = """etl_sgs_rule( parentid,tool_id,prodg_id,from_layer,from_stage,to_layer,to_stage,update_time )
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_sgs_rule",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_SIZE_CONTROL(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,
+                                                CASE WHEN rule_name='' THEN NULL ELSE rule_name END AS rule_name,
+                                                CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id,
+                                                CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                                CASE WHEN prodg_tech='' THEN NULL ELSE prodg_tech END AS prodg_tech,
+                                                CASE WHEN prodg_id='' THEN NULL ELSE prodg_id END AS prodg_id,
+                                                CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id,
+                                                CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                                CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                                CASE WHEN lot_type='' THEN NULL ELSE lot_type END AS lot_type,
+                                                CASE WHEN foup_con='' THEN NULL ELSE foup_con END AS foup_con,
+                                                CASE WHEN min_batch_size='' THEN NULL ELSE min_batch_size END AS min_batch_size,
+                                                CASE WHEN max_batch_size='' THEN NULL ELSE max_batch_size END AS max_batch_size,
+                                                CASE WHEN min_foup_size='' THEN NULL ELSE min_foup_size END AS min_foup_size,
+                                                CASE WHEN max_foup_size='' THEN NULL ELSE max_foup_size END AS max_foup_size,
+                                                CASE WHEN hard_flag='' THEN NULL ELSE hard_flag END AS hard_flag,
+                                                update_time,
+                                                CASE WHEN other_min_batch_size='' THEN NULL ELSE other_min_batch_size END AS other_min_batch_size 
+                                                from APS_ETL_SIZE_CONTROL
+                                            """
+    postgres_table_define = """etl_size_control(parentid,rule_name,toolg_id,tool_id,prodg_tech,prodg_id,prod_id,layer,stage,lot_type,foup_con,
+                                                            min_batch_size,max_batch_size,min_foup_size,max_foup_size,hard_flag,update_time,other_min_batch_size )
+                                               """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_size_control",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_TOOL(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  CASE WHEN parentid='' THEN NULL ELSE parentid END AS parentid,
+                                                CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id,
+                                                CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                                CASE WHEN ch_id='' THEN NULL ELSE ch_id END AS ch_id,
+                                                CASE WHEN tool_status='' THEN NULL ELSE tool_status END AS tool_status,
+                                                tool_status_time,
+                                                CASE WHEN ch_status='' THEN NULL ELSE ch_status END AS ch_status,
+                                                ch_status_time,
+                                                coat,
+                                                CASE WHEN lot_id='' THEN NULL ELSE lot_id END AS lot_id,
+                                                down_back_time,
+                                                port_num,
+                                                reticle_num,
+                                                CASE WHEN location='' THEN NULL ELSE location END AS location,
+                                                update_time,
+                                                cross_fab_flag,
+                                                std_hr,
+                                                std_wip,
+                                                foup_num,
+                                                CASE WHEN process_mode='' THEN NULL ELSE process_mode END AS process_mode,
+                                                CASE WHEN multi_flag='' THEN NULL ELSE multi_flag END AS multi_flag,
+                                                CASE WHEN entity='' THEN NULL ELSE entity END AS entity,
+                                                CASE WHEN bn_flag='' THEN NULL ELSE bn_flag END AS bn_flag,
+                                                purge_time,
+                                                CASE WHEN minor_ch_flag='' THEN NULL ELSE minor_ch_flag END AS minor_ch_flag,
+                                                CASE WHEN module_id='' THEN NULL ELSE module_id END AS module_id 
+                                        from APS_ETL_TOOL
+                                     """
+    postgres_table_define = """etl_tool(parentid,toolg_id,tool_id,ch_id,tool_status,tool_status_time,ch_status,ch_status_time,coat,lot_id,down_back_time,
+                                                    port_num,reticle_num,location,update_time,cross_fab_flag,std_hr,std_wip,foup_num,process_mode,multi_flag,
+                                                    entity,bn_flag,purge_time, minor_ch_flag,module_id)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_tool",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_TOOL_DOWN(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,toolg_id,tool_id,
+                                                case when ch_id = '' then NULL ELSE ch_id END AS ch_id,
+                                                down_start,down_end,
+                                                case when remark = '' then NULL ELSE remark END AS remark,update_time
+                                        from APS_ETL_TOOL_DOWN
+                                     """
+    postgres_table_define = """etl_tool_down(parentid,toolg_id,tool_id,ch_id,down_start,down_end,remark,update_time)
+                                                                  """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_tool_down",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_TRANSPORT(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  CASE WHEN parentid='' THEN NULL ELSE parentid END AS parentid,
+                                                CASE WHEN location_from='' THEN NULL ELSE location_from END AS location_from,
+                                                CASE WHEN location_to='' THEN NULL ELSE location_to END AS location_to,
+                                                transport_time,
+                                                update_time 
+                                        from APS_ETL_TRANSPORT
+                                     """
+    postgres_table_define = """etl_transport(parentid,location_from,location_to,transport_time,update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_transport",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_VC_RECORD(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select PARENTID, LOT_ID, TOOLG_ID, TOOL_ID, REST_TIME, QTY, UPDATE_TIME, VC_GROUP from APS_ETL_VC_RECORD
+                """
+    postgres_table_define = """etl_vc_record(PARENTID, LOT_ID, TOOLG_ID, TOOL_ID, REST_TIME, QTY, UPDATE_TIME, VC_GROUP)
+                """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_vc_record",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_WIP(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid, lot_id, step_id, target_step_id, target_toolg_id,prodg_id,prodg_tech, prod_id,plan_id,target_plan_id,
+                                                   lot_type,foup_id,qty,pty,shr_flag,lot_status,remain_qtime,qtime_step_id_to,arrival,layer,stage,tool_id,reticle_id,
+                                                   recipe,ppid,track_in,process_start,tech_id,customer,location,parent_lot,critical_ratio,hold_code,pre_tool_id,update_time,
+                                                   factory,parent_tool_flag,target_prod_id,from_step_id,to_step_id,job_prepare,white_flag,batch_id,assign_batch_id,assign_multi_id,
+                                                   frombatch_time,assign_tool_id,trans_state,foup_station_id,inhibit_pass_flag,preohb_tool_id,switch_flag  from APS_ETL_WIP
+                                           """
+    postgres_table_define = """etl_wip(parentid, lot_id, step_id, target_step_id, target_toolg_id,prodg_id,prodg_tech, prod_id,plan_id,target_plan_id,
+                                                   lot_type,foup_id,qty,pty,shr_flag,lot_status,remain_qtime,qtime_step_id_to,arrival,layer,stage,tool_id,reticle_id,
+                                                   recipe,ppid,track_in,process_start,tech_id,customer,location,parent_lot,critical_ratio,hold_code,pre_tool_id,update_time,
+                                                   factory,parent_tool_flag,target_prod_id,from_step_id,to_step_id,job_prepare,white_flag,batch_id,assign_batch_id,assign_multi_lot,
+                                                   formbatch_time,assign_tool_id,trans_state,foup_station_id,inhibit_pass_flag,preohb_tool_id,switch_flag)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_wip",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+def export_to_test_APS_ETL_WAFER_START(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,
+                                               CASE WHEN mfg_date='' THEN NULL ELSE mfg_date END AS mfg_date,
+                                               CASE WHEN lot_id='' THEN NULL ELSE lot_id END AS lot_id,
+                                               CASE WHEN qty='' THEN NULL ELSE qty END AS qty,
+                                               CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id,
+                                               CASE WHEN update_time='' THEN NULL ELSE update_time END AS update_time
+                                         from APS_ETL_WAFER_START
+                                     """
+    postgres_table_define = """etl_wafer_start(parentid,mfg_date,lot_id,qty,prod_id,update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_wafer_start",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+def export_to_test_APS_ETL_PPID_INFO(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select CASE WHEN seq='' THEN NULL ELSE seq END AS seq,
+                                               CASE WHEN ppid='' THEN NULL ELSE ppid END AS ppid,
+                                               parentid,
+                                               CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id,
+                                               CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                               CASE WHEN ch_id='' THEN NULL ELSE ch_id END AS ch_id,
+                                               CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id,
+                                               CASE WHEN plan_id='' THEN NULL ELSE plan_id END AS plan_id,
+                                               CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                               coat_lbound,coat_ubound,coat_per_wafer,
+                                               coat_per_chamber,clean_time,clean_mon_time, update_time, 
+                                               CASE WHEN parameter='' THEN NULL ELSE parameter END AS parameter 
+                                               from APS_ETL_PPID_INFO
+                                          """
+    postgres_table_define = """etl_ppid_info(seq,ppid, parentid,toolg_id,tool_id,ch_id,prod_id, plan_id,stage,coat_lbound,coat_ubound,coat_per_wafer,
+                                                         coat_per_chamber,clean_time,clean_mon_time, update_time, parameter)
+                                                         """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_ppid_info",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()
+
+
+def export_to_test_APS_ETL_PRI_WIP(table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select CASE WHEN parentid='' THEN NULL ELSE parentid END AS parentid,
+                                               CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id,
+                                               CASE WHEN lot_id='' THEN NULL ELSE lot_id END AS lot_id,
+                                               CASE WHEN pri_type='' THEN NULL ELSE pri_type END AS pri_type,
+                                               CASE WHEN prod_id='' THEN NULL ELSE prod_id END AS prod_id,
+                                               CASE WHEN target_plan_id='' THEN NULL ELSE target_plan_id END AS target_plan_id,
+                                               CASE WHEN target_step_id='' THEN NULL ELSE target_step_id END AS target_step_id,
+                                               CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                               CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                               CASE WHEN update_time ='' THEN NULL ELSE update_time  END AS update_time 
+                                        from APS_ETL_PRI_WIP
+                                                      """
+    postgres_table_define = """etl_pri_wip(parentid,toolg_id,lot_id,pri_type,prod_id,target_plan_id,target_step_id,layer,stage,update_time)
+                                                   """
+    my_postgres.copy_duckdb_to_postgres_for_test_pg(uuid=uuid,
+                                                    duckdb=duck_db_memory,
+                                                    table_name_in_duckdb=table_name,
+                                                    table_name_in_pg="etl_pri_wip",  # 要小写
+                                                    select_sql_in_duck=select_sql_in_duck,
+                                                    postgres_table_define=postgres_table_define,
+                                                    pg_conn=my_postgres.postgres_get_test_db_connection())
+    duck_db_memory.close()

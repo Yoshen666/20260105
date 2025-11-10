@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="2d70224d-42bb-474f-8b8a-ea54f5e3292c" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ProjectId" id="2X0cxdmBLtOLKh5W8hozFpzOtkM" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../SYNC_PYTHON" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\XinXiang\ETL_PYTHON\xinxiang\jobs_etl" />
+      <recent name="D:\XinXiang\ETL_PYTHON\xinxiang\jobs_etl\helper" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.aps_etl_wip_5m">
+    <configuration name="aps_etl_lot_op_hist_10m" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ETL_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/xinxiang/jobs_etl" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xinxiang/jobs_etl/aps_etl_lot_op_hist_10m.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="aps_etl_lot_situation" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ETL_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/xinxiang/jobs_etl" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xinxiang/jobs_etl/aps_etl_lot_situation.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="aps_etl_tool_2m" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ETL_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/xinxiang/jobs_etl" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xinxiang/jobs_etl/aps_etl_tool_2m.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="aps_etl_wip_5m" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ETL_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/xinxiang/jobs_etl" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xinxiang/jobs_etl/aps_etl_wip_5m.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="compare_job" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ETL_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/xinxiang/job_compare" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xinxiang/job_compare/compare_job.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.aps_etl_wip_5m" />
+        <item itemvalue="Python.aps_etl_tool_2m" />
+        <item itemvalue="Python.compare_job" />
+        <item itemvalue="Python.aps_etl_lot_situation" />
+        <item itemvalue="Python.aps_etl_lot_op_hist_10m" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration" cleanupOnStartRun="true">
+    <configuration>C:\Users\Administrator\AppData\Roaming\Subversion</configuration>
+    <supportedVersion>125</supportedVersion>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="2d70224d-42bb-474f-8b8a-ea54f5e3292c" name="Default Changelist" comment="" />
+      <created>1697769685747</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1697769685747</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="567" y="212" key="FileChooserDialogImpl" timestamp="1761706221461">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="567" y="212" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1761706221461" />
+    <state x="620" y="260" key="FileChooserDialogImpl/0.0.1680.1010@0.0.1680.1010" timestamp="1756988681889" />
+    <state width="1515" height="179" key="GridCell.Tab.0.bottom" timestamp="1762747529747">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1339" height="272" key="GridCell.Tab.0.bottom/0.0.1360.728@0.0.1360.728" timestamp="1760580899021" />
+    <state width="1515" height="179" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1762747529747" />
+    <state width="1659" height="233" key="GridCell.Tab.0.bottom/0.0.1680.1010@0.0.1680.1010" timestamp="1762268133325" />
+    <state width="1899" height="272" key="GridCell.Tab.0.bottom/0.0.1920.1040@0.0.1920.1040" timestamp="1761558171923" />
+    <state width="1515" height="179" key="GridCell.Tab.0.center" timestamp="1762747529747">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1339" height="272" key="GridCell.Tab.0.center/0.0.1360.728@0.0.1360.728" timestamp="1760580899021" />
+    <state width="1515" height="179" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1762747529747" />
+    <state width="1659" height="233" key="GridCell.Tab.0.center/0.0.1680.1010@0.0.1680.1010" timestamp="1762268133325" />
+    <state width="1899" height="272" key="GridCell.Tab.0.center/0.0.1920.1040@0.0.1920.1040" timestamp="1761558171923" />
+    <state width="1515" height="179" key="GridCell.Tab.0.left" timestamp="1762747529747">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1339" height="272" key="GridCell.Tab.0.left/0.0.1360.728@0.0.1360.728" timestamp="1760580899021" />
+    <state width="1515" height="179" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1762747529747" />
+    <state width="1659" height="233" key="GridCell.Tab.0.left/0.0.1680.1010@0.0.1680.1010" timestamp="1762268133325" />
+    <state width="1899" height="272" key="GridCell.Tab.0.left/0.0.1920.1040@0.0.1920.1040" timestamp="1761558171923" />
+    <state width="1515" height="179" key="GridCell.Tab.0.right" timestamp="1762747529747">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state width="1339" height="272" key="GridCell.Tab.0.right/0.0.1360.728@0.0.1360.728" timestamp="1760580899021" />
+    <state width="1515" height="179" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1762747529747" />
+    <state width="1659" height="233" key="GridCell.Tab.0.right/0.0.1680.1010@0.0.1680.1010" timestamp="1762268133325" />
+    <state width="1899" height="272" key="GridCell.Tab.0.right/0.0.1920.1040@0.0.1920.1040" timestamp="1761558171923" />
+    <state x="478" y="11" width="579" height="801" key="find.popup" timestamp="1761637949237">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="423" y="9" width="555" height="708" key="find.popup/0.0.1360.728@0.0.1360.728" timestamp="1761291647717" />
+    <state x="478" y="11" width="579" height="801" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1761637949237" />
+    <state x="523" y="13" width="634" height="982" key="find.popup/0.0.1680.1010@0.0.1680.1010" timestamp="1756994819946" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_temp/copy_product_to_test.py</url>
+          <line>100</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_temp/copy_product_to_test.py</url>
+          <line>101</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_temp/copy_product_to_test.py</url>
+          <line>95</line>
+          <option name="timeStamp" value="11" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_temp/copy_product_to_test.py</url>
+          <line>96</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/runner/run_aps_etl_write_back_to_oracle_etl_tool.py</url>
+          <line>21</line>
+          <option name="timeStamp" value="14" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_postgres.py</url>
+          <line>268</line>
+          <option name="timeStamp" value="19" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_etl/aps_etl_qtime_spec_720m.py</url>
+          <line>340</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_etl/aps_his_aps_mid_fhopehs_5m.py</url>
+          <line>36</line>
+          <option name="timeStamp" value="42" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_etl/aps_his_aps_mid_fhopehs_5m.py</url>
+          <line>263</line>
+          <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_copy/copy_flow_for_backup.py</url>
+          <line>50</line>
+          <option name="timeStamp" value="46" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_log.py</url>
+          <line>9</line>
+          <option name="timeStamp" value="54" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_log.py</url>
+          <line>33</line>
+          <option name="timeStamp" value="55" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_copy/copy_rsilot_run_hs_for_backup.py</url>
+          <line>40</line>
+          <option name="timeStamp" value="59" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_duck.py</url>
+          <line>185</line>
+          <option name="timeStamp" value="61" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_duck.py</url>
+          <line>186</line>
+          <option name="timeStamp" value="62" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_service/aps_etl_detl_service.py</url>
+          <line>105</line>
+          <option name="timeStamp" value="66" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_etl/aps_etl_wafer_start_60m.py</url>
+          <line>160</line>
+          <option name="timeStamp" value="77" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_file.py</url>
+          <line>42</line>
+          <option name="timeStamp" value="78" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_copy/copy_ph_lothistory_a3_for_backup.py</url>
+          <line>46</line>
+          <option name="timeStamp" value="79" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/jobs_copy/copy_ph_lothistory_a3_for_backup.py</url>
+          <line>50</line>
+          <option name="timeStamp" value="80" />
+        </line-breakpoint>
+      </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="PythonConfigurationType">
+        <watch expression="col" />
+        <watch expression="datetime.datetime.hour" language="Python" />
+        <watch expression="hour" language="Python" />
+      </configuration>
+    </watches-manager>
+  </component>
+</project>

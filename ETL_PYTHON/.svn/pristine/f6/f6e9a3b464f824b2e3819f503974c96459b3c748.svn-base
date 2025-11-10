@@ -1,0 +1,21 @@
+import logging
+import os
+from logging.handlers import TimedRotatingFileHandler
+
+from xinxiang import config
+
+
+def init_log(file_name, when='D'):
+    if not os.path.isdir(config.g_log_path):
+        os.makedirs(config.g_log_path)
+    log = logging.getLogger()
+    fmt = '[%(asctime)s] - [%(levelname)s] -%(pathname)s #Line:%(lineno)d - %(message)s'
+    fileTimeHandler = TimedRotatingFileHandler(file_name, encoding="utf-8", when='D', interval=1,
+                                               backupCount=7)
+    fileTimeHandler.setFormatter(logging.Formatter(fmt))
+    logging.basicConfig(level=config.g_log_level,
+                        format=fmt,
+                        encoding='utf-8'
+                        )
+    log.addHandler(fileTimeHandler)
+

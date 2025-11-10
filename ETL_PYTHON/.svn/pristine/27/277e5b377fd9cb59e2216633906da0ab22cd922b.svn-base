@@ -1,0 +1,110 @@
+from xinxiang.jobs_etl import aps_tmp_lothistory_5m_APS_MID_PH_LOTHISTORY, aps_tr_type11_30m, aps_tr_type12_30m, \
+    aps_tr_type21_30m, aps_tr_type22_30m, aps_tr_type31_30m, aps_tr_type32_30m, aps_tr_type221_30m, \
+    aps_tmp_type11_median_1d_APS_MID_TYPE3_MEDIAN, aps_mid_type_runtime_1d_APS_MID_TYPE32_RUNTIME_ALL, \
+    aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN, aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_TMP_TYPE11_TECH_MEDIAN, aps_tmp_type11_median_1d_APS_TMP_TYPE12_OPE_MEDIAN, \
+    aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN, aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN, \
+    aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN, aps_tmp_type11_median_1d_APS_MID_TYPE31_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_MID_TYPE32_MEDIAN, aps_tmp_type11_median_1d_APS_MID_TYPE33_MEDIAN, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_ALL, aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_P_ALL, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_ALL, aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_P_ALL, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE31_RUNTIME_ALL, aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_ALL, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_P_ALL, aps_tr_type3_5m,\
+    aps_etl_special_cons_10m, aps_tmp_type21_median_1d_APS_MID_PURGE11, \
+    aps_tmp_type21_median_1d_APS_MID_PURGE12, aps_tr_charge_time_10m, sql_to_table_APS_ETL_PH_RTDQTIME, \
+    sql_to_table_APS_ETL_RTDQTTIME, sql_to_table_APS_ETL_RTDQTTIME_UN_WMTWID, sql_to_table_APS_ETL_RTDQTTIME_WMTWID, \
+    aps_tmp_charge_time_10m, aps_tr_csfrinhibit_15m,aps_tmp_type11_median_1d_APS_MID_OCS_MEASURE_CT
+from xinxiang.util import my_cron
+
+
+def set_etl_cron(schedule):
+    schedule.add_job(aps_tr_type3_5m.execute, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tr_type11_30m.execute, 'cron', hour='9', misfire_grace_time=60)  # 周期从9点开始,每天执行一次
+    schedule.add_job(aps_tr_type12_30m.execute, 'cron', hour='9', misfire_grace_time=60)  # 周期从9点开始,每天执行一次
+    schedule.add_job(aps_tr_type21_30m.execute, 'cron', hour='10', misfire_grace_time=60)  # 周期从10点开始,每天执行一次
+    schedule.add_job(aps_tr_type22_30m.execute, 'cron', hour='10', misfire_grace_time=60)  # 周期从10点开始,每天执行一次
+    schedule.add_job(aps_tr_type31_30m.execute, 'cron', hour='11', misfire_grace_time=60)  # 周期从11点开始,每天执行一次
+    schedule.add_job(aps_tr_type32_30m.execute, 'cron', hour='11', misfire_grace_time=60)  # 周期从11点开始,每天执行一次
+    schedule.add_job(aps_tr_type221_30m.execute, 'cron', hour='10', misfire_grace_time=60)  # 周期从10点开始,每天执行一次
+
+
+    schedule.add_job(aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN.execute, 'cron', hour='10',
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN.execute, 'cron', hour='10',
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type11_median_1d_APS_TMP_TYPE11_TECH_MEDIAN.execute, 'cron', hour='10',
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type11_median_1d_APS_TMP_TYPE12_OPE_MEDIAN.execute, 'cron', hour='10',
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN.execute,
+                     my_cron.CronTriger6.cron_triger("0 12 10 * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN.execute,
+                     my_cron.CronTriger6.cron_triger("0 12 10 * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type11_median_1d_APS_MID_OCS_MEASURE_CT.execute,
+                     my_cron.CronTriger6.cron_triger("0 12 10 * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN.execute,
+                     my_cron.CronTriger6.cron_triger("0 12 10 * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type11_median_1d_APS_MID_TYPE3_MEDIAN.execute,
+                     my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type11_median_1d_APS_MID_TYPE31_MEDIAN.execute,
+                     my_cron.CronTriger6.cron_triger("0 0 10 * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type11_median_1d_APS_MID_TYPE32_MEDIAN.execute,
+                     my_cron.CronTriger6.cron_triger("0 0 10 * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type11_median_1d_APS_MID_TYPE33_MEDIAN.execute,
+                     my_cron.CronTriger6.cron_triger("0 0 10 * * ?"),
+                     misfire_grace_time=60)
+
+    schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_ALL.execute,
+                     my_cron.CronTriger6.cron_triger("0 18 10 * * ?"), misfire_grace_time=60)
+    schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_P_ALL.execute,
+                     my_cron.CronTriger6.cron_triger("0 35 10 * * ?"), misfire_grace_time=60)
+    schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_ALL.execute,
+                     my_cron.CronTriger6.cron_triger("0 18 10 * * ?"), misfire_grace_time=60)
+    schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_P_ALL.execute,
+                     my_cron.CronTriger6.cron_triger("0 45 10 * * ?"), misfire_grace_time=60)
+    schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE31_RUNTIME_ALL.execute,
+                     my_cron.CronTriger6.cron_triger("0 18 10 * * ?"), misfire_grace_time=60)
+    schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE32_RUNTIME_ALL.execute,
+                     my_cron.CronTriger6.cron_triger("0 18 10 * * ?"), misfire_grace_time=60)
+    schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_ALL.execute,
+                     my_cron.CronTriger6.cron_triger("0 18 10 * * ?"), misfire_grace_time=60)
+    schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_P_ALL.execute,
+                     my_cron.CronTriger6.cron_triger("0 55 10 * * ?"), misfire_grace_time=60)
+
+    schedule.add_job(aps_tmp_lothistory_5m_APS_MID_PH_LOTHISTORY.execute,
+                     my_cron.CronTriger6.cron_triger("0 1/5 * * * ?"), misfire_grace_time=60)
+
+    # 其他ETL
+    schedule.add_job(aps_etl_special_cons_10m.execute, my_cron.CronTriger6.cron_triger("10 2/10 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_charge_time_10m.execute, my_cron.CronTriger6.cron_triger("0 9/10 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tr_charge_time_10m.execute, my_cron.CronTriger6.cron_triger("0 8/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    schedule.add_job(aps_tmp_type21_median_1d_APS_MID_PURGE11.execute, my_cron.CronTriger6.cron_triger("0 12 10 * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(aps_tmp_type21_median_1d_APS_MID_PURGE12.execute, my_cron.CronTriger6.cron_triger("0 12 10 * * ?"),
+                     misfire_grace_time=60)
+
+    schedule.add_job(sql_to_table_APS_ETL_PH_RTDQTIME.execute, my_cron.CronTriger6.cron_triger("10 3/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sql_to_table_APS_ETL_RTDQTTIME.execute, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sql_to_table_APS_ETL_RTDQTTIME_UN_WMTWID.execute, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sql_to_table_APS_ETL_RTDQTTIME_WMTWID.execute,
+                     my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    schedule.add_job(aps_tr_csfrinhibit_15m.execute,
+                     my_cron.CronTriger6.cron_triger("0 4/15 * * * ?"),
+                     misfire_grace_time=60)

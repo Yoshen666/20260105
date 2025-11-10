@@ -1,0 +1,29 @@
+# sync&etl写上本机名称 (李)
+## 修改表结构
+    APS_ETL_VER_CONTROL_DUCK
+    APS_ETL_SYNC_CONTROL_DUCK
+    追加 server_name varchar2(200) --服务器名称
+    字段
+## 修改my_oracle.py (李，已完成)
+    HandlingVerControl
+    get_last_create_file
+
+## 追加 copy_flow_for_backup.py(李)
+    追加一个job（将95产出拷贝到94，并写94的产出）
+
+# 改写Duckdb -> Oracle回写方式(旭林)
+    从duckdb > pandas > oracle
+    改成
+      duckdb > csv > oracle
+
+# 修改etl导出到pg部分代码，
+- 追加一张表，识别那个服务器是主服务器，哪个是备用机（高盛）
+- 追加一个函数，判断当前服务器是否为主服务器（返回True or False）（李）
+- 当返回True的时候，执行拷贝到pg动作 （共通:李,具体ETL修改:高盛）
+- 当返回False的时候，不执行拷贝到PG动作 （共通:李,具体ETL修改:高盛）
+
+# 修改删除windows 定时任务的脚本，做到无键盘干预可以直接删除（李）
+
+# 汇总所有Job，整理出2个bat（高盛，谢成）
+- 一个bat执行全部设置windows定时任务
+- 一个bat执行全部删除windows定时任务（无键盘干预）

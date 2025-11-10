@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c8707244-5eea-4a2a-9e5d-82c7e1a750ae" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectId" id="2WbeX7QLjQP5ztMzEbH67j9OngG" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RunManager" selected="Python.init_duckdb">
+    <configuration name="init_duckdb" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="SYNC_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="D:\Program Files\Python311\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/init_duckdb.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="manager_jobs" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="SYNC_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/xinxiang/jobs_manager" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xinxiang/jobs_manager/manager_jobs.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="manager_jobs_copy" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="SYNC_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/xinxiang/jobs_manager" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xinxiang/jobs_manager/manager_jobs_copy.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="my_oracle" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="SYNC_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/xinxiang/util" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/xinxiang/util/my_oracle.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_connection" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="SYNC_PYTHON" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/testcase" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/testcase/test_connection.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.init_duckdb" />
+        <item itemvalue="Python.my_oracle" />
+        <item itemvalue="Python.test_connection" />
+        <item itemvalue="Python.manager_jobs_copy" />
+        <item itemvalue="Python.manager_jobs" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration" cleanupOnStartRun="true">
+    <configuration>C:\Users\Administrator\AppData\Roaming\Subversion</configuration>
+    <supportedVersion>125</supportedVersion>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c8707244-5eea-4a2a-9e5d-82c7e1a750ae" name="Default Changelist" comment="" />
+      <created>1697005743622</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1697005743622</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="484" y="8" key="#my_oracle" timestamp="1756878860697">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="484" y="8" key="#my_oracle/0.0.1536.824@0.0.1536.824" timestamp="1756878860697" />
+    <state width="950" height="412" key="DebuggerActiveHint" timestamp="1756880755799">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="950" height="412" key="DebuggerActiveHint/0.0.1360.728@0.0.1360.728" timestamp="1756880755799" />
+    <state width="965" height="466" key="DebuggerActiveHint/0.0.1536.824@0.0.1536.824" timestamp="1756878973783" />
+    <state x="686" y="211" key="FileChooserDialogImpl" timestamp="1761557894417">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1758684090159" />
+    <state x="686" y="211" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1761557894417" />
+    <state width="1659" height="271" key="GridCell.Tab.0.bottom" timestamp="1757396991770">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="1659" height="271" key="GridCell.Tab.0.bottom/0.0.1360.728@0.0.1360.728" timestamp="1757396991770" />
+    <state width="1515" height="357" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1757051135091" />
+    <state width="1659" height="357" key="GridCell.Tab.0.bottom/0.0.1680.1010@0.0.1680.1010" timestamp="1756994186397" />
+    <state width="1659" height="271" key="GridCell.Tab.0.center" timestamp="1757396991770">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="1659" height="271" key="GridCell.Tab.0.center/0.0.1360.728@0.0.1360.728" timestamp="1757396991770" />
+    <state width="1515" height="357" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1757051135091" />
+    <state width="1659" height="357" key="GridCell.Tab.0.center/0.0.1680.1010@0.0.1680.1010" timestamp="1756994186396" />
+    <state width="1659" height="271" key="GridCell.Tab.0.left" timestamp="1757396991770">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="1659" height="271" key="GridCell.Tab.0.left/0.0.1360.728@0.0.1360.728" timestamp="1757396991770" />
+    <state width="1515" height="357" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1757051135091" />
+    <state width="1659" height="357" key="GridCell.Tab.0.left/0.0.1680.1010@0.0.1680.1010" timestamp="1756994186396" />
+    <state width="1659" height="271" key="GridCell.Tab.0.right" timestamp="1757396991770">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="1659" height="271" key="GridCell.Tab.0.right/0.0.1360.728@0.0.1360.728" timestamp="1757396991770" />
+    <state width="1515" height="357" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1757051135091" />
+    <state width="1659" height="357" key="GridCell.Tab.0.right/0.0.1680.1010@0.0.1680.1010" timestamp="1756994186396" />
+    <state width="1659" height="271" key="GridCell.Tab.1.bottom" timestamp="1757396991770">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="1659" height="271" key="GridCell.Tab.1.bottom/0.0.1360.728@0.0.1360.728" timestamp="1757396991770" />
+    <state width="1515" height="99" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1756883716011" />
+    <state width="1659" height="271" key="GridCell.Tab.1.bottom/0.0.1680.1010@0.0.1680.1010" timestamp="1756991868167" />
+    <state width="1659" height="271" key="GridCell.Tab.1.center" timestamp="1757396991770">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="1659" height="271" key="GridCell.Tab.1.center/0.0.1360.728@0.0.1360.728" timestamp="1757396991770" />
+    <state width="1515" height="99" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1756883716011" />
+    <state width="1659" height="271" key="GridCell.Tab.1.center/0.0.1680.1010@0.0.1680.1010" timestamp="1756991868167" />
+    <state width="1659" height="271" key="GridCell.Tab.1.left" timestamp="1757396991770">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="1659" height="271" key="GridCell.Tab.1.left/0.0.1360.728@0.0.1360.728" timestamp="1757396991770" />
+    <state width="1515" height="99" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1756883716011" />
+    <state width="1659" height="271" key="GridCell.Tab.1.left/0.0.1680.1010@0.0.1680.1010" timestamp="1756991868167" />
+    <state width="1659" height="271" key="GridCell.Tab.1.right" timestamp="1757396991770">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="1659" height="271" key="GridCell.Tab.1.right/0.0.1360.728@0.0.1360.728" timestamp="1757396991770" />
+    <state width="1515" height="99" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1756883716011" />
+    <state width="1659" height="271" key="GridCell.Tab.1.right/0.0.1680.1010@0.0.1680.1010" timestamp="1756991868167" />
+    <state width="688" height="372" key="XDebugger.FullValuePopup" timestamp="1756880755797">
+      <screen x="0" y="0" width="1360" height="728" />
+    </state>
+    <state width="688" height="372" key="XDebugger.FullValuePopup/0.0.1360.728@0.0.1360.728" timestamp="1756880755797" />
+    <state x="478" y="145" width="579" height="534" key="find.popup" timestamp="1761101479137">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="478" y="145" width="579" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1761101479137" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_postgres.py</url>
+          <line>224</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_postgres.py</url>
+          <line>121</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_postgres.py</url>
+          <line>266</line>
+          <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_postgres.py</url>
+          <line>267</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_common.py</url>
+          <line>67</line>
+          <option name="timeStamp" value="29" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_common.py</url>
+          <line>167</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_file.py</url>
+          <line>81</line>
+          <option name="timeStamp" value="37" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_file.py</url>
+          <line>85</line>
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_file.py</url>
+          <line>94</line>
+          <option name="timeStamp" value="39" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_file.py</url>
+          <line>96</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_his.py</url>
+          <line>122</line>
+          <option name="timeStamp" value="41" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_his.py</url>
+          <line>124</line>
+          <option name="timeStamp" value="42" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_his.py</url>
+          <line>126</line>
+          <option name="timeStamp" value="43" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_his.py</url>
+          <line>134</line>
+          <option name="timeStamp" value="44" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_his.py</url>
+          <line>167</line>
+          <option name="timeStamp" value="45" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_oracle.py</url>
+          <line>238</line>
+          <option name="timeStamp" value="46" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_oracle.py</url>
+          <line>245</line>
+          <option name="timeStamp" value="47" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_cmder.py</url>
+          <line>22</line>
+          <option name="timeStamp" value="48" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_common.py</url>
+          <line>185</line>
+          <option name="timeStamp" value="49" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/my_oracle.py</url>
+          <line>29</line>
+          <option name="timeStamp" value="50" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/xinxiang/util/oracle_to_duck_common.py</url>
+          <line>69</line>
+          <option name="timeStamp" value="51" />
+        </line-breakpoint>
+      </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

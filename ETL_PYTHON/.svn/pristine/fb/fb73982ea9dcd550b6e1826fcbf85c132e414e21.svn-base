@@ -1,0 +1,3 @@
+d:
+cd D:\XinXiang\ETL_PYTHON\runner
+start /B python run_aps_tmp_lothistory_5m_aps_mid_ph_lothistory.py

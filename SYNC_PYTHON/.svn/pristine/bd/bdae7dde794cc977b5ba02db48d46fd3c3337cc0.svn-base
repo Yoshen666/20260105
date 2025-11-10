@@ -1,0 +1,63 @@
+from datetime import date, datetime
+
+'''
+%Y 四位年
+%m 月 0-12
+%d 天
+%H 小时(24)
+%M 分钟(0-59)
+%S 秒
+%f 微秒
+'''
+
+
+def date_str():
+    today = date.today()
+    str_today = today.strftime("%Y_%m_%d")
+    return str_today
+
+
+def date_time_minute_str():
+    times = datetime.now()
+    str = times.strftime('%Y-%m-%d %H:%M')
+    return str
+
+
+def date_time_second_str():
+    times = datetime.now()
+    str = times.strftime('%Y-%m-%d %H:%M:%S')
+    return str
+
+
+def date_time_second_short_str():
+    times = datetime.now()
+    str = times.strftime('%Y%m%d%H%M%S')
+    return str
+
+
+def date_time_hour_short_str():
+    times = datetime.now()
+    str = times.strftime('%Y%m%d%H')
+    return str
+
+
+def date_short_str():
+    times = datetime.now()
+    str = times.strftime('%Y%m%d')
+    return str
+
+
+def hour_short_str():
+    times = datetime.now()
+    str = times.strftime('%H')
+    return str
+
+
+def date_time_min_second_str():
+    times = datetime.now()
+    str = times.strftime('%Y-%m-%d %H:%M:%S.%f')
+    return str
+
+
+def duration(start, end):
+    return (end - start).seconds

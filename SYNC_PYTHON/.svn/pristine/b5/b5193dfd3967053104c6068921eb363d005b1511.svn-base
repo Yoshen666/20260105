@@ -1,0 +1,34 @@
+import logging
+import subprocess
+
+from xinxiang import config
+
+
+def exec_view_to_dat(file_name, query_sql, split_char, is_append_header):
+    head = "no"
+    if is_append_header:
+        head = "yes"
+    cmder = """
+    sqluldr264 user={}/{}@{} query="{}" field=”{}“ head={} file={} charset=AL32UTF8
+    """.format(config.g_oracle_user,
+               config.g_oracle_password,
+               config.g_oracle_ip,
+               query_sql,
+               split_char,
+               head,
+               file_name)
+
+    logging.info(cmder)
+
+    result = exec(cmder)
+    return result
+
+
+def exec(cmder):
+    print(cmder)
+    logging.info(cmder)
+    result = subprocess.run(cmder, capture_output=True, text=True)
+    print(result.stdout)
+    logging.info(result.stdout)
+    return result.returncode
+

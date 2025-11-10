@@ -1,0 +1,1496 @@
+import logging
+import warnings
+
+from xinxiang.util import oracle_to_duck_common
+
+###################以下为自动生成代码########################
+
+
+
+def sync_APS_SYNC_APC_INHIBIT_BATCH():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_APC_INHIBIT_BATCH"
+    target_table = "APS_SYNC_APC_INHIBIT_BATCH"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name,
+                                              source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_EQP_STATUS_BOOKING_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_EQP_STATUS_BOOKING_SETTING"
+    target_table = "APS_SYNC_EQP_STATUS_BOOKING_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "v_eqp_status_convert_available"
+    target_table = "APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_EQP_STATUS_E10_FORECAST():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_EQP_STATUS_E10_FORECAST"
+    target_table = "APS_SYNC_EQP_STATUS_E10_FORECAST"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_EQP_STATUS_WAIT_TIME_SETTING"
+    target_table = "APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MASK_INFO():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_ETL_MASK_INFO"
+    target_table = "APS_SYNC_MASK_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WIP():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_ETL_WIP"
+    target_table = "APS_SYNC_WIP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FRDRBL_ID_DYB():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_FRDRBL_ID_DYB"
+    target_table = "APS_SYNC_FRDRBL_ID_DYB"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FUR_ED_CONTROL_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_FUR_ED_CONTROL_SETTING"
+    target_table = "APS_SYNC_FUR_ED_CONTROL_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MASK_MES_STATUS():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_MASK_MES_STATUS"
+    target_table = "APS_SYNC_MASK_MES_STATUS"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MOVE_TARGET_RANK():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_MOVE_TARGET_RANK"
+    target_table = "APS_SYNC_MOVE_TARGET_RANK"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_PHOTO_PATH_CONVERT():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_PHOTO_PATH_CONVERT"
+    target_table = "APS_SYNC_PHOTO_PATH_CONVERT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_GROUP_EQPG_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_GROUP_EQPG_SETTING"
+    target_table = "APS_SYNC_SCHE_GROUP_EQPG_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_LOT_PURPTY_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_LOT_PURPTY_SETTING"
+    target_table = "APS_SYNC_SCHE_LOT_PURPTY_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_LOT_TO_EQPG():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_LOT_TO_EQPG"
+    target_table = "APS_SYNC_SCHE_LOT_TO_EQPG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_OPE_NO_MODULE_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_OPE_NO_MODULE_SETTING"
+    target_table = "APS_SYNC_SCHE_OPE_NO_MODULE_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_PM_PROP_TIME():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_PM_PROP_TIME"
+    target_table = "APS_SYNC_SCHE_PM_PROP_TIME"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_UMT_MODULE_EQPG():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_UMT_MODULE_EQPG"
+    target_table = "APS_SYNC_SCHE_UMT_MODULE_EQPG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SETTING_MCS_LOCATION_MANUAL():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SETTING_MCS_LOCATION_MANUAL"
+    target_table = "APS_SYNC_SETTING_MCS_LOCATION_MANUAL"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_TRANSFER_TIME_DEFALUTE():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_TRANSFER_TIME_DEFALUT"
+    target_table = "APS_SYNC_TRANSFER_TIME_DEFALUTE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_CONTROL_LOT():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_UMT_CONTROL_LOT"
+    target_table = "APS_SYNC_UMT_CONTROL_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_EQP_CAP_STD():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_UMT_EQP_CAP_STD"
+    target_table = "APS_SYNC_UMT_EQP_CAP_STD"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_PATH_CONVERT_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_UMT_PATH_CONVERT_SETTING"
+    target_table = "APS_SYNC_UMT_PATH_CONVERT_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_RUN_RULE_BATCH_SIZE():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_UMT_RUN_RULE_BATCH_SIZE"
+    target_table = "APS_SYNC_UMT_RUN_RULE_BATCH_SIZE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WET_ACID_CONTROL_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_WET_ACID_CONTROL_SETTING"
+    target_table = "APS_SYNC_WET_ACID_CONTROL_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WET_ACID_DATA():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_WET_ACID_DATA"
+    target_table = "APS_SYNC_WET_ACID_DATA"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WS_SCHEDULE_LOT_INFO():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_WS_SCHEDULE_LOT_INFO"
+    target_table = "APS_SYNC_WS_SCHEDULE_LOT_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_DAILY_MOVE_TARGET():
+    # Corn In DataBase: 10 8/10 * * * ?
+    source_table = "V_DAILY_MOVE_TARGET"
+    target_table = "APS_SYNC_DAILY_MOVE_TARGET"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RDS_RECIPEINFO():
+    # Corn In DataBase: 10 8/10 * * * ?
+    source_table = "V_RDS_RECIPEINFO"
+    target_table = "APS_SYNC_RDS_RECIPEINFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_CSLOT_FORCESAMP():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_CSLOT_FORCESAMP"
+    target_table = "APS_SYNC_CSLOT_FORCESAMP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RETICLE_USE():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_ETL_RETICLE_USE"
+    target_table = "APS_SYNC_RETICLE_USE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FLOW_DYB_RETURN():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_FLOW_DYB_RETURN"
+    target_table = "APS_SYNC_FLOW_DYB_RETURN"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FRLOT_EQP_RESOURCE_FLAG():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_FRLOT_EQP_RESOURCE_FLAG"
+    target_table = "APS_SYNC_FRLOT_EQP_RESOURCE_FLAG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FVLOT_QTIME():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_FVLOT_QTIME"
+    target_table = "APS_SYNC_FVLOT_QTIME"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_OCS_JOB_GROUP_SPEC():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_OCS_JOB_GROUP_SPEC"
+    target_table = "APS_SYNC_OCS_JOB_GROUP_SPEC"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RETICLE_PROD():
+    # Corn In DataBase:
+    source_table = "V_RETICLE_PROD"
+    target_table = "APS_SYNC_RETICLE_PROD"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RSSPLIT_INFO():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_RSSPLIT_INFO"
+    target_table = "APS_SYNC_RSSPLIT_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_QTIME_PROD_EQP():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_RTD_QTIME_PROD_EQP"
+    target_table = "APS_SYNC_RTD_QTIME_PROD_EQP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_RTD_BATCH_INFO():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_UMT_RTD_BATCH_INFO"
+    target_table = "APS_SYNC_UMT_RTD_BATCH_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FLOW():
+    # Corn In DataBase: 0 6/30 * * * ?
+    source_table = "V_ETL_FLOW"
+    target_table = "APS_SYNC_FLOW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_QTIME_EQP_LOADING():
+    # Corn In DataBase: 30 7/10 * * * ?
+    source_table = "V_QTIME_EQP_LOADING"
+    target_table = "APS_SYNC_QTIME_EQP_LOADING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_QTIME_EQP_LOADING_AM():
+    # Corn In DataBase: 30 7/10 * * * ?
+    source_table = "V_QTIME_EQP_LOADING_AM"
+    target_table = "APS_SYNC_QTIME_EQP_LOADING_AM"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_RECIPEGROUP():
+    # Corn In DataBase: 30 7/10 * * * ?
+    source_table = "V_RTD_RECIPEGROUP"
+    target_table = "APS_SYNC_RTD_RECIPEGROUP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_CUT_LINE():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_CUT_LINE"
+    target_table = "APS_SYNC_CUT_LINE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FLOW_ORDER_CHANGE():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_FLOW_ORDER_CHANGE"
+    target_table = "APS_SYNC_FLOW_ORDER_CHANGE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_LOT_LOCATION():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_LOT_LOCATION"
+    target_table = "APS_SYNC_LOT_LOCATION"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_LOT_PURPOSE():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_LOT_PURPOSE"
+    target_table = "APS_SYNC_LOT_PURPOSE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MCS_SCHED_TRANSFER_TIME():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_MCS_SCHED_TRANSFER_TIME"
+    target_table = "APS_SYNC_MCS_SCHED_TRANSFER_TIME"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MLIF_FOR_BATCH_MANU_REG():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_MLIF_FOR_BATCH_MANU_REG"
+    target_table = "APS_SYNC_MLIF_FOR_BATCH_MANU_REG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_PRODUCT_INFO():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_PRODUCT_INFO"
+    target_table = "APS_SYNC_PRODUCT_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RSPILOT_RUNING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_RSPILOT_RUNING"
+    target_table = "APS_SYNC_RSPILOT_RUNING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_MOVE_TARGET():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_RTD_MOVE_TARGET"
+    target_table = "APS_SYNC_RTD_MOVE_TARGET"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_WET_BATCH_SIZE_SETTING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_RTD_WET_BATCH_SIZE_SETTING"
+    target_table = "APS_SYNC_RTD_WET_BATCH_SIZE_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SELECT_LOT():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_SELECT_LOT"
+    target_table = "APS_SYNC_SELECT_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SHL_LOT_FIRE_NUMBER():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_SHL_LOT_FIRE_NUMBER"
+    target_table = "APS_SYNC_SHL_LOT_FIRE_NUMBER"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SHR_PRI():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_SHR_PRI"
+    target_table = "APS_SYNC_SHR_PRI"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_BOAT_CONSTAINT_SETTING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_UMT_BOAT_CONSTAINT_SETTING"
+    target_table = "APS_SYNC_UMT_BOAT_CONSTAINT_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_UMT_EQP_BATCH_SIZE_SETTING"
+    target_table = "APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_UO_HOLDLOT_WAIT_DISPATCH"
+    target_table = "APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WET_ED_DATA():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_WET_ED_DATA"
+    target_table = "APS_SYNC_WET_ED_DATA"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WET_EXCHANGE_ACID_SETTING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_WET_EXCHANGE_ACID_SETTING"
+    target_table = "APS_SYNC_WET_EXCHANGE_ACID_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_OP_CHAMBER_RULE():
+    # Corn In DataBase: 40 15/60 * * * ?
+    source_table = "V_OP_CHAMBER_RULE"
+    target_table = "APS_SYNC_OP_CHAMBER_RULE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_PD_RECIPE_EQP_MAIN():
+    # Corn In DataBase: 40 15/60 * * * ?
+    source_table = "V_PD_RECIPE_EQP_MAIN"
+    target_table = "APS_SYNC_PD_RECIPE_EQP_MAIN"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+# def sync_APS_SYNC_PD_RECIPE_EQP_LOAD():
+#     # Corn In DataBase: 55 9/10 * * * ?
+#     source_table = "V_PD_RECIPE_EQP_LOAD"
+#     target_table = "APS_SYNC_PD_RECIPE_EQP_LOAD"
+#     etl_name = "Sync " + source_table + " to " + target_table
+#
+#     logging.info("Start " + etl_name)
+#     oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+#     logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_PF_PO_N1():
+    # Corn In DataBase: 55 8/10 * * * ?
+    source_table = "V_PF_PO_N1"
+    target_table = "APS_SYNC_PF_PO_N1"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_APC_PA():
+    # Corn In DataBase: 0 11/10 * * * ?
+    source_table = "V_SCHE_APC_PA"
+    target_table = "APS_SYNC_SCHE_APC_PA"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_OCS_JOB_SPEC_GROUP_PO():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "VIEW_OCS_JOB_SPEC_GROUP_PO"
+    target_table = "APS_SYNC_OCS_JOB_SPEC_GROUP_PO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_APC_RECIPE_EFFECT_TIME():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_APC_RECIPE_EFFECT_TIME"
+    target_table = "APS_SYNC_APC_RECIPE_EFFECT_TIME"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_APC_SPLIT_WAFER():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_APC_SPLIT_WAFER"
+    target_table = "APS_SYNC_APC_SPLIT_WAFER"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_CSCMBMRCPPRCFG_MFG():
+    # Corn In DataBase:
+    source_table = "V_CSCMBMRCPPRCFG_MFG"
+    target_table = "APS_SYNC_CSCMBMRCPPRCFG_MFG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_CSCMBMRCPRULE():
+    # Corn In DataBase:
+    source_table = "V_CSCMBMRCPRULE"
+    target_table = "APS_SYNC_CSCMBMRCPRULE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_HOLD_DETAIL_HISTORY():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_HOLD_DETAIL_HISTORY"
+    target_table = "APS_SYNC_HOLD_DETAIL_HISTORY"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_LOT_PROCESS_MONITOR():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_LOT_PROCESS_MONITOR"
+    target_table = "APS_SYNC_LOT_PROCESS_MONITOR"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MASK_GROUP_MAPPLING():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_MASK_GROUP_MAPPLING"
+    target_table = "APS_SYNC_MASK_GROUP_MAPPLING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_PD_RECIPE_EQP_DYB():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_PD_RECIPE_EQP_DYB"
+    target_table = "APS_SYNC_PD_RECIPE_EQP_DYB"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+# def sync_APS_SYNC_PD_RECIPE_EQP_REWORK():
+#     # Corn In DataBase: 0 6/10 * * * ?
+#     source_table = "V_PD_RECIPE_EQP_REWORK"
+#     target_table = "APS_SYNC_PD_RECIPE_EQP_REWORK"
+#     etl_name = "Sync " + source_table + " to " + target_table
+#
+#     logging.info("Start " + etl_name)
+#     oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+#     logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_QTIME_CONSTRAINT():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_QTIME_CONSTRAINT"
+    target_table = "APS_SYNC_QTIME_CONSTRAINT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RMS_RECIPE_RETICLE():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_RMS_RECIPE_RETICLE"
+    target_table = "APS_SYNC_RMS_RECIPE_RETICLE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_SCHE_APC_LOT_SPECIAL_VALUE"
+    target_table = "APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_TMS_EQP_PARAMETER():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_TMS_EQP_PARAMETER"
+    target_table = "APS_SYNC_TMS_EQP_PARAMETER"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING():
+    # Corn In DataBase:
+    source_table = "V_UMT_EQP_UNIT_PLAN_SETTING"
+    target_table = "APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_WET_RECIPE_TANK_RULE():
+    # Corn In DataBase:
+    source_table = "V_UMT_WET_RECIPE_TANK_RULE"
+    target_table = "APS_SYNC_UMT_WET_RECIPE_TANK_RULE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UNIT_EQP_CHAMBER_SETTING():
+    # Corn In DataBase:
+    source_table = "V_UNIT_EQP_CHAMBER_SETTING"
+    target_table = "APS_SYNC_UNIT_EQP_CHAMBER_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_DIFF_BATCH_SIZE_MIX():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_DIFF_BATCH_SIZE_MIX"
+    target_table = "APS_SYNC_DIFF_BATCH_SIZE_MIX"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_EQP_RCP_INHIBIT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_EQP_RCP_INHIBIT"
+    target_table = "APS_SYNC_EQP_RCP_INHIBIT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_ETL_TOOL():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_ETL_TOOL"
+    target_table = "APS_SYNC_ETL_TOOL"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FVEQP():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_FVEQP"
+    target_table = "APS_SYNC_FVEQP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FVPORT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_FVPORT"
+    target_table = "APS_SYNC_FVPORT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_IDLE_DUMMY_SPEC():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_IDLE_DUMMY_SPEC"
+    target_table = "APS_SYNC_IDLE_DUMMY_SPEC"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_LOT_TO_EQP():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_LOT_TO_EQP"
+    target_table = "APS_SYNC_LOT_TO_EQP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MCS_SCHED_LOCATION_INFO():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_MCS_SCHED_LOCATION_INFO"
+    target_table = "APS_SYNC_MCS_SCHED_LOCATION_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MLIF_FOR_WOT_MANU_REG():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_MLIF_FOR_WOT_MANU_REG"
+    target_table = "APS_SYNC_MLIF_FOR_WOT_MANU_REG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MLIF_HOLD_LOT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_MLIF_HOLD_LOT"
+    target_table = "APS_SYNC_MLIF_HOLD_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MM_FRSTK():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_MM_FRSTK"
+    target_table = "APS_SYNC_MM_FRSTK"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_PRODUCT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_PRODUCT"
+    target_table = "APS_SYNC_PRODUCT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_MFG_HWLD_SPEC():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_RTD_MFG_HWLD_SPEC"
+    target_table = "APS_SYNC_RTD_MFG_HWLD_SPEC"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_RUN_LOTBYEQP_COUNT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_RTD_RUN_LOTBYEQP_COUNT"
+    target_table = "APS_SYNC_RTD_RUN_LOTBYEQP_COUNT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SGS_LOT_WIP():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_SGS_LOT_WIP"
+    target_table = "APS_SYNC_SGS_LOT_WIP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_APC_PB():
+    # Corn In DataBase: 0 7/10 * * * ?
+    source_table = "V_SCHE_APC_PB"
+    target_table = "APS_SYNC_SCHE_APC_PB"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY():
+    # Corn In DataBase: 0 7/10 * * * ?
+    source_table = "V_WP_SPLIT_MERGE_DETAIL_HISTORY"
+    target_table = "APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_QTIME_FLOW():
+    source_table = "V_RTD_QTIME_FLOW"
+    target_table = "APS_SYNC_RTD_QTIME_FLOW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_RTD_LOT_RESOURCE_FLAG():
+    source_table = "V_RTD_LOT_RESOURCE_FLAG"
+    target_table = "APS_SYNC_RTD_LOT_RESOURCE_FLAG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_FRLOT_FUTUREHOLD():
+    source_table = "V_FRLOT_FUTUREHOLD"
+    target_table = "APS_SYNC_FRLOT_FUTUREHOLD"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_RSPILOT_RUN_HS():
+    source_table = "V_RSPILOT_RUN_HS"
+    target_table = "APS_SYNC_RSPILOT_RUN_HS"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_RECIPE_NPW_RULEMAP():
+    source_table = "V_RECIPE_NPW_RULEMAP"
+    target_table = "APS_SYNC_RECIPE_NPW_RULEMAP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+# def sync_APS_SYNC_FHOPEH_DELAY_10MINS():
+#     source_table = "V_FHOPEH_DELAY_10MINS"
+#     target_table = "APS_SYNC_FHOPEH_DELAY"
+#     etl_name = "Sync " + source_table + " to " + target_table
+#
+#     logging.info("Start " + etl_name)
+#     oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table, target_table=target_table)
+#     logging.info("End " + etl_name)
+
+
+# def sync_APS_SYNC_CSFRINHIBIT():
+#         source_table = "V_CSFRINHIBIT"
+#         target_table = "APS_SYNC_CSFRINHIBIT"
+#         etl_name = "Sync " + source_table + " to " + target_table
+#
+#         logging.info("Start " + etl_name)
+#         oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+#                                                   target_table=target_table)
+#         logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_OCS_AUTODUMMY_COMPLETE():
+    source_table = "V_OCS_AUTODUMMY_COMPLETE"
+    target_table = "APS_SYNC_OCS_AUTODUMMY_COMPLETE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW():
+    source_table = "V_RTD_WET_SPECIAL_LOT_CTRL_NEW"
+    target_table = "APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_CSDYNAMICMWF():
+    source_table = "V_CSDYNAMICMWF"
+    target_table = "APS_SYNC_CSDYNAMICMWF"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_SAMPLING_RATE():
+    source_table = "V_SAMPLING_RATE"
+    target_table = "APS_SYNC_SAMPLING_RATE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_EQP_RECIPE_ED_ADD_VALUE():
+    source_table = "V_EQP_RECIPE_ED_ADD_VALUE"
+    target_table = "APS_SYNC_EQP_RECIPE_ED_ADD_VALUE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_OUT_DF_PURGE_COMBINE():
+    source_table = "V_OUT_DF_PURGE_COMBINE"
+    target_table = "APS_SYNC_OUT_DF_PURGE_COMBINE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_RTD_ID_OPE_CONFIG():
+    source_table = "V_RTD_ID_OPE_CONFIG"
+    target_table = "APS_SYNC_RTD_ID_OPE_CONFIG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_MLIF_EQP_SETTING():
+    source_table = "v_mlif_eqp_setting"
+    target_table = "APS_SYNC_MLIF_EQP_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_UMT_BOTTLENECK_EQPG_SETTING():
+    source_table = "v_umt_bottleneck_eqpg_setting"
+    target_table = "APS_SYNC_UMT_BOTTLENECK_EQPG_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_EQP_ED_DATA_REPORT():
+    source_table = "V_EQP_ED_DATA_REPORT"
+    target_table = "APS_SYNC_EQP_ED_DATA_REPORT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_EQP_MODE_SETTING():
+    source_table = "V_EQP_MODE_SETTING"
+    target_table = "APS_SYNC_EQP_MODE_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_PREFER_TOOL():
+    source_table = "V_RTD_PREFER_TOOL"
+    target_table = "APS_SYNC_RTD_PREFER_TOOL"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_FREQP_UTS():
+    source_table = "V_FREQP_UTS"
+    target_table = "APS_SYNC_FREQP_UTS"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_MES_FRLOT_RETNLIST():
+    source_table = "V_MES_FRLOT_RETNLIST"
+    target_table = "APS_SYNC_MES_FRLOT_RETNLIST"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_MAJOR_ANOMALY_EWS_LOT():
+    source_table = "V_MAJOR_ANOMALY_EWS_LOT"
+    target_table = "APS_SYNC_MAJOR_ANOMALY_EWS_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_APC_INHIBIT_LOT():
+    source_table = "V_APC_INHIBIT_LOT"
+    target_table = "APS_SYNC_APC_INHIBIT_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_NPW_RECIPE_GROUP():
+    source_table = "V_NPW_RECIPE_GROUP"
+    target_table = "APS_SYNC_NPW_RECIPE_GROUP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_RTD_IMP_SOURCE():
+    source_table = "V_RTD_IMP_SOURCE"
+    target_table = "APS_SYNC_RTD_IMP_SOURCE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_MES_FRLRCP():
+    source_table = "V_MES_FRLRCP"
+    target_table = "APS_SYNC_MES_FRLRCP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_STRIP_CHAMBER():
+    source_table = "V_STRIP_CHAMBER"
+    target_table = "APS_SYNC_STRIP_CHAMBER"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_CSFLOWSAMPLINGCFG():
+    source_table = "V_CSFLOWSAMPLINGCFG"
+    target_table = "APS_SYNC_CSFLOWSAMPLINGCFG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,
+                                              target_table=target_table)
+    logging.info("End " + etl_name)
+
+if __name__ == '__main__':
+    warnings.filterwarnings("ignore")
+    sync_APS_SYNC_CSFLOWSAMPLINGCFG()
+
+
+
+

@@ -1,0 +1,117 @@
+REM ================ Phase 1 =================
+
+schtasks /create /tn xinxiang_aps_etl_wip /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_wip.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_etl_flow /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_flow.vbs /sc hourly /mo 1 /st 00:00 /f
+
+
+schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_wip /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_wip.vbs /sc minute /mo 10 /st 00:06 /f
+schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_flow /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_flow.vbs /sc hourly /mo 1 /st 00:10 /f
+
+REM ================ Phase 2 =================
+schtasks /create /tn xinxiang_aps_etl_tool_down /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_tool_down.vbs /sc minute /mo 10 /st 00:00 /f
+REM schtasks /create /tn xinxiang_aps_etl_tool /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_etl_tool.vbs /sc minute /mo 2 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_etl_qtime_spec /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_qtime_spec.vbs /sc hourly /mo 12 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_etl_qtime_hold /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_qtime_hold.vbs /sc minute /mo 5 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_etl_wafer_start /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_wafer_start.vbs /sc hourly /mo 1 /st 00:55 /f
+schtasks /create /tn xinxiang_aps_etl_vc_record /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_vc_record.vbs /sc minute /mo 10 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_etl_transport /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_transport.vbs /sc hourly /mo 12 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_etl_etl_tool /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_etl_tool.vbs /sc minute /mo 2 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_etl_size_control /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_size_control.vbs /sc minute /mo 10 /st 00:07 /f
+schtasks /create /tn xinxiang_aps_etl_season_rule /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_season_rule.vbs /sc minute /mo 10 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_etl_sampling_lot /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_sampling_lot.vbs /sc minute /mo 10 /st 00:09 /f
+schtasks /create /tn xinxiang_aps_etl_ppid_info /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_ppid_info.vbs /sc hourly /mo 12 /st 13:00 /f
+schtasks /create /tn xinxiang_aps_etl_hold_rls /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_hold_rls.vbs /sc minute /mo 10 /st 00:00 /f
+
+REM ================ Phase 3 =================
+schtasks /create /tn xinxiang_aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_ALL /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_ALL.vbs /sc daily /mo 1 /st 10:18 /f
+schtasks /create /tn xinxiang_aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_P_ALL /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_P_ALL.vbs /sc daily /mo 1 /st 10:35 /f
+schtasks /create /tn xinxiang_aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_ALL /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_ALL.vbs /sc daily /mo 1 /st 10:18 /f
+schtasks /create /tn xinxiang_aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_P_ALL /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_P_ALL.vbs /sc daily /mo 1 /st 10:45 /f
+schtasks /create /tn xinxiang_aps_mid_type_runtime_1d_APS_MID_TYPE31_RUNTIME_ALL /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_type_runtime_1d_APS_MID_TYPE31_RUNTIME_ALL.vbs /sc daily /mo 1 /st 10:18 /f
+schtasks /create /tn xinxiang_aps_mid_type_runtime_1d_APS_MID_TYPE32_RUNTIME_ALL /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_type_runtime_1d_APS_MID_TYPE32_RUNTIME_ALL.vbs /sc daily /mo 1 /st 10:18 /f
+schtasks /create /tn xinxiang_aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_ALL /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_ALL.vbs /sc daily /mo 1 /st 10:18 /f
+schtasks /create /tn xinxiang_aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_P_ALL /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_P_ALL.vbs /sc daily /mo 1 /st 10:55 /f
+schtasks /create /tn xinxiang_aps_tmp_charge_time /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_charge_time.vbs /sc minute /mo 10 /st 00:09 /f
+schtasks /create /tn xinxiang_aps_tmp_lothistory_5m_aps_mid_ph_lothisory /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_lothistory_5m_aps_mid_ph_lothisory.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_tmp_type11_median_1d_APS_MID_OCS_MEASURE_CT /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type11_median_1d_APS_MID_OCS_MEASURE_CT.vbs /sc daily /mo 1 /st 10:12 /f
+schtasks /create /tn xinxiang_APS_TMP_TYPE11_MEDIAN_1D_APS_MID_TYPE3_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_APS_TMP_TYPE11_MEDIAN_1D_APS_MID_TYPE3_MEDIAN.vbs /sc minute /mo 10 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_tmp_type11_median_1d_APS_MID_TYPE31_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type11_median_1d_APS_MID_TYPE31_MEDIAN.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tmp_type11_median_1d_APS_MID_TYPE32_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type11_median_1d_APS_MID_TYPE32_MEDIAN.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tmp_type11_median_1d_APS_MID_TYPE33_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type11_median_1d_APS_MID_TYPE33_MEDIAN.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tmp_type11_median_1d_APS_TMP_TYPE11_TECH_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type11_median_1d_APS_TMP_TYPE11_TECH_MEDIAN.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tmp_type11_median_1d_APS_TMP_TYPE12_OPE_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type11_median_1d_APS_TMP_TYPE12_OPE_MEDIAN.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tmp_type21_median_1d_APS_MID_PURGE11 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type21_median_1d_APS_MID_PURGE11.vbs /sc daily /mo 1 /st 10:12 /f
+schtasks /create /tn xinxiang_aps_tmp_type21_median_1d_APS_MID_PURGE12 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type21_median_1d_APS_MID_PURGE12.vbs /sc daily /mo 1 /st 10:12 /f
+schtasks /create /tn xinxiang_aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN.vbs /sc daily /mo 1 /st 10:12 /f
+schtasks /create /tn xinxiang_aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN.vbs /sc daily /mo 1 /st 10:12 /f
+schtasks /create /tn xinxiang_aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN.vbs /sc daily /mo 1 /st 10:12 /f
+schtasks /create /tn xinxiang_aps_tr_charge_time /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_charge_time.vbs /sc minute /mo 10 /st 00:08 /f
+schtasks /create /tn xinxiang_aps_tr_csfrinhibit /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_csfrinhibit.vbs /sc minute /mo 15 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_tr_type3 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_type3.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn xinxiang_aps_tr_type11 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_type11.vbs /sc daily /mo 1 /st 09:00 /f
+schtasks /create /tn xinxiang_aps_tr_type12 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_type12.vbs /sc daily /mo 1 /st 09:00 /f
+schtasks /create /tn xinxiang_aps_tr_type21 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_type21.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tr_type22 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_type22.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_aps_tr_type31 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_type31.vbs /sc daily /mo 1 /st 11:00 /f
+schtasks /create /tn xinxiang_aps_tr_type32 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_type32.vbs /sc daily /mo 1 /st 11:00 /f
+schtasks /create /tn xinxiang_aps_tr_type221 /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tr_type221.vbs /sc daily /mo 1 /st 10:00 /f
+schtasks /create /tn xinxiang_sql_to_table_APS_ETL_PH_RTDQTIME /tr D:\XinXiang\ETL_PYTHON\runner\run_sql_to_table_APS_ETL_PH_RTDQTIME.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn xinxiang_sql_to_table_APS_ETL_RTDQTTIME /tr D:\XinXiang\ETL_PYTHON\runner\run_sql_to_table_APS_ETL_RTDQTTIME.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn xinxiang_sql_to_table_APS_ETL_RTDQTTIME_UN_WMTWID /tr D:\XinXiang\ETL_PYTHON\runner\run_sql_to_table_APS_ETL_RTDQTTIME_UN_WMTWID.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn xinxiang_sql_to_table_APS_ETL_RTDQTTIME_WMTWID /tr D:\XinXiang\ETL_PYTHON\runner\run_sql_to_table_APS_ETL_RTDQTTIME_WMTWID.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn xinxiang_aps_etl_apc_webservice /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_apc_webservice.vbs /sc minute /mo 20 /st 00:00 /f
+schtasks /create /tn xinxiang_aps_etl_recipe_eqp_all /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_recipe_eqp_all.vbs /sc minute /mo 10 /st 00:03 /f
+schtasks /create /tn xinxiang_aps_mid_rls /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_mid_rls.vbs /sc minute /mo 10 /st 00:02 /f
+schtasks /create /tn xinxiang_aps_etl_rls /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_rls.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_copy_flow_for_backup /tr D:\XinXiang\ETL_PYTHON\runner\run_copy_flow_for_backup.vbs /sc hourly /mo 1 /st 00:10 /f
+schtasks /create /tn xinxiang_everyday_generate_log_file /tr D:\XinXiang\ETL_PYTHON\runner\run_everyday_generate_log_file.vbs /sc daily /st 00:00 /f
+
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_tool_down /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_tool_down.vbs /sc minute /mo 10 /st 00:15 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_qtime_spec /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_qtime_spec.vbs /sc hourly /mo 12 /st 00:25 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_qtime_hold /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_qtime_hold.vbs /sc minute /mo 10 /st 00:00 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_wafer_start /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_wafer_start.vbs /sc hourly /mo 1 /st 00:15 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_vc_record /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_vc_record.vbs /sc minute /mo 10 /st 00:05 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_transport /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_transport.vbs /sc hourly /mo 12 /st 00:22 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_etl_tool /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_etl_tool.vbs /sc minute /mo 5 /st 00:01 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_size_control /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_size_control.vbs  /sc minute /mo 10 /st 00:00 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_season_rule /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_season_rule.vbs /sc minute /mo 10 /st 00:09 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_sampling_lot /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_sampling_lot.vbs /sc minute /mo 10 /st 00:00 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_ppid_info /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_ppid_info.vbs /sc hourly /mo 12 /st 01:25 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_hold_rls /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_hold_rls.vbs /sc minute /mo 10 /st 00:05 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_rls /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_rls.vbs /sc minute /mo 10 /st 00:06 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_monitor /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_monitor.vbs /sc minute /mo 10 /st 00:00 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_sgs_rls /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_sgs_rls.vbs /sc hourly /mo 1 /st 00:55 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_pirun /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_pirun.vbs /sc minute /mo 10 /st 00:01 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_sgs_rule /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_sgs_rule.vbs /sc hourly /mo 12 /st 01:08 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_mask_info /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_mask_info.vbs /sc minute /mo 10 /st 00:02 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_demand /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_demand.vbs /sc minute /mo 10 /st 00:01 /f
+ schtasks /create /tn xinxiang_aps_etl_write_back_to_oracle_pri_wip /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_write_back_to_oracle_pri_wip.vbs /sc minute /mo 10 /st 00:00 /f
+
+REM ================ Phase 4 =================
+schtasks /create /tn xinxiang_aps_etl_pri_wip /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_pri_wip.vbs /sc minute /mo 10 /st 00:09 /f
+schtasks /create /tn xinxiang_aps_etl_lothistory /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_lothistory.vbs /sc minute /mo 10 /st 00:09 /f
+schtasks /create /tn xinxiang_aps_etl_lot_op_hist /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_lot_op_hist.vbs /sc hourly /mo 1 /st 00:55 /f
+schtasks /create /tn xinxiang_aps_etl_mask_history /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_mask_history.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_etl_sgs_rls /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_sgs_rls.vbs /sc hourly /mo 1 /st 00:50 /f
+schtasks /create /tn xinxiang_aps_etl_pirun /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_pirun.vbs /sc minute /mo 10 /st 00:08 /f
+schtasks /create /tn xinxiang_aps_etl_sgs_rule /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_sgs_rule.vbs /sc hourly /mo 12 /st 01:00 /f
+schtasks /create /tn xinxiang_aps_etl_mask_info /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_mask_info.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_etl_demand /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_demand.vbs /sc minute /mo 10 /st 00:09 /f
+schtasks /create /tn xinxiang_aps_etl_special_cons /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_special_cons.vbs /sc minute /mo 10 /st 00:09 /f
+schtasks /create /tn xinxiang_aps_etl_monitor /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_monitor.vbs /sc minute /mo 10 /st 00:09 /f
+
+schtasks /create /tn xinxiang_aps_his_aps_mid_fhopehs /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_mid_fhopehs.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_his_aps_mid_fhopehs_reticle /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_mid_fhopehs_reticle.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_his_aps_mid_ocs_job_group_po_state_h /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_mid_ocs_job_group_po_state_h.vbs /sc minute /mo 10 /st 00:08 /f
+schtasks /create /tn xinxiang_aps_his_aps_mid_rspilot_run_hs /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_mid_rspilot_run_hs.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_his_aps_tmp_lothistory /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_tmp_lothistory.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_his_aps_tmp_mask_history /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_tmp_mask_history.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_his_aps_tmp_ocs_main_h /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_tmp_ocs_main_h.vbs /sc minute /mo 10 /st 00:08 /f
+REM schtasks /create /tn xinxiang_aps_his_aps_mid_ph_lothistory /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_mid_ph_lothistory.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_tmp_lothistory_5m_aps_mid_ph_lothistory /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_tmp_lothistory_5m_aps_mid_ph_lothistory.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_log_aps_log_exec_log_hist /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_log_exec_log_hist.vbs /sc daily /mo 1 /st 09:01 /f
+schtasks /create /tn xinxiang_run_aps_etl_detl_service /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_detl_service.vbs /sc minute /mo 1 /st 00:00 /f
+
+pause

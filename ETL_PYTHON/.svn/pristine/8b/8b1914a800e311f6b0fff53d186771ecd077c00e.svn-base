@@ -1,0 +1,138 @@
+# import gc
+# import logging
+# import os
+#
+# from xinxiang import config
+# from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons
+#
+#
+# def create_temp_table(duck_db):
+#     pass
+#
+#
+# def biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+#     sql = """
+#     INSERT  /*+ append */  INTO APS_TR_RSPILOT_RUNING (
+#         JOB_NO, APC_TYPE, LOT_KEY_NO, DEVICE_GRP, DEVICE_NM, DEVICE_NM1, C_OP_NO,
+#         C_UNIT_ID, E_OP_NO, OP_NO_1, UNIT_ID_1, OP_NO_2, UNIT_ID_2, OP_NO_3, UNIT_ID_3,
+#         START_DATE, STATUS, PILOT_COMMENT, PILOT_CHUCK, MASK_NM, PILOT_CNT, GUID, PARTKEY
+#     )
+#     SELECT PA.*, gen_random_uuid() AS GUID,
+#     -- TO_DATE( '{current_time}', 'YYYY-MM-DD HH24:MI:SS') AS PARTKEY
+#     '{current_time}' AS PARTKEY
+#     -- FROM V_RSPILOT_RUNING  PA TODO
+#     FROM APS_SYNC_RSPILOT_RUNING.APS_SYNC_RSPILOT_RUNING PA
+#     """.format(current_time=current_time)
+#
+#     ### AND SUBSTR(F.PLAN_ID, 1, INSTR(F.PLAN_ID,'.',-1)-1) = C.PLAN_ID
+#     my_duck.exec_sql(oracle_conn=oracle_conn,
+#                      duck_db_memory=duck_db_memory,
+#                      ETL_Proc_Name=ETL_Proc_Name,
+#                      methodName="Insert Into APS_TR_RSPILOT_RUNING",
+#                      sql=sql,
+#                      current_time=current_time,
+#                      update_table="APS_TR_RSPILOT_RUNING")
+#
+#
+# def execute():
+#     ###############################################################
+#     ### 以下参数必须定义
+#     ### ETL_Proc_Name    : ETL 名称
+#     ### current_time     ：请直接拷贝
+#     ### current_time_short ：请直接拷贝
+#     ### uuid             ：请直接拷贝
+#     ### target_table     : 该ETL输出表名
+#     ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+#     ### target_table_sql ： 该ETL输出表定义SQL
+#     ###############################################################
+#     ETL_Proc_Name = "APS_ETL_BR.APS_TR_RSPILOT_RUNING_10M"
+#     current_time = my_date.date_time_second_str()
+#     current_time_short = my_date.date_time_second_short_str()
+#     uuid = my_oracle.UUID()
+#
+#     target_table = "APS_TR_RSPILOT_RUNING"
+#     used_table_list = ['APS_SYNC_RSPILOT_RUNING']
+#     target_table_sql = """
+#         create table {}APS_TR_RSPILOT_RUNING
+#         (
+#           job_no        VARCHAR(60) not null,
+#           apc_type      VARCHAR(6) not null,
+#           lot_key_no    VARCHAR(36) not null,
+#           device_grp    VARCHAR(60),
+#           device_nm     VARCHAR(48),
+#           device_nm1    VARCHAR(15),
+#           c_op_no       VARCHAR(30) not null,
+#           c_unit_id     VARCHAR(24) not null,
+#           e_op_no       VARCHAR(30) not null,
+#           op_no_1       VARCHAR(30),
+#           unit_id_1     VARCHAR(24),
+#           op_no_2       VARCHAR(30),
+#           unit_id_2     VARCHAR(24),
+#           op_no_3       VARCHAR(30),
+#           unit_id_3     VARCHAR(24),
+#           start_date    VARCHAR(60),
+#           status        VARCHAR(15),
+#           pilot_comment VARCHAR(768),
+#           pilot_chuck   VARCHAR(6),
+#           mask_nm       VARCHAR(192),
+#           pilot_cnt     VARCHAR(60),
+#           guid          VARCHAR(64) not null,
+#           partkey       VARCHAR(60) not null,
+#           PRIMARY KEY (GUID, PARTKEY)
+#         )
+#     """.format("") # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+#     target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+#
+#     oracle_conn = None
+#     try:
+#         oracle_conn = my_oracle.oracle_get_connection()
+#         # 开始日志
+#         my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+#         # 创建DuckDB
+#         duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+#         if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+#             duck_db_memory.sql('SET threads TO 2')
+#             # 加上TMP目录:LQN:2023/08/21
+#             duck_db_memory.execute(
+#                 "SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+#         # 创建Temp表
+#         create_temp_table(duck_db_memory)
+#         # Attach用到的表
+#         my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+#         ################################################################################################################
+#         ## 以下为业务逻辑
+#         ################################################################################################################
+#
+#         biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+#
+#         ################################################################################################################
+#         ## 以上为业务逻辑
+#         ################################################################################################################
+#         # 导出到目标文件中
+#         target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+#                                                                                   target_table,
+#                                                                                   target_table_sql.format("file_db."),
+#                                                                                   current_time_short)
+#         # 写版本号
+#         my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file)
+#         # 写完成日志
+#         my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+#     except Exception as e:
+#         # 写警告日志
+#         my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, cons_error_code.APS_TR_RCP_INHIBIT_XX_ETL) # TODO 改成你自己的CODE
+#         logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+#         raise e
+#     finally:
+#         oracle_conn.commit()
+#         oracle_conn.close()
+#         if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+#             # 删除TMP目录:LQN:2023/08/21
+#             if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+#                 os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+#         gc.collect()  # 内存释放
+#
+#
+# if __name__ == '__main__':
+#     # 单JOB测试用
+#     print("start")
+#     execute()

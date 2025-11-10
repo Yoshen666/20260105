@@ -1,0 +1,10 @@
+from xinxiang.jobs_manager import manager_jobs
+
+
+def set_manager_jobs_cron(schedule):
+    # 每天1点执行一次
+    schedule.add_job(manager_jobs.delete_backup_files_by_day, "cron", hour=1, minute=0, second=0, misfire_grace_time=60)
+    # 每天2点，14点执行一次 TODO 最后要用的
+    # schedule.add_job(manager_jobs.delete_oracle_db_log_by_12_hours, "cron", hour="2,14", minute=0, second=0, misfire_grace_time=60)
+    # 每天1,7,13,19点执行一次
+    schedule.add_job(manager_jobs.delete_backup_files_by_6_hours, "cron", hour="1,7,13,19", minute=0, second=0, misfire_grace_time=60)

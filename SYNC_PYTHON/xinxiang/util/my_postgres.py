@@ -1,0 +1,409 @@
+import logging
+import multiprocessing
+import os
+import threading
+import time
+import uuid
+
+import psycopg2
+from xinxiang import config
+from xinxiang.util import my_date, my_duck, my_cmder, my_oracle, cons_error_code
+
+
+def postgres_get_connection():
+    # 生產環境
+    conn = psycopg2.connect(database=config.g_postgres_database,
+                            user=config.g_postgres_user,
+                            password=config.g_postgres_password,
+                            host=config.g_postgres_host,
+                            port=config.g_postgres_port)
+    return conn
+
+
+def postgres_get_test_db_connection():
+    # 測試環境
+    conn = psycopg2.connect(database=config.g_test_postgres_database,
+                            user=config.g_test_postgres_user,
+                            password=config.g_test_postgres_password,
+                            host=config.g_test_postgres_host,
+                            port=config.g_test_postgres_port)
+    return conn
+
+
+def postgres_get_test_test_db_connection():
+    # 測試的測試環境
+    conn = psycopg2.connect(database=config.g_postgres_test_test_database,
+                            user=config.g_postgres_test_test_user,
+                            password=config.g_postgres_test_test_password,
+                            host=config.g_postgres_test_test_host,
+                            port=config.g_postgres_test_test_port)
+    return conn
+
+
+def uuid_csv_file_name():
+    s = str(uuid.uuid4())
+    # s1 = s.replace("-", "")
+    return s + ".csv"
+
+def copy_duckdb_to_postgres_for_test_pg(uuid, duckdb,
+                                        table_name_in_duckdb,
+                                        table_name_in_pg,
+                                        csv_delimiter='@',
+                                        select_sql_in_duck=None,
+                                        postgres_table_define=None,
+                                        copy_to_yto=True,
+                                        pg_conn=None):
+    """
+    uuid                 : 当前ETL的uuid
+    duckdb               : 当前的Duckdb
+    table_name_in_duckdb : 准备将哪张表数据导出到postgres
+    table_name_in_pg     : 对应的postgers的表名
+    csv_delimiter        : csv字段间的分割符
+    postgres_table_define : postgres的copy sql的表信息部分
+                           例如 原SQL为
+                           copy 表名(字段1,字段2...字段n) from 'csv_file_name' delimiter ',' CSV HEADER
+                           则 postgres_table_define = '表名(字段1,字段2...字段n)'
+    """
+    start_time = time.time()
+    current_time = my_date.date_time_second_str()
+    _csv_file = uuid_csv_file_name()
+    csv_file_name = os.path.join(config.g_mem_etl_output_path, _csv_file)
+
+    target_path = decide_postgres_db_folder(export_to_pg_prod_test=True, pg_table_name=table_name_in_pg)
+
+    try:
+
+        # 检查DuckDB的产出
+        duck_row = my_duck.get_row_count_in_duckdb(duckdb, tableName=table_name_in_duckdb)
+        if duck_row > 0:
+            # 从DuckDB导出CSV文件
+            duck_export_csv_sql = """
+                copy ({select_sql_in_duck}) to '{csv_file_name}' (HEADER, DELIMITER '{csv_delimiter}', NULL '')
+                """.format(select_sql_in_duck=select_sql_in_duck,
+                           csv_file_name=csv_file_name,
+                           csv_delimiter=csv_delimiter)
+            duckdb.sql(duck_export_csv_sql)
+
+            end_time = time.time()
+            exec_time = end_time - start_time
+            msg = """从DuckDB导出CSV文件用时 {exec_time} 秒.""".format(exec_time=exec_time)
+            logging.info(msg)
+            print(msg)
+            _start_time = time.time()
+
+                # 10.52.192.99
+            copy_cmder = "xcopy {source} {target} /Y".format(source=csv_file_name, target=target_path)
+            logging.info(copy_cmder)
+            my_cmder.exec(copy_cmder)
+
+            _end_time = time.time()
+            exec_time = _end_time - _start_time
+            msg = """xcopy > {target_path} 用时 {exec_time} 秒.""".format(exec_time=exec_time, target_path=target_path)
+            logging.info(msg)
+            print(msg)
+            _start_time = time.time()
+
+            process_copy_to_yth = multiprocessing.Process(target=copy_to_yth_func, args=(
+                True, postgres_table_define, csv_file_name, csv_delimiter, table_name_in_pg, current_time, uuid))
+            process_copy_to_yto = multiprocessing.Process(target=copy_to_yto_func, args=(
+                True, postgres_table_define, csv_file_name, csv_delimiter, table_name_in_pg, current_time, uuid, copy_to_yto))
+
+            process_copy_to_yth.start()
+            process_copy_to_yto.start()
+
+            process_copy_to_yth.join()
+            process_copy_to_yto.join()
+        else:
+            logging.info("""DuckDB的 {table_name_in_duckdb} 无产出数据,故不向Postgres[{table_name_in_pg}]中导入数据.""".format(table_name_in_duckdb=table_name_in_duckdb, table_name_in_pg=table_name_in_pg))
+    except Exception as e:
+        logging.exception("处理出错: %s", e)
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+        path = os.path.join(target_path, _csv_file)
+        if os.path.exists(path):
+            os.remove(path)
+        raise e
+    finally:
+        if pg_conn:
+            pg_conn.close()
+
+        end_time = time.time()
+        exec_time = end_time -start_time
+        msg = """
+            拷贝{table_name_in_duckdb} 到Postgres完成，用时 {exec_time} 秒.
+        """.format(table_name_in_duckdb=table_name_in_duckdb, exec_time=exec_time)
+        logging.info(msg)
+        print(msg)
+        path = os.path.join(target_path, _csv_file)
+        if os.path.exists(path):
+            os.remove(path)
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+
+def copy_duckdb_to_postgres(uuid, duckdb,
+                            table_name_in_duckdb,
+                            table_name_in_pg,
+                            csv_delimiter='@',
+                            select_sql_in_duck=None,
+                            postgres_table_define=None,
+                            copy_to_yto=True,
+                            pg_conn=None,
+                            oracle_conn=None,
+                            ETL_Proc_Name=None):
+    """
+    uuid                 : 当前ETL的uuid
+    duckdb               : 当前的Duckdb
+    table_name_in_duckdb : 准备将哪张表数据导出到postgres
+    table_name_in_pg     : 对应的postgers的表名
+    csv_delimiter        : csv字段间的分割符
+    postgres_table_define : postgres的copy sql的表信息部分
+                           例如 原SQL为
+                           copy 表名(字段1,字段2...字段n) from 'csv_file_name' delimiter ',' CSV HEADER
+                           则 postgres_table_define = '表名(字段1,字段2...字段n)'
+    """
+    start_time = time.time()
+    current_time = my_date.date_time_second_str()
+    _csv_file = uuid_csv_file_name()
+    target_path = decide_postgres_db_folder(export_to_pg_prod_test=False, pg_table_name=table_name_in_pg)
+    csv_file_name = os.path.join(config.g_mem_etl_output_path, _csv_file)
+    ETL_Proc_Name = ETL_Proc_Name + "_PG"
+    try:
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+
+        # 检查DuckDB的产出
+        duck_row = my_duck.get_row_count_in_duckdb(duckdb, tableName=table_name_in_duckdb)
+        if duck_row > 0:
+            # 从DuckDB导出CSV文件
+            duck_export_csv_sql = """
+                copy ({select_sql_in_duck}) to '{csv_file_name}' (HEADER, DELIMITER '{csv_delimiter}', NULL '')
+                """.format(select_sql_in_duck=select_sql_in_duck,
+                           csv_file_name=csv_file_name,
+                           csv_delimiter=csv_delimiter)
+            duckdb.sql(duck_export_csv_sql)
+
+            end_time = time.time()
+            exec_time = end_time - start_time
+            msg = """从DuckDB导出CSV文件用时 {exec_time} 秒.""".format(exec_time=exec_time)
+            logging.info(msg)
+            print(msg)
+            _start_time = time.time()
+
+
+            # if pg_conn is None:
+            #     target_path = config.g_pgserver_path
+            # else:
+            #     target_path = config.g_test_pgserver_path
+
+                # 10.52.192.99
+            copy_cmder = "xcopy {source} {target} /Y".format(source=csv_file_name, target=target_path)
+            logging.info(copy_cmder)
+            my_cmder.exec(copy_cmder)
+
+            _end_time = time.time()
+            exec_time = _end_time - _start_time
+            msg = """xcopy > {target_path} 用时 {exec_time} 秒.""".format(exec_time=exec_time, target_path=target_path)
+            logging.info(msg)
+            print(msg)
+            _start_time = time.time()
+
+            process_copy_to_yth = multiprocessing.Process(target=copy_to_yth_func, args=(
+                False, postgres_table_define, csv_file_name, csv_delimiter, table_name_in_pg, current_time, uuid))
+            process_copy_to_yto = multiprocessing.Process(target=copy_to_yto_func, args=(
+                False, postgres_table_define, csv_file_name, csv_delimiter, table_name_in_pg, current_time, uuid, copy_to_yto))
+
+            process_copy_to_yth.start()
+            process_copy_to_yto.start()
+
+            process_copy_to_yth.join()
+            process_copy_to_yto.join()
+        else:
+            logging.info("""DuckDB的 {table_name_in_duckdb} 无产出数据,故不向Postgres[{table_name_in_pg}]中导入数据.""".format(table_name_in_duckdb=table_name_in_duckdb, table_name_in_pg=table_name_in_pg))
+    except Exception as e:
+        logging.exception("处理出错: %s", e)
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+        path = os.path.join(config.g_pgserver_path, _csv_file)
+        if os.path.exists(path):
+            os.remove(path)
+        raise e
+    finally:
+        # 删除PG Server中的临时文件
+        # path = os.path.join(config.g_pgserver_path, _csv_file)
+        # if os.path.exists(path):
+        #     os.remove(path)
+        # if os.path.exists(csv_file_name):
+        #     os.remove(csv_file_name)
+
+        # if pg_cur:
+        #     pg_cur.close()
+        if pg_conn:
+            pg_conn.close()
+
+        end_time = time.time()
+        exec_time = end_time -start_time
+        msg = """
+            拷贝{table_name_in_duckdb} 到Postgres完成，用时 {exec_time} 秒.
+        """.format(table_name_in_duckdb=table_name_in_duckdb, exec_time=exec_time)
+        logging.info(msg)
+        print(msg)
+        path = os.path.join(target_path, _csv_file)
+        if os.path.exists(path):
+            os.remove(path)
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+
+
+def copy_to_yth_func(export_to_pg_prod_test, postgres_table_define, csv_file_name, csv_delimiter, table_name_in_pg, current_time, uuid):
+    tmpName = "copy_to_yth_func"
+    oracle_conn = None
+    try:
+        pg_conn = decide_postgres_db_connection(export_to_pg_prod_test=export_to_pg_prod_test, pg_table_name=table_name_in_pg)
+        # if not export_to_pg_prod_test:
+        #     pg_conn = postgres_get_connection()
+        # else:
+        #     pg_conn = postgres_get_test_db_connection()
+
+        _start_time = time.time()
+        # 将CSV文件copy到Postgres
+        # yth
+        pg_cur = pg_conn.cursor()
+        copy_to_postgres_sql = r"""
+                    copy {schema}.{postgres_table_define}
+                    from '{csv_file_name}'
+                    DELIMITER '{csv_delimiter}' NULL '' CSV HEADER
+                    """.format(postgres_table_define=postgres_table_define,
+                               csv_file_name=csv_file_name,
+                               csv_delimiter=csv_delimiter,
+                               schema='yth')
+        pg_cur.execute(copy_to_postgres_sql)
+
+        _end_time = time.time()
+        exec_time = _end_time - _start_time
+        msg = """将CSV文件copy到Postgres {exec_time} 秒.""".format(exec_time=exec_time)
+        logging.info(msg)
+        print(copy_to_postgres_sql)
+        print(msg)
+        _start_time = time.time()
+
+        # 版本号
+        sql = r"""insert into yth.etl_ver_control(id, module_id, toolg_id,table_name, update_time, update_user)
+                    values('{uuid}','', '', '{table_name_in_pg}', '{current_time}', 'CIM')
+                    """.format(uuid=uuid, table_name_in_pg=table_name_in_pg, current_time=current_time)
+        logging.info(sql)
+        print(sql)
+        pg_cur.execute(sql)
+        pg_conn.commit()
+    except Exception as e:
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=table_name_in_pg, e=e))
+        msg = tmpName + "测试库异常： " + table_name_in_pg + " " + str(e)
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 写警告日志
+        my_oracle.sendTempAlarm(oracle_conn, msg, cons_error_code.APS_ETL_TO_PG_CODE_XX_ETL)
+        raise e
+    finally:
+        pg_cur.close()
+        pg_conn.close()
+        if oracle_conn is not None:
+            oracle_conn.commit()
+            oracle_conn.close()
+
+
+def copy_to_yto_func(export_to_pg_prod_test, postgres_table_define, csv_file_name, csv_delimiter, table_name_in_pg, current_time, uuid, copy_to_yto):
+    tmpName = "copy_to_yto_func"
+    oracle_conn = None
+    if copy_to_yto:
+        try:
+            pg_conn = decide_postgres_db_connection(export_to_pg_prod_test=export_to_pg_prod_test, pg_table_name=table_name_in_pg)
+            # if not export_to_pg_prod_test:
+            #     pg_conn = postgres_get_connection()
+            # else:
+            #     pg_conn = postgres_get_test_db_connection()
+
+            _start_time = time.time()
+            pg_cur = pg_conn.cursor()
+            # yto
+            copy_to_postgres_sql = r"""
+                            copy {schema}.{postgres_table_define}
+                            from '{csv_file_name}'
+                            DELIMITER '{csv_delimiter}' NULL '' CSV HEADER
+                            """.format(postgres_table_define=postgres_table_define,
+                                       csv_file_name=csv_file_name,
+                                       csv_delimiter=csv_delimiter,
+                                       schema='yto')
+            pg_cur.execute(copy_to_postgres_sql)
+
+            _end_time = time.time()
+            exec_time = _end_time - _start_time
+            msg = """将CSV文件copy到Postgres {exec_time} 秒.""".format(exec_time=exec_time)
+            logging.info(msg)
+            print(copy_to_postgres_sql)
+            print(msg)
+            _start_time = time.time()
+
+            # 版本号
+            sql = r"""insert into yto.etl_ver_control(id, module_id, toolg_id,table_name, update_time, update_user)
+                            values('{uuid}','', '', '{table_name_in_pg}', '{current_time}', 'CIM')
+                            """.format(uuid=uuid, table_name_in_pg=table_name_in_pg, current_time=current_time)
+            pg_cur.execute(sql)
+            print(sql)
+            logging.info(sql)
+            pg_conn.commit()
+        except Exception as e:
+            logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=table_name_in_pg, e=e))
+            msg = tmpName + "测试库异常： " + table_name_in_pg + " " + str(e)
+            oracle_conn = my_oracle.oracle_get_connection()
+            # 写警告日志
+            my_oracle.sendTempAlarm(oracle_conn, msg, cons_error_code.APS_ETL_TO_PG_CODE_XX_ETL)
+            raise e
+        finally:
+            pg_cur.close()
+            pg_conn.close()
+            if oracle_conn is not None:
+                oracle_conn.commit()
+                oracle_conn.close()
+    else:
+        pass
+
+
+def decide_postgres_db_folder(export_to_pg_prod_test, pg_table_name):
+    # 向生產的測試數據庫中回傳數據
+    if export_to_pg_prod_test:
+        return config.g_test_pgserver_path
+
+    if config.g_test_and_prod_mixed:
+        if config.g_etl_prod_tables.__contains__(pg_table_name):
+            # 在白名單中的表，繼續保持得到生產的庫
+            return config.g_pgserver_path
+        else:
+            # 不在白名單中的表，插入PG的測試的測試庫
+            print(pg_table_name, "插入PG的測試庫")
+            return config.g_pgserver_test_test_path
+    else:
+        # 最終生產環境
+        return config.g_pgserver_path
+
+
+def decide_postgres_db_connection(export_to_pg_prod_test, pg_table_name):
+    # 向生產的測試數據庫中回傳數據
+    if export_to_pg_prod_test:
+        return postgres_get_test_db_connection()
+
+    if config.g_test_and_prod_mixed:
+        if config.g_etl_prod_tables.__contains__(pg_table_name):
+            # 在白名單中的表，繼續保持得到生產的庫
+            print(pg_table_name, "插入PG的生產庫")
+            return postgres_get_connection()
+        else:
+            # 不在白名單中的表，插入PG的測試的測試庫
+            print(pg_table_name, "插入PG的測試庫")
+            return postgres_get_test_test_db_connection()
+    else:
+        print(pg_table_name, "插入PG的生產庫")
+        return postgres_get_connection()
+

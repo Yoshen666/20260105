@@ -1,0 +1,3892 @@
+import logging
+import warnings
+
+from xinxiang.util import oracle_to_duck_common
+
+###################以下为自动生成代码########################
+
+
+def sync_APS_SYNC_APC_INHIBIT_BATCH():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_APC_INHIBIT_BATCH"
+    target_table = "APS_SYNC_APC_INHIBIT_BATCH"
+    etl_name = "Sync " + source_table + " to " + target_table
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, PHYSICAL_RECIPE, NG_TIME, UPDATE_TIME FROM V_APC_INHIBIT_BATCH """
+    create_table_sql = """
+       CREATE TABLE APS_SYNC_APC_INHIBIT_BATCH (
+                EQP_ID VARCHAR,
+                PHYSICAL_RECIPE VARCHAR,
+                NG_TIME TIMESTAMP,
+                UPDATE_TIME TIMESTAMP
+                )
+        """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_EQP_STATUS_BOOKING_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_EQP_STATUS_BOOKING_SETTING"
+    target_table = "APS_SYNC_EQP_STATUS_BOOKING_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT ID, SHIFT_DATE, EQP_ID, CHAMBER_NO, E10_STATE, E10_CODE, EST_SPEC, REPLACE(REPLACE(PM_TYPE, chr(10), ''), chr(13), '') AS PM_TYPE, START_TIME, END_TIME, FORCE_FLAG, SKIP_FLAG, UPDATE_TIME, UPDATE_USER, JOB_TYPE, MODULE FROM V_EQP_STATUS_BOOKING_SETTING """
+    create_table_sql = """
+       CREATE TABLE APS_SYNC_EQP_STATUS_BOOKING_SETTING (
+            ID VARCHAR,
+            SHIFT_DATE VARCHAR,
+            EQP_ID VARCHAR,
+            CHAMBER_NO VARCHAR,
+            E10_STATE VARCHAR,
+            E10_CODE VARCHAR,
+            EST_SPEC VARCHAR,
+            PM_TYPE VARCHAR,
+            START_TIME TIMESTAMP,
+            END_TIME TIMESTAMP,
+            FORCE_FLAG VARCHAR,
+            SKIP_FLAG VARCHAR,
+            UPDATE_TIME TIMESTAMP,
+            UPDATE_USER VARCHAR,
+            JOB_TYPE VARCHAR,
+            MODULE VARCHAR
+)
+          """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "v_eqp_status_convert_available"
+    target_table = "APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MOUDLE, E10_STATUS, E10_CODE, REPLACE(REPLACE(F_COMMNET, chr(10), ''), chr(13), '') AS F_COMMNET, UPDATE_TIME FROM v_eqp_status_convert_available """
+    create_table_sql = """
+        CREATE TABLE APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE (
+            MOUDLE VARCHAR,
+            E10_STATUS VARCHAR,
+            E10_CODE VARCHAR,
+            F_COMMNET VARCHAR,
+            UPDATE_TIME TIMESTAMP
+        )
+              """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_EQP_STATUS_E10_FORECAST():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_EQP_STATUS_E10_FORECAST"
+    target_table = "APS_SYNC_EQP_STATUS_E10_FORECAST"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT ID, EQP_ID, BOOKING_TYPE, START_TIME, END_TIME, REPLACE(REPLACE(F_COMMENT, chr(10), ''), chr(13), '') AS F_COMMENT FROM V_EQP_STATUS_E10_FORECAST """
+    create_table_sql = """
+         CREATE TABLE APS_SYNC_EQP_STATUS_E10_FORECAST (
+                ID VARCHAR,
+                EQP_ID VARCHAR,
+                BOOKING_TYPE VARCHAR,
+                START_TIME VARCHAR,
+                END_TIME VARCHAR,
+                F_COMMENT VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_EQP_STATUS_WAIT_TIME_SETTING"
+    target_table = "APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, OPE_NO, E10_STATE, WAIT_FLAG, WAIT_TIME, REPLACE(REPLACE(DESC_TEXT, chr(10), ''), chr(13), '') AS DESC_TEXT, EQP_G, MODULE FROM V_EQP_STATUS_WAIT_TIME_SETTING"""
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING (
+                EQP_ID VARCHAR,
+                OPE_NO VARCHAR,
+                E10_STATE VARCHAR,
+                WAIT_FLAG VARCHAR,  
+                WAIT_TIME VARCHAR,
+                DESC_TEXT VARCHAR,
+                EQP_G VARCHAR,
+                MODULE VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MASK_INFO():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_ETL_MASK_INFO"
+    target_table = "APS_SYNC_MASK_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT RTCL_ID, MASK_NAME, MFG_NO, MASK_GROUP, LOC_ID, STATUS, LAST_UPDATE_TM, LAST_RESCREEN_TM, NEXT_RESCREEN_TM, TARGET, LAST_PTNCHK_ACT FROM V_ETL_MASK_INFO """
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_MASK_INFO (
+                RTCL_ID VARCHAR,
+                MASK_NAME VARCHAR,
+                MFG_NO VARCHAR,
+                MASK_GROUP VARCHAR,
+                LOC_ID VARCHAR,
+                STATUS VARCHAR,
+                LAST_UPDATE_TM TIMESTAMP,
+                LAST_RESCREEN_TM TIMESTAMP,
+                NEXT_RESCREEN_TM TIMESTAMP,
+                TARGET VARCHAR,
+                LAST_PTNCHK_ACT VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_WIP():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_ETL_WIP"
+    target_table = "APS_SYNC_WIP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name) ### TOOOOOOOOOOOOOOOOODOOOOOOOOOOOOOOOOOOOOOOOO TODO
+    # query_sql = """SELECT D_THESYSTEMKEY, LOT_ID, OPE_NO, PRODSPEC_ID, WAFER_QTY, LOT_PROC_STATE, LOT_INV_STATE, PARENT_LOT_ID, LOT_FAMILY_ID, CUSTOMER_ID, MAINPD_ID, PRIORITY_CLASS, LOT_TYPE, SUB_LOT_TYPE, LOT_FINISHED_STATE, CLAIM_TIME, CASSETE_ID, TRANS_STATE, TECH_ID, EQP_ID, LAYER, LAST_OPE_COMP_TIME, OPE_NO_START_TIME, LAST_PROCESS_START_TIME, PROCESS_START_TIME, CTRL_JOB_ID, FLOWBATCH_ID, replace(replace(replace(FLOWBATCH_OBJ ,chr(10),''),chr(13),''), chr(160), '') as FLOWBATCH_OBJ, WHITE_FLAG FROM V_ETL_WIP"""
+    # # query_sql = """SELECT D_THESYSTEMKEY, LOT_ID, OPE_NO, PRODSPEC_ID, WAFER_QTY, LOT_PROC_STATE, LOT_INV_STATE, PARENT_LOT_ID, LOT_FAMILY_ID, CUSTOMER_ID, MAINPD_ID, PRIORITY_CLASS, LOT_TYPE, SUB_LOT_TYPE, LOT_FINISHED_STATE, CLAIM_TIME, CASSETE_ID, TRANS_STATE, TECH_ID, EQP_ID, LAYER, LAST_OPE_COMP_TIME, OPE_NO_START_TIME, LAST_PROCESS_START_TIME, PROCESS_START_TIME, CTRL_JOB_ID, FLOWBATCH_ID,  FLOWBATCH_OBJ, WHITE_FLAG FROM V_ETL_WIP"""
+    # create_table_sql = """
+    #      CREATE TABLE APS_SYNC_WIP (
+    #             D_THESYSTEMKEY VARCHAR,
+    #             LOT_ID VARCHAR,
+    #             OPE_NO VARCHAR,
+    #             PRODSPEC_ID VARCHAR,
+    #             WAFER_QTY VARCHAR,
+    #             LOT_PROC_STATE VARCHAR,
+    #             LOT_INV_STATE VARCHAR,
+    #             PARENT_LOT_ID VARCHAR,
+    #             LOT_FAMILY_ID VARCHAR,
+    #             CUSTOMER_ID VARCHAR,
+    #             MAINPD_ID VARCHAR,
+    #             PRIORITY_CLASS VARCHAR,
+    #             LOT_TYPE VARCHAR,
+    #             SUB_LOT_TYPE VARCHAR,
+    #             LOT_FINISHED_STATE VARCHAR,
+    #             CLAIM_TIME TIMESTAMP,
+    #             CASSETE_ID VARCHAR,
+    #             TRANS_STATE VARCHAR,
+    #             TECH_ID VARCHAR,
+    #             EQP_ID VARCHAR,
+    #             LAYER VARCHAR,
+    #             LAST_OPE_COMP_TIME TIMESTAMP,
+    #             OPE_NO_START_TIME TIMESTAMP,
+    #             LAST_PROCESS_START_TIME TIMESTAMP,
+    #             PROCESS_START_TIME TIMESTAMP,
+    #             CTRL_JOB_ID VARCHAR,
+    #             FLOWBATCH_ID VARCHAR,
+    #             FLOWBATCH_OBJ VARCHAR,
+    #             WHITE_FLAG VARCHAR
+    #      )
+    # """
+    # oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+    #                                                  source_table=source_table,
+    #                                                  target_table=target_table,
+    #                                                  query_sql=query_sql,
+    #                                                  create_table_sql=create_table_sql)
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name, source_table=source_table,target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FRDRBL_ID_DYB():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_FRDRBL_ID_DYB"
+    target_table = "APS_SYNC_FRDRBL_ID_DYB"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, OPE_NO, PHOTO_LAYER, DYB_RTCLSET_ID, MAINPD_ID, IDENTIFIER, DRBL_ID, UPDATE_TIME FROM V_FRDRBL_ID_DYB"""
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_FRDRBL_ID_DYB (
+                LOT_ID VARCHAR,
+                OPE_NO VARCHAR,
+                PHOTO_LAYER VARCHAR,
+                DYB_RTCLSET_ID VARCHAR,
+                MAINPD_ID VARCHAR,
+                IDENTIFIER VARCHAR,
+                DRBL_ID VARCHAR,
+                UPDATE_TIME TIMESTAMP
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FUR_ED_CONTROL_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_FUR_ED_CONTROL_SETTING"
+    target_table = "APS_SYNC_FUR_ED_CONTROL_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT ID, EQP_ID, OPER_NO, PRODUCT_ID, RECIPE_ID, ITEM_SVID, ITEM_NAME, LSL, USL, SPEC_TYPE, UPDATE_TIME, UPDATE_USER FROM V_FUR_ED_CONTROL_SETTING"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_FUR_ED_CONTROL_SETTING(
+                ID VARCHAR,
+                EQP_ID VARCHAR,
+                OPER_NO VARCHAR,
+                PRODUCT_ID VARCHAR,
+                RECIPE_ID VARCHAR,
+                ITEM_SVID VARCHAR,
+                ITEM_NAME VARCHAR,
+                LSL VARCHAR,
+                USL VARCHAR,
+                SPEC_TYPE VARCHAR,
+                UPDATE_TIME TIMESTAMP,
+                UPDATE_USER VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MASK_MES_STATUS():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_MASK_MES_STATUS"
+    target_table = "APS_SYNC_MASK_MES_STATUS"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT RETICLE_ID, MASK_STATUS FROM V_MASK_MES_STATUS"""
+    create_table_sql = """
+       CREATE TABLE APS_SYNC_MASK_MES_STATUS (
+            RETICLE_ID VARCHAR,
+            MASK_STATUS VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MOVE_TARGET_RANK():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_MOVE_TARGET_RANK"
+    target_table = "APS_SYNC_MOVE_TARGET_RANK"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT RANK_TYPE, RANK_NO, UPDATE_USER, UPDATE_TIME, REPLACE(REPLACE(MEMO, chr(10), ''), chr(13), '') AS MEMO FROM V_MOVE_TARGET_RANK"""
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_MOVE_TARGET_RANK (
+                RANK_TYPE VARCHAR,
+                RANK_NO VARCHAR,
+                UPDATE_USER VARCHAR,
+                UPDATE_TIME TIMESTAMP,
+                MEMO VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_PHOTO_PATH_CONVERT():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_PHOTO_PATH_CONVERT"
+    target_table = "APS_SYNC_PHOTO_PATH_CONVERT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT USE_FLAG_TYPE, REPLACE(REPLACE(F_COMMENT, chr(10), ''), chr(13), '') AS F_COMMENT, ACTIVE_FLAG FROM V_PHOTO_PATH_CONVERT"""
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_PHOTO_PATH_CONVERT (
+                USE_FLAG_TYPE VARCHAR,
+                F_COMMENT VARCHAR,
+                ACTIVE_FLAG VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_GROUP_EQPG_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_GROUP_EQPG_SETTING"
+    target_table = "APS_SYNC_SCHE_GROUP_EQPG_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT RN, SCHE_EQP_G, EQP_G, IF_CROSS, REPLACE(REPLACE(REMARK, chr(10), ''), chr(13), '') AS REMARK, UPDATE_TIME, UPDATE_USER FROM V_SCHE_GROUP_EQPG_SETTING """
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_SCHE_GROUP_EQPG_SETTING (
+                RN VARCHAR,
+                SCHE_EQP_G VARCHAR,
+                EQP_G VARCHAR,
+                IF_CROSS VARCHAR,
+                REMARK VARCHAR,
+                UPDATE_TIME TIMESTAMP,
+                UPDATE_USER VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_LOT_PURPTY_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_LOT_PURPTY_SETTING"
+    target_table = "APS_SYNC_SCHE_LOT_PURPTY_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, OLD_LOT_PURPOSE, OLD_PRIORITY, REPLACE(REPLACE(LOT_PURPOSE, chr(10), ''), chr(13), '') AS LOT_PURPOSE, PRIORITY, TARGET_OPE_NO, UPDATE_TIME FROM V_SCHE_LOT_PURPTY_SETTING """
+    create_table_sql = """
+      CREATE TABLE APS_SYNC_SCHE_LOT_PURPTY_SETTING (
+            LOT_ID VARCHAR,
+            OLD_LOT_PURPOSE VARCHAR,
+            OLD_PRIORITY VARCHAR,
+            LOT_PURPOSE VARCHAR,
+            PRIORITY VARCHAR,
+            TARGET_OPE_NO VARCHAR,
+            UPDATE_TIME TIMESTAMP
+        )
+        """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_LOT_TO_EQPG():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_LOT_TO_EQPG"
+    target_table = "APS_SYNC_SCHE_LOT_TO_EQPG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_G, LOT_ID, OPE_NO, PRODSPEC_ID, WAFER_QTY, LOT_PROC_STATE, MAINPD_ID, CLAIM_TIME FROM V_SCHE_LOT_TO_EQPG"""
+    create_table_sql = """
+         CREATE TABLE APS_SYNC_SCHE_LOT_TO_EQPG (
+                EQP_G VARCHAR,
+                LOT_ID VARCHAR,
+                OPE_NO VARCHAR,
+                PRODSPEC_ID VARCHAR,
+                WAFER_QTY VARCHAR,
+                LOT_PROC_STATE VARCHAR,
+                MAINPD_ID VARCHAR,
+                CLAIM_TIME TIMESTAMP
+         )
+         """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_OPE_NO_MODULE_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_OPE_NO_MODULE_SETTING"
+    target_table = "APS_SYNC_SCHE_OPE_NO_MODULE_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT OPE_NO, MODULE, UPDATE_TIME, UPDATE_USER FROM V_SCHE_OPE_NO_MODULE_SETTING """
+    create_table_sql = """
+         CREATE TABLE APS_SYNC_SCHE_OPE_NO_MODULE_SETTING (
+                OPE_NO VARCHAR,
+                MODULE VARCHAR,
+                UPDATE_TIME VARCHAR,
+                UPDATE_USER VARCHAR
+         )
+        """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_PM_PROP_TIME():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_PM_PROP_TIME"
+    target_table = "APS_SYNC_SCHE_PM_PROP_TIME"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MUDULE, EQP_G, EQP_ID, CHAMBER_NO, PM_TYPE, BEGIN_TIME, END_TIME, BEGIN_TIMES, END_TIMES, INTERVAL_DAY, ITEM_TYPE, UPDATE_USER, UPDATE_TIME FROM V_SCHE_PM_PROP_TIME"""
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_SCHE_PM_PROP_TIME (
+                MUDULE VARCHAR,
+                EQP_G VARCHAR,
+                EQP_ID VARCHAR,
+                CHAMBER_NO VARCHAR,
+                PM_TYPE VARCHAR,
+                BEGIN_TIME VARCHAR,
+                END_TIME VARCHAR,
+                BEGIN_TIMES VARCHAR,
+                END_TIMES VARCHAR,
+                INTERVAL_DAY VARCHAR,
+                ITEM_TYPE VARCHAR,
+                UPDATE_USER VARCHAR,
+                UPDATE_TIME VARCHAR
+            )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SCHE_UMT_MODULE_EQPG():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SCHE_UMT_MODULE_EQPG"
+    target_table = "APS_SYNC_SCHE_UMT_MODULE_EQPG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT SCHE_EQP_G, EQP_G, AVAILABLE_MASK_LIBRARY, MAX_MASK_LIBRARY FROM V_SCHE_UMT_MODULE_EQPG"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_SCHE_UMT_MODULE_EQPG (
+                    SCHE_EQP_G VARCHAR,
+                    EQP_G VARCHAR,
+                    AVAILABLE_MASK_LIBRARY VARCHAR,
+                    MAX_MASK_LIBRARY VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SETTING_MCS_LOCATION_MANUAL():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_SETTING_MCS_LOCATION_MANUAL"
+    target_table = "APS_SYNC_SETTING_MCS_LOCATION_MANUAL"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT TOOL_ID, LOCATION, UPDATE_DATE FROM V_SETTING_MCS_LOCATION_MANUAL"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_SETTING_MCS_LOCATION_MANUAL(
+                TOOL_ID VARCHAR,
+                LOCATION VARCHAR,
+                UPDATE_DATE VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_TRANSFER_TIME_DEFALUTE():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_TRANSFER_TIME_DEFALUT"
+    target_table = "APS_SYNC_TRANSFER_TIME_DEFALUTE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT FUNCTION_KEY, TRANSFER_TIME, UNIT, REPLACE(REPLACE(F_COMMENT, chr(10), ''), chr(13), '') AS F_COMMENT FROM V_TRANSFER_TIME_DEFALUT"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_TRANSFER_TIME_DEFALUTE (
+                FUNCTION_KEY VARCHAR,
+                TRANSFER_TIME VARCHAR,
+                UNIT VARCHAR,
+                F_COMMENT VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_CONTROL_LOT():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_UMT_CONTROL_LOT"
+    target_table = "APS_SYNC_UMT_CONTROL_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT TECH, PRODG1, PRODUCT_ID, OPE_NO, LOT_ID, UPDATE_TIME, UPDATE_USER, MODULE FROM V_UMT_CONTROL_LOT """
+    create_table_sql = """
+         CREATE TABLE APS_SYNC_UMT_CONTROL_LOT (
+                TECH VARCHAR,
+                PRODG1 VARCHAR,
+                PRODUCT_ID VARCHAR,
+                OPE_NO VARCHAR,
+                LOT_ID VARCHAR, 
+                UPDATE_TIME VARCHAR,
+                UPDATE_USER VARCHAR,
+                MODULE VARCHAR
+        )
+        """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_EQP_CAP_STD():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_UMT_EQP_CAP_STD"
+    target_table = "APS_SYNC_UMT_EQP_CAP_STD"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_G, EQP_ID, STD_CAP, CROSS_FAB_FLAG, CROSS_FAB_HOUR_LIMIT, STD_WIP FROM V_UMT_EQP_CAP_STD """
+    create_table_sql = """
+             CREATE TABLE APS_SYNC_UMT_EQP_CAP_STD (
+                    EQP_G VARCHAR,
+                    EQP_ID VARCHAR,
+                    STD_CAP VARCHAR,
+                    CROSS_FAB_FLAG VARCHAR,
+                    CROSS_FAB_HOUR_LIMIT VARCHAR,
+                    STD_WIP VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_PATH_CONVERT_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_UMT_PATH_CONVERT_SETTING"
+    target_table = "APS_SYNC_UMT_PATH_CONVERT_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT USE_FLAG_TYPE, REPLACE(REPLACE(F_COMMENT, chr(10), ''), chr(13), '') AS F_COMMENT, RS_HOLD_TIME, MODULE, EQP_G, ACTIVE_FLAG FROM V_UMT_PATH_CONVERT_SETTING"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_UMT_PATH_CONVERT_SETTING (
+                USE_FLAG_TYPE VARCHAR,
+                F_COMMENT VARCHAR,
+                RS_HOLD_TIME VARCHAR,
+                MODULE VARCHAR,
+                EQP_G VARCHAR,
+                ACTIVE_FLAG VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_RUN_RULE_BATCH_SIZE():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_UMT_RUN_RULE_BATCH_SIZE"
+    target_table = "APS_SYNC_UMT_RUN_RULE_BATCH_SIZE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT RULE_NAME, MODULE_ID, TOOLG_ID, TOOL_ID, PRODG_TECH, PRODG_ID, PROD_ID, OPE_NO, LOT_TYPE, FOUP_CNT_EXACT, BATCH_QTY_MIN, BATCH_QTY_MAX, FOUP_CNT_MIN, FOUP_CNT_MAX, HARD_FLAG, REPLACE(REPLACE(REMARK, chr(10), ''), chr(13), '') AS REMARK FROM V_UMT_RUN_RULE_BATCH_SIZE"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_UMT_RUN_RULE_BATCH_SIZE (
+                    RULE_NAME VARCHAR,
+                    MODULE_ID VARCHAR,
+                    TOOLG_ID VARCHAR,
+                    TOOL_ID VARCHAR,
+                    PRODG_TECH VARCHAR,
+                    PRODG_ID VARCHAR,
+                    PROD_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    LOT_TYPE VARCHAR,
+                    FOUP_CNT_EXACT VARCHAR,
+                    BATCH_QTY_MIN VARCHAR,
+                    BATCH_QTY_MAX VARCHAR,
+                    FOUP_CNT_MIN VARCHAR,
+                    FOUP_CNT_MAX VARCHAR,
+                    HARD_FLAG VARCHAR,
+                    REMARK VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WET_ACID_CONTROL_SETTING():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_WET_ACID_CONTROL_SETTING"
+    target_table = "APS_SYNC_WET_ACID_CONTROL_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT ID, EQP_ID, OPER_NO, PRODUCT_ID, RECIPE_ID, ITEM_SVID, ITEM_NAME, LSL, USL, SPEC_TYPE, UPDATE_TIME, UPDATE_USER FROM V_WET_ACID_CONTROL_SETTING"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_WET_ACID_CONTROL_SETTING (
+                    ID VARCHAR,
+                    EQP_ID VARCHAR,
+                    OPER_NO VARCHAR,
+                    PRODUCT_ID VARCHAR,
+                    RECIPE_ID VARCHAR,
+                    ITEM_SVID VARCHAR,
+                    ITEM_NAME VARCHAR,
+                    LSL VARCHAR,
+                    USL VARCHAR,
+                    SPEC_TYPE VARCHAR,
+                    UPDATE_TIME TIMESTAMP,
+                    UPDATE_USER VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WET_ACID_DATA():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_WET_ACID_DATA"
+    target_table = "APS_SYNC_WET_ACID_DATA"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, ITEM_NAME, VALUE, UPDATE_TIME FROM V_WET_ACID_DATA"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_WET_ACID_DATA (
+                EQP_ID VARCHAR,
+                ITEM_NAME VARCHAR,
+                VALUE VARCHAR,
+                UPDATE_TIME VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_WS_SCHEDULE_LOT_INFO():
+    # Corn In DataBase: 0 5/5 * * * ?
+    source_table = "V_WS_SCHEDULE_LOT_INFO"
+    target_table = "APS_SYNC_WS_SCHEDULE_LOT_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT WO_NO, START_DATE, KEY_NO, PCS_QTY, CHIP_BODY, SUFFIX, PRODSPEC_ID FROM V_WS_SCHEDULE_LOT_INFO"""
+    create_table_sql = """
+             CREATE TABLE APS_SYNC_WS_SCHEDULE_LOT_INFO (
+                    WO_NO VARCHAR,
+                    START_DATE TIMESTAMP,
+                    KEY_NO VARCHAR,
+                    PCS_QTY VARCHAR,
+                    CHIP_BODY VARCHAR,
+                    SUFFIX VARCHAR,
+                    PRODSPEC_ID VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_DAILY_MOVE_TARGET():
+    # Corn In DataBase: 10 8/10 * * * ?
+    source_table = "V_DAILY_MOVE_TARGET"
+    target_table = "APS_SYNC_DAILY_MOVE_TARGET"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODG1, OPE_NO, OPER_SEQ, MOVE_TARGET FROM V_DAILY_MOVE_TARGET"""
+    create_table_sql = """  
+          CREATE TABLE APS_SYNC_DAILY_MOVE_TARGET (
+                PRODG1 VARCHAR,
+                OPE_NO VARCHAR,
+                OPER_SEQ VARCHAR,
+                MOVE_TARGET VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RDS_RECIPEINFO():
+    # Corn In DataBase: 10 8/10 * * * ?
+    source_table = "V_RDS_RECIPEINFO"
+    target_table = "APS_SYNC_RDS_RECIPEINFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT DKEY, TOOLID, CHAMBERID, MODULE, SUBNAME, JOBGROUPID, JOBSPECID, OCSSTATE, E10STATE, LIFETIME, EXPIRETIME, CLAIMUSER, LASTSTAMPTIME, STATE, STATECHANGETIME, RUNTIMEGROUPNAME, RESISTERID, REPLACE(REPLACE(RECIPE_MEMO, chr(10), ''), chr(13), '') AS RECIPE_MEMO  FROM V_RDS_RECIPEINFO"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_RDS_RECIPEINFO (
+                    DKEY VARCHAR,
+                    TOOLID VARCHAR,
+                    CHAMBERID VARCHAR,
+                    MODULE VARCHAR,
+                    SUBNAME VARCHAR,
+                    JOBGROUPID VARCHAR,
+                    JOBSPECID VARCHAR,
+                    OCSSTATE VARCHAR,
+                    E10STATE VARCHAR,
+                    LIFETIME VARCHAR,
+                    EXPIRETIME TIMESTAMP,
+                    CLAIMUSER VARCHAR,
+                    LASTSTAMPTIME TIMESTAMP,
+                    STATE VARCHAR,
+                    STATECHANGETIME TIMESTAMP,
+                    RUNTIMEGROUPNAME VARCHAR,
+                    RESISTERID VARCHAR,
+                    RECIPE_MEMO VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_CSLOT_FORCESAMP():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_CSLOT_FORCESAMP"
+    target_table = "APS_SYNC_CSLOT_FORCESAMP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, SAMP_TYPE, MAINPD_ID, OPE_NO, CLAIM_USER_ID, replace(replace(CLAIM_MEMO,chr(10),''),chr(13),'') as CLAIM_MEMO, CLAIM_TIME FROM V_CSLOT_FORCESAMP"""
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_CSLOT_FORCESAMP (
+                LOT_ID VARCHAR,
+                SAMP_TYPE VARCHAR,
+                MAINPD_ID VARCHAR,
+                OPE_NO VARCHAR,
+                CLAIM_USER_ID VARCHAR,
+                CLAIM_MEMO VARCHAR,
+                CLAIM_TIME VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RETICLE_USE():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_ETL_RETICLE_USE"
+    target_table = "APS_SYNC_RETICLE_USE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT RETICLE_ID, TTL FROM V_ETL_RETICLE_USE"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_RETICLE_USE (
+                    RETICLE_ID VARCHAR,
+                    TTL VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_FLOW_DYB_RETURN():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_FLOW_DYB_RETURN"
+    target_table = "APS_SYNC_FLOW_DYB_RETURN"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, OPENO, DYB_MAINPD_ID, MAINPD_ID, RETURN_OPE_NO FROM V_FLOW_DYB_RETURN"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_FLOW_DYB_RETURN (
+                    LOT_ID VARCHAR,
+                    OPENO VARCHAR,
+                    DYB_MAINPD_ID VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    RETURN_OPE_NO VARCHAR
+                )
+            """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FRLOT_EQP_RESOURCE_FLAG():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_FRLOT_EQP_RESOURCE_FLAG"
+    target_table = "APS_SYNC_FRLOT_EQP_RESOURCE_FLAG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, EQP_ID, CTRLJOB_ID, CLAIM_TIME, OPE_NO, MAINPD_ID, PRODSPEC_ID, QTY FROM V_FRLOT_EQP_RESOURCE_FLAG"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_FRLOT_EQP_RESOURCE_FLAG (
+                    LOT_ID VARCHAR,
+                    EQP_ID VARCHAR,
+                    CTRLJOB_ID VARCHAR,
+                    CLAIM_TIME TIMESTAMP,
+                    OPE_NO VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    QTY VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FVLOT_QTIME():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_FVLOT_QTIME"
+    target_table = "APS_SYNC_FVLOT_QTIME"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, TRIGGER_MAINPD_ID, TRIGGER_OP_NO, TRIGGER_TIME, TARGET_MAINPD_ID, TARGET_OP_NO, QTIME_SPEC, TARGET_TIME, REMAIN_QTIME FROM V_FVLOT_QTIME"""
+    create_table_sql = """
+      CREATE TABLE APS_SYNC_FVLOT_QTIME (
+                LOT_ID VARCHAR,
+                TRIGGER_MAINPD_ID VARCHAR,
+                TRIGGER_OP_NO VARCHAR,
+                TRIGGER_TIME TIMESTAMP,
+                TARGET_MAINPD_ID VARCHAR,
+                TARGET_OP_NO VARCHAR,
+                QTIME_SPEC VARCHAR,
+                TARGET_TIME TIMESTAMP,
+                REMAIN_QTIME VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_OCS_JOB_GROUP_SPEC():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_OCS_JOB_GROUP_SPEC"
+    target_table = "APS_SYNC_OCS_JOB_GROUP_SPEC"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT JOB_SPEC_GROUP_ID, MODULE, JOB_SPEC_ID, MAINTOOLFLAG, SEQNO FROM V_OCS_JOB_GROUP_SPEC """
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_OCS_JOB_GROUP_SPEC (
+                JOB_SPEC_GROUP_ID VARCHAR,
+                MODULE VARCHAR,
+                JOB_SPEC_ID VARCHAR,
+                MAINTOOLFLAG VARCHAR,
+                SEQNO VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RETICLE_PROD():
+    # Corn In DataBase:
+    source_table = "V_RETICLE_PROD"
+    target_table = "APS_SYNC_RETICLE_PROD"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODSPEC_ID, PRODG1, MASK_GROUP, RTCL_ID, OPE_NO, CHIP_BODY FROM V_RETICLE_PROD """
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_RETICLE_PROD (
+                    PRODSPEC_ID VARCHAR,
+                    PRODG1 VARCHAR,
+                    MASK_GROUP VARCHAR,
+                    RTCL_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    CHIP_BODY VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RSSPLIT_INFO():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_RSSPLIT_INFO"
+    target_table = "APS_SYNC_RSSPLIT_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_MOTHER, LOT_SON, SPLIT_OP_NO, UNIT_ID, UPD_DATE FROM V_RSSPLIT_INFO"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_RSSPLIT_INFO (
+                    LOT_MOTHER VARCHAR,
+                    LOT_SON VARCHAR,
+                    SPLIT_OP_NO VARCHAR,
+                    UNIT_ID VARCHAR,
+                    UPD_DATE TIMESTAMP
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_QTIME_PROD_EQP():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_RTD_QTIME_PROD_EQP"
+    target_table = "APS_SYNC_RTD_QTIME_PROD_EQP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PROD_ID, MAINPD_ID, NOW_OPER_NO, NEXT_OPE_NO, FROM_OPE_NO, TO_OPE_NO, EQP_ID, UPDATE_TIME, USED_TC, VIRTUAL_TIME_TC, HOLD_FLAG FROM V_RTD_QTIME_PROD_EQP"""
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_RTD_QTIME_PROD_EQP (
+                    PROD_ID VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    NOW_OPER_NO VARCHAR,
+                    NEXT_OPE_NO VARCHAR,
+                    FROM_OPE_NO VARCHAR,
+                    TO_OPE_NO VARCHAR,
+                    EQP_ID VARCHAR,
+                    UPDATE_TIME TIMESTAMP,
+                    USED_TC VARCHAR,
+                    VIRTUAL_TIME_TC VARCHAR,
+                    HOLD_FLAG VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_UMT_RTD_BATCH_INFO():
+    # Corn In DataBase: 0 6/5 * * * ?
+    source_table = "V_UMT_RTD_BATCH_INFO"
+    target_table = "APS_SYNC_UMT_RTD_BATCH_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT BATCH_NAME, BATCH_TARGET_FLAG, FLOWBATCH_PATH_FLAG, BATCH_PATH_TARGET_FLAG, PRODSPEC_ID, MAINPD_ID, OPE_NO, PATH_CNT, REPLACE(REPLACE(PATH_ISSUE, chr(10), '') , chr(13), '') AS PATH_ISSUE, SKIP_FLAG, UPDATE_TIME FROM V_UMT_RTD_BATCH_INFO"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_UMT_RTD_BATCH_INFO (
+                    BATCH_NAME VARCHAR,
+                    BATCH_TARGET_FLAG VARCHAR,
+                    FLOWBATCH_PATH_FLAG VARCHAR,
+                    BATCH_PATH_TARGET_FLAG VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    PATH_CNT VARCHAR,
+                    PATH_ISSUE VARCHAR,
+                    SKIP_FLAG VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FLOW():
+    # Corn In DataBase: 0 6/30 * * * ?
+    source_table = "V_ETL_FLOW"
+    target_table = "APS_SYNC_FLOW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MNPD_ID, MNPD_VS, PRODG1, PRODSPEC_ID, OPE_NO, OPE_SEQ, SCHE_EQP_G, EQP_G, INLINE_CT, INLINE_CYC_ACC, INLINE_CYC_REMAIN, TC, UPDATE_TIME, STD_CT, SGS_FLAG, SGS_GROUP, SGS_FIRST_OP, SGS_WEIGHT, SGS_END_OP, SGS_LOOP_GROUP, INLINE_PROC_TIME, BATCH_NAME, BATCH_TARGET_FLAG FROM V_ETL_FLOW"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_FLOW (
+                MNPD_ID VARCHAR,
+                MNPD_VS VARCHAR,
+                PRODG1 VARCHAR,
+                PRODSPEC_ID VARCHAR,
+                OPE_NO VARCHAR,
+                OPE_SEQ VARCHAR,
+                SCHE_EQP_G VARCHAR,
+                EQP_G VARCHAR,
+                INLINE_CT VARCHAR,
+                INLINE_CYC_ACC VARCHAR,
+                INLINE_CYC_REMAIN VARCHAR,
+                TC VARCHAR,
+                UPDATE_TIME TIMESTAMP,
+                STD_CT VARCHAR,
+                SGS_FLAG VARCHAR,
+                SGS_GROUP VARCHAR,
+                SGS_FIRST_OP VARCHAR,
+                SGS_WEIGHT VARCHAR,
+                SGS_END_OP VARCHAR,
+                SGS_LOOP_GROUP VARCHAR,
+                INLINE_PROC_TIME VARCHAR,
+                BATCH_NAME VARCHAR,
+                BATCH_TARGET_FLAG VARCHAR
+            )
+            """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_QTIME_EQP_LOADING():
+    # Corn In DataBase: 30 7/10 * * * ?
+    source_table = "V_QTIME_EQP_LOADING"
+    target_table = "APS_SYNC_QTIME_EQP_LOADING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT FAB, QTIME_TYPE, PRODSPEC_ID, MAINPD_ID, ENTRY_OPE_NO, TARGET_OPE_NO, DS_OPE_NO, DS_SEQ_NO, TARGET_QTIME_LIMIT, WITH_PATH_FLAG, REPLACE(REPLACE(DS_PATH_ISSUE, chr(10), ''), chr(13), '') AS DS_PATH_ISSUE, AVG_OP_TC, AVG_OP_LOADING, ACC_OP_LOADING, CAPACITY_OK_FLAG, REPLACE(REPLACE(DS_CAPACITY_ISSUE, chr(10), ''), chr(13), '') AS DS_CAPACITY_ISSUE, PATH_CNT, PATH_LIST, STHL_FLAG, TOP_ENTRY_OPE_NO, PM_SPEED_UP, EQP_ID, UPDATE_TIME FROM V_QTIME_EQP_LOADING """
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_QTIME_EQP_LOADING (
+                    FAB VARCHAR,
+                    QTIME_TYPE VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    ENTRY_OPE_NO VARCHAR,
+                    TARGET_OPE_NO VARCHAR,
+                    DS_OPE_NO VARCHAR,
+                    DS_SEQ_NO VARCHAR,
+                    TARGET_QTIME_LIMIT VARCHAR,
+                    WITH_PATH_FLAG VARCHAR,
+                    DS_PATH_ISSUE VARCHAR,
+                    AVG_OP_TC VARCHAR,
+                    AVG_OP_LOADING VARCHAR,
+                    ACC_OP_LOADING VARCHAR,
+                    CAPACITY_OK_FLAG VARCHAR,
+                    DS_CAPACITY_ISSUE VARCHAR,
+                    PATH_CNT VARCHAR,
+                    PATH_LIST VARCHAR,
+                    STHL_FLAG VARCHAR,
+                    TOP_ENTRY_OPE_NO VARCHAR,
+                    PM_SPEED_UP VARCHAR,
+                    EQP_ID VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_QTIME_EQP_LOADING_AM():
+    # Corn In DataBase: 30 7/10 * * * ?
+    source_table = "V_QTIME_EQP_LOADING_AM"
+    target_table = "APS_SYNC_QTIME_EQP_LOADING_AM"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT FAB, QTIME_TYPE, PRODSPEC_ID, MAINPD_ID, ENTRY_OPE_NO, TARGET_OPE_NO, DS_OPE_NO, DS_SEQ_NO, TARGET_QTIME_LIMIT, WITH_PATH_FLAG, REPLACE(REPLACE(DS_PATH_ISSUE, chr(10), ''), chr(13), '') AS DS_PATH_ISSUE, AVG_OP_TC, AVG_OP_LOADING, ACC_OP_LOADING, CAPACITY_OK_FLAG, DS_CAPACITY_ISSUE, PATH_CNT, PATH_LIST, STHL_FLAG, TOP_ENTRY_OPE_NO, PM_SPEED_UP, EQP_ID, UPDATE_TIME FROM V_QTIME_EQP_LOADING_AM"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_QTIME_EQP_LOADING_AM (
+                    FAB VARCHAR,
+                    QTIME_TYPE VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    ENTRY_OPE_NO VARCHAR,
+                    TARGET_OPE_NO VARCHAR,
+                    DS_OPE_NO VARCHAR,
+                    DS_SEQ_NO VARCHAR,
+                    TARGET_QTIME_LIMIT VARCHAR,
+                    WITH_PATH_FLAG VARCHAR,
+                    DS_PATH_ISSUE VARCHAR,
+                    AVG_OP_TC VARCHAR,
+                    AVG_OP_LOADING VARCHAR,
+                    ACC_OP_LOADING VARCHAR,
+                    CAPACITY_OK_FLAG VARCHAR,
+                    DS_CAPACITY_ISSUE VARCHAR,
+                    PATH_CNT VARCHAR,
+                    PATH_LIST VARCHAR,
+                    STHL_FLAG VARCHAR,
+                    TOP_ENTRY_OPE_NO VARCHAR,
+                    PM_SPEED_UP VARCHAR,
+                    EQP_ID VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_RECIPEGROUP():
+    # Corn In DataBase: 30 7/10 * * * ?
+    source_table = "V_RTD_RECIPEGROUP"
+    target_table = "APS_SYNC_RTD_RECIPEGROUP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT TOOL_ID, PPID, "TYPE", SIGN_STATUS, RTD_GROUPID, RTD_GROUPNAME, MODIFY_USER, MODIFY_DATETIME, UPDATE_TIME FROM APS_SYNC_RTD_RECIPEGROUP"""
+    create_table_sql = """
+             CREATE TABLE APS_SYNC_RTD_RECIPEGROUP (
+                    TOOL_ID VARCHAR,
+                    PPID VARCHAR,
+                    "TYPE" VARCHAR,
+                    SIGN_STATUS VARCHAR,
+                    RTD_GROUPID VARCHAR,
+                    RTD_GROUPNAME VARCHAR,
+                    MODIFY_USER VARCHAR,
+                    MODIFY_DATETIME TIMESTAMP,
+                    UPDATE_TIME TIMESTAMP
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+
+
+
+def sync_APS_SYNC_CUT_LINE():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_CUT_LINE"
+    target_table = "APS_SYNC_CUT_LINE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODG1, CUTLINE_OPE_NO, LOT_ID, WAFER_QTY, PRODUCT_STATUS FROM V_CUT_LINE"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_CUT_LINE (
+                    PRODG1 VARCHAR,
+                    CUTLINE_OPE_NO VARCHAR,
+                    LOT_ID VARCHAR,
+                    WAFER_QTY VARCHAR,
+                    PRODUCT_STATUS VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FLOW_ORDER_CHANGE():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_FLOW_ORDER_CHANGE"
+    target_table = "APS_SYNC_FLOW_ORDER_CHANGE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT CONVERT_TYPE, REACTION_FLAG, OBJECT_CAT, OBJECT_TYPE, OBJECT_NAME, OBJECT_ID, OPE_NO, MAINPD_ID, PRODSPEC_ID, NEW_MAINPD_ID, NEW_OPE_NO, START_TIME, END_TIME, APPLY_LOT_COUNT, MAX_LOT_COUNT, TOTAL_LOT_COUNT FROM V_FLOW_ORDER_CHANGE"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_FLOW_ORDER_CHANGE (
+                    CONVERT_TYPE VARCHAR,
+                    REACTION_FLAG VARCHAR,
+                    OBJECT_CAT VARCHAR,
+                    OBJECT_TYPE VARCHAR,
+                    OBJECT_NAME VARCHAR,
+                    OBJECT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    NEW_MAINPD_ID VARCHAR,
+                    NEW_OPE_NO VARCHAR,
+                    START_TIME TIMESTAMP,
+                    END_TIME TIMESTAMP,
+                    APPLY_LOT_COUNT VARCHAR,
+                    MAX_LOT_COUNT VARCHAR,
+                    TOTAL_LOT_COUNT VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_LOT_LOCATION():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_LOT_LOCATION"
+    target_table = "APS_SYNC_LOT_LOCATION"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, LOT_PROCESS_STATE, QTY, FOUP_EQP_ID, MAINPD_ID, PRODSPEC_ID, FOUP_STATION_ID, OPE_NO, FAB_PHASE, FAB_ID, FOUP_ID FROM V_LOT_LOCATION"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_LOT_LOCATION (
+                    LOT_ID VARCHAR,
+                    LOT_PROCESS_STATE VARCHAR,
+                    QTY VARCHAR,
+                    FOUP_EQP_ID VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    FOUP_STATION_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    FAB_PHASE VARCHAR,
+                    FAB_ID VARCHAR,
+                    FOUP_ID VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_LOT_PURPOSE():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_LOT_PURPOSE"
+    target_table = "APS_SYNC_LOT_PURPOSE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, LOT_PURPOSE, PRODG1, ACCELARATE_FLAG FROM V_LOT_PURPOSE """
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_LOT_PURPOSE (
+                    LOT_ID VARCHAR,
+                    LOT_PURPOSE VARCHAR,
+                    PRODG1 VARCHAR,
+                    ACCELARATE_FLAG VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MCS_SCHED_TRANSFER_TIME():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_MCS_SCHED_TRANSFER_TIME"
+    target_table = "APS_SYNC_MCS_SCHED_TRANSFER_TIME"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOCATION_FROM, LOCATION_TO, TRANSPORT_TIME FROM V_MCS_SCHED_TRANSFER_TIME"""
+    create_table_sql = """
+             CREATE TABLE APS_SYNC_MCS_SCHED_TRANSFER_TIME (
+                    LOCATION_FROM VARCHAR,
+                    LOCATION_TO VARCHAR,
+                    TRANSPORT_TIME VARCHAR
+                )
+                """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_MLIF_FOR_BATCH_MANU_REG():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_MLIF_FOR_BATCH_MANU_REG"
+    target_table = "APS_SYNC_MLIF_FOR_BATCH_MANU_REG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, LOT_LOCATION, BATCH_ID, LOGICAL_RECIPE, MAINPD_ID, PRODSPEC_ID, OPE_NO, CAST_ID, LOT_ID, QTY, PRIORITY_CLASS, UPDATE_TIME, UPDATE_USER FROM V_MLIF_FOR_BATCH_MANU_REG"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_MLIF_FOR_BATCH_MANU_REG (
+                LINE VARCHAR,
+                LOT_LOCATION VARCHAR,
+                BATCH_ID VARCHAR,
+                LOGICAL_RECIPE VARCHAR,
+                MAINPD_ID VARCHAR,
+                PRODSPEC_ID VARCHAR,
+                OPE_NO VARCHAR,
+                CAST_ID VARCHAR,
+                LOT_ID VARCHAR,
+                QTY VARCHAR,
+                PRIORITY_CLASS VARCHAR,
+                UPDATE_TIME TIMESTAMP,
+                UPDATE_USER VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_PRODUCT_INFO():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_PRODUCT_INFO"
+    target_table = "APS_SYNC_PRODUCT_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODG1, GROUP_TECH FROM V_PRODUCT_INFO """
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_PRODUCT_INFO (
+                    PRODG1 VARCHAR,
+                    GROUP_TECH VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RSPILOT_RUNING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_RSPILOT_RUNING"
+    target_table = "APS_SYNC_RSPILOT_RUNING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT JOB_NO, APC_TYPE, LOT_KEY_NO, DEVICE_GRP, DEVICE_NM, DEVICE_NM1, C_OP_NO, C_UNIT_ID, E_OP_NO, OP_NO_1, UNIT_ID_1, OP_NO_2, UNIT_ID_2, OP_NO_3, UNIT_ID_3, START_DATE, STATUS, REPLACE(REPLACE(PILOT_COMMENT, chr(10), ''), chr(13), '') AS PILOT_COMMENT, PILOT_CHUCK, MASK_NM, PILOT_CNT FROM V_RSPILOT_RUNING"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_RSPILOT_RUNING (
+                    JOB_NO VARCHAR,
+                    APC_TYPE VARCHAR,
+                    LOT_KEY_NO VARCHAR,
+                    DEVICE_GRP VARCHAR,
+                    DEVICE_NM VARCHAR,
+                    DEVICE_NM1 VARCHAR,
+                    C_OP_NO VARCHAR,
+                    C_UNIT_ID VARCHAR,
+                    E_OP_NO VARCHAR,
+                    OP_NO_1 VARCHAR,
+                    UNIT_ID_1 VARCHAR,
+                    OP_NO_2 VARCHAR,
+                    UNIT_ID_2 VARCHAR,
+                    OP_NO_3 VARCHAR,
+                    UNIT_ID_3 VARCHAR,
+                    START_DATE TIMESTAMP,
+                    STATUS VARCHAR,
+                    PILOT_COMMENT VARCHAR,
+                    PILOT_CHUCK VARCHAR,
+                    MASK_NM VARCHAR,
+                    PILOT_CNT VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_MOVE_TARGET():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_RTD_MOVE_TARGET"
+    target_table = "APS_SYNC_RTD_MOVE_TARGET"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODULE, CT_G, PRODG1, PRODSPEC_ID, OPE_NO, EQP_ID, MOVE_TARGET, END_DATE, DISPATCH_TYPE, FORCE_FLAG, MAX_MOVE_FLAG FROM V_RTD_MOVE_TARGET"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_RTD_MOVE_TARGET (
+                    MODULE VARCHAR,
+                    CT_G VARCHAR,
+                    PRODG1 VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    EQP_ID VARCHAR,
+                    MOVE_TARGET VARCHAR,
+                    END_DATE VARCHAR,
+                    DISPATCH_TYPE VARCHAR,
+                    FORCE_FLAG VARCHAR,
+                    MAX_MOVE_FLAG VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_RTD_WET_BATCH_SIZE_SETTING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_RTD_WET_BATCH_SIZE_SETTING"
+    target_table = "APS_SYNC_RTD_WET_BATCH_SIZE_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT ID1, EQP_ID, PRODSPEC_ID, OPE_NO, BATCH_SIZE, REPLACE(REPLACE(MEMO, chr(10), ''), chr(13), '') AS MEMO, UPDATE_TIME, UPDATE_USER, REQUIRE_FLAG FROM V_RTD_WET_BATCH_SIZE_SETTING"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_RTD_WET_BATCH_SIZE_SETTING (
+                ID1 VARCHAR,
+                EQP_ID VARCHAR,
+                PRODSPEC_ID VARCHAR,
+                OPE_NO VARCHAR,
+                BATCH_SIZE VARCHAR,
+                MEMO VARCHAR,
+                UPDATE_TIME TIMESTAMP,
+                UPDATE_USER VARCHAR,
+                REQUIRE_FLAG VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SELECT_LOT():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_SELECT_LOT"
+    target_table = "APS_SYNC_SELECT_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOTID, FROM_OP, FROM_SEQ, TO_OP, TO_SEQ, RANK, PRODG_ID, EMPLOYEE FROM V_SELECT_LOT"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_SELECT_LOT (
+                LOTID VARCHAR,
+                FROM_OP VARCHAR,
+                FROM_SEQ VARCHAR,
+                TO_OP VARCHAR,
+                TO_SEQ VARCHAR,
+                RANK VARCHAR,
+                PRODG_ID VARCHAR,
+                EMPLOYEE VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_SHL_LOT_FIRE_NUMBER():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_SHL_LOT_FIRE_NUMBER"
+    target_table = "APS_SYNC_SHL_LOT_FIRE_NUMBER"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, MODULE, LOT_ID, END_OPE_NO, SHL_FIRENUMBER, UPDATE_TIME FROM V_SHL_LOT_FIRE_NUMBER"""
+    create_table_sql = """
+             CREATE TABLE APS_SYNC_SHL_LOT_FIRE_NUMBER (
+                LINE VARCHAR,
+                MODULE VARCHAR,
+                LOT_ID VARCHAR,
+                END_OPE_NO VARCHAR,
+                SHL_FIRENUMBER VARCHAR,
+                UPDATE_TIME TIMESTAMP
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_SHR_PRI():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_SHR_PRI"
+    target_table = "APS_SYNC_SHR_PRI"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, LOT_PURPOSE, PRI FROM V_SHR_PRI """
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_SHR_PRI (
+                LOT_ID VARCHAR,
+                LOT_PURPOSE VARCHAR,
+                PRI VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_BOAT_CONSTAINT_SETTING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_UMT_BOAT_CONSTAINT_SETTING"
+    target_table = "APS_SYNC_UMT_BOAT_CONSTAINT_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_G, EQP_ID, TECH, PRODG1, PRODUCT_ID, OPE_NO, BATCH_MAX, MAX_CTRL, OTHER_MIN_CTRL, POINT_AREA, REPLACE(REPLACE(REMARK, chr(10), ''), chr(13), '') AS REMARK FROM V_UMT_BOAT_CONSTAINT_SETTING"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_UMT_BOAT_CONSTAINT_SETTING (          
+                EQP_G VARCHAR,
+                EQP_ID VARCHAR,
+                TECH VARCHAR,
+                PRODG1 VARCHAR,
+                PRODUCT_ID VARCHAR,
+                OPE_NO VARCHAR,
+                BATCH_MAX VARCHAR,
+                MAX_CTRL VARCHAR,
+                OTHER_MIN_CTRL VARCHAR,
+                POINT_AREA VARCHAR,
+                REMARK VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_UMT_EQP_BATCH_SIZE_SETTING"
+    target_table = "APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_G, EQP_ID, BATCH_SIZE, UPDATE_TIME FROM V_UMT_EQP_BATCH_SIZE_SETTING"""
+    create_table_sql = """
+          CREATE TABLE APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING (
+                EQP_G VARCHAR,
+                EQP_ID VARCHAR,
+                BATCH_SIZE VARCHAR,
+                UPDATE_TIME TIMESTAMP
+        )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_UO_HOLDLOT_WAIT_DISPATCH"
+    target_table = "APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, PRODSPEC_ID, OPE_NO, LOT_PROC_STATE, RLS_HOUR, RLS_TIME_FORECAST, LAST_CLAIM_TIME FROM V_UO_HOLDLOT_WAIT_DISPATCH"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH (
+                LOT_ID VARCHAR,
+                PRODSPEC_ID VARCHAR,
+                OPE_NO VARCHAR,
+                LOT_PROC_STATE VARCHAR,
+                RLS_HOUR VARCHAR,
+                RLS_TIME_FORECAST TIMESTAMP,
+                LAST_CLAIM_TIME TIMESTAMP
+            )
+            """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_WET_ED_DATA():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_WET_ED_DATA"
+    target_table = "APS_SYNC_WET_ED_DATA"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, ITEM_NAME, VALUE, REPORT_TIME, UPDATE_TIME FROM V_WET_ED_DATA"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_WET_ED_DATA (
+                EQP_ID VARCHAR,
+                ITEM_NAME VARCHAR,
+                VALUE VARCHAR,
+                REPORT_TIME VARCHAR,
+                UPDATE_TIME VARCHAR
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_WET_EXCHANGE_ACID_SETTING():
+    # Corn In DataBase: 15 5/5 * * * ?
+    source_table = "V_WET_EXCHANGE_ACID_SETTING"
+    target_table = "APS_SYNC_WET_EXCHANGE_ACID_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODEL, EQP_ID, TANK_ID, TANK_NAME, CHANGE_TYPE, FIX_TIME, INTERVAL_DAYS, START_DATE, LIFE_TIME_SVID, LIFE_TIME, BATCH_COUNT_SVID, BATCH_COUNT, CHANGE_TIME, WAIT_TIME FROM V_WET_EXCHANGE_ACID_SETTING"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_WET_EXCHANGE_ACID_SETTING (
+                    MODEL VARCHAR,
+                    EQP_ID VARCHAR,
+                    TANK_ID VARCHAR,
+                    TANK_NAME VARCHAR,
+                    CHANGE_TYPE VARCHAR,
+                    FIX_TIME VARCHAR,
+                    INTERVAL_DAYS VARCHAR,
+                    START_DATE TIMESTAMP,
+                    LIFE_TIME_SVID VARCHAR,
+                    LIFE_TIME VARCHAR,
+                    BATCH_COUNT_SVID VARCHAR,
+                    BATCH_COUNT VARCHAR,
+                    CHANGE_TIME VARCHAR,
+                    WAIT_TIME VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_OP_CHAMBER_RULE():
+    # Corn In DataBase: 40 15/60 * * * ?
+    source_table = "V_OP_CHAMBER_RULE"
+    target_table = "APS_SYNC_OP_CHAMBER_RULE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, PRODSPEC_ID, OPE_NO, EQP_ID, RECIPE_ID, CHAMBER_RULE, CHAMBER_FLAG, CHAMBER_USER_FLAG, MAINPD_ID_BODY, PRC_CHAMBER_USER_FLAG, MFG_CHAMBER_USER_FLAG FROM V_OP_CHAMBER_RULE """
+    create_table_sql = """
+             CREATE TABLE APS_SYNC_OP_CHAMBER_RULE (
+                    LINE VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    EQP_ID VARCHAR,
+                    RECIPE_ID VARCHAR,
+                    CHAMBER_RULE VARCHAR,
+                    CHAMBER_FLAG VARCHAR,
+                    CHAMBER_USER_FLAG VARCHAR,
+                    MAINPD_ID_BODY VARCHAR,
+                    PRC_CHAMBER_USER_FLAG VARCHAR,
+                    MFG_CHAMBER_USER_FLAG VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_PD_RECIPE_EQP_MAIN():
+    # Corn In DataBase: 40 15/60 * * * ?
+    source_table = "V_PD_RECIPE_EQP_MAIN"
+    target_table = "APS_SYNC_PD_RECIPE_EQP_MAIN"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, LCRECIPE_ID, PD_ID, REPLACE(REPLACE(PHYSICAL_RECIPE_ID, chr(10), ''), chr(13), '') AS PHYSICAL_RECIPE_ID, PRODSPEC_ID, M_RECIPE, UPDATE_TIME FROM V_PD_RECIPE_EQP_MAIN"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_PD_RECIPE_EQP_MAIN (
+                    EQP_ID VARCHAR,
+                    LCRECIPE_ID VARCHAR,
+                    PD_ID VARCHAR,
+                    PHYSICAL_RECIPE_ID VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    M_RECIPE VARCHAR,
+                    UPDATE_TIME VARCHAR
+                )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_PF_PO_N1():
+    # Corn In DataBase: 55 8/10 * * * ?
+    source_table = "V_PF_PO_N1"
+    target_table = "APS_SYNC_PF_PO_N1"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, MAINPD_ID, POS_PDID, PHOTO_LAYER, TOTAL_SEQNO, OPE_SEQ, MAX_BATCH_SIZE, POSLIST_SEQNO, OPE_NO, MODPD_ID, BATCH_NAME, BATCH_TARGET_FLAG, UPDATE_TIME FROM V_PF_PO_N1"""
+    create_table_sql = """
+           CREATE TABLE APS_SYNC_PF_PO_N1 (
+                LINE VARCHAR,
+                MAINPD_ID VARCHAR,
+                POS_PDID VARCHAR,
+                PHOTO_LAYER VARCHAR,
+                TOTAL_SEQNO VARCHAR,
+                OPE_SEQ VARCHAR,
+                MAX_BATCH_SIZE VARCHAR,
+                POSLIST_SEQNO VARCHAR,
+                OPE_NO VARCHAR,
+                MODPD_ID VARCHAR,
+                BATCH_NAME VARCHAR,
+                BATCH_TARGET_FLAG VARCHAR,
+                UPDATE_TIME TIMESTAMP
+            )
+                   """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_SCHE_APC_PA():
+    # Corn In DataBase: 0 11/10 * * * ?
+    source_table = "V_SCHE_APC_PA"
+    target_table = "APS_SYNC_SCHE_APC_PA"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODSPEC_ID, CHIP_BODY, PR_OP_NO, PR_UNIT_ID, OP_NO_1, UNIT_ID_1, OP_NO_2, UNIT_ID_2, MASK_NM, PA_FLAG, REPLACE(REPLACE(PA_COMMENT, chr(10), ''), chr(13), '') AS PA_COMMENT, PA_UPD_DATE, FOURTH_VAL_FLG, JOB_NO, MAX_EFCT_TIME, REMAIN_DAY, INSERT_DATE, FOURTH_PARM_VAL_FLAG FROM V_SCHE_APC_PA"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_SCHE_APC_PA (
+                    PRODSPEC_ID VARCHAR,
+                    CHIP_BODY VARCHAR,
+                    PR_OP_NO VARCHAR,
+                    PR_UNIT_ID VARCHAR,
+                    OP_NO_1 VARCHAR,
+                    UNIT_ID_1 VARCHAR,
+                    OP_NO_2 VARCHAR,
+                    UNIT_ID_2 VARCHAR,
+                    MASK_NM VARCHAR,
+                    PA_FLAG VARCHAR,
+                    PA_COMMENT VARCHAR,
+                    PA_UPD_DATE VARCHAR,
+                    FOURTH_VAL_FLG VARCHAR,
+                    JOB_NO VARCHAR,
+                    MAX_EFCT_TIME VARCHAR(20),
+                    REMAIN_DAY VARCHAR,
+                    INSERT_DATE TIMESTAMP,
+                    FOURTH_PARM_VAL_FLAG VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv_operate(etl_name=etl_name,
+                                                             source_table=source_table,
+                                                             target_table=target_table,
+                                                             query_sql=query_sql,
+                                                             create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_OCS_JOB_SPEC_GROUP_PO():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "VIEW_OCS_JOB_SPEC_GROUP_PO"
+    target_table = "APS_SYNC_OCS_JOB_SPEC_GROUP_PO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT JOB_SPEC_GROUP_PO_ID, JOB_SPEC_GROUP_ID, CREATE_TIME, FOUP_ID, PTOOL_ID, SUB_NAME, STATUS, MODULE, JOB_SPEC_ID, SEQNO, MTOOL_ID, MAINTOOLFLAG, RECIPE, SLOTS, OCSBATCHID, RETICLE, TEST_FOR, MONTIOR_PLAN_NAME, FOUP_NO, JOB_SEQNO FROM VIEW_OCS_JOB_SPEC_GROUP_PO"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_OCS_JOB_SPEC_GROUP_PO (
+                    JOB_SPEC_GROUP_PO_ID VARCHAR,
+                    JOB_SPEC_GROUP_ID VARCHAR,
+                    CREATE_TIME TIMESTAMP,
+                    FOUP_ID VARCHAR,
+                    PTOOL_ID VARCHAR,
+                    SUB_NAME VARCHAR,
+                    STATUS VARCHAR,
+                    MODULE VARCHAR,
+                    JOB_SPEC_ID VARCHAR,
+                    SEQNO VARCHAR,
+                    MTOOL_ID VARCHAR,
+                    MAINTOOLFLAG VARCHAR,
+                    RECIPE VARCHAR,
+                    SLOTS VARCHAR,
+                    OCSBATCHID VARCHAR,
+                    RETICLE VARCHAR,
+                    TEST_FOR VARCHAR,
+                    MONTIOR_PLAN_NAME VARCHAR,
+                    FOUP_NO VARCHAR,
+                    JOB_SEQNO VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_APC_RECIPE_EFFECT_TIME():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_APC_RECIPE_EFFECT_TIME"
+    target_table = "APS_SYNC_APC_RECIPE_EFFECT_TIME"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, RECIPE, SPEC, LAST_RUN_TIME, SPE_OVER_TIME, STATE FROM V_APC_RECIPE_EFFECT_TIME"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_APC_RECIPE_EFFECT_TIME (
+                    EQP_ID VARCHAR,
+                    RECIPE VARCHAR,
+                    SPEC VARCHAR,
+                    LAST_RUN_TIME VARCHAR,
+                    SPE_OVER_TIME VARCHAR,
+                    STATE VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_APC_SPLIT_WAFER():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_APC_SPLIT_WAFER"
+    target_table = "APS_SYNC_APC_SPLIT_WAFER"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT JOB_NO, NAME, SPLIT_COUNT FROM V_APC_SPLIT_WAFER """
+    create_table_sql = """
+              CREATE TABLE APS_SYNC_APC_SPLIT_WAFER (
+                    JOB_NO VARCHAR,
+                    NAME VARCHAR,
+                    SPLIT_COUNT VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_CSCMBMRCPPRCFG_MFG():
+    # Corn In DataBase:
+    source_table = "V_CSCMBMRCPPRCFG_MFG"
+    target_table = "APS_SYNC_CSCMBMRCPPRCFG_MFG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, PRODUCT_ID, MAINPD_ID, OPERATION, EQP_ID, RECIPE_ID, D_SEQNO, ACT_FLG_PRC, ACT_FLG_MFG, REPLACE(REPLACE(NOTE, chr(10), ''), chr(13), '') AS NOTE, LAST_UPDATE_USER, LAST_UPDATE_TIME FROM V_CSCMBMRCPPRCFG_MFG"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_CSCMBMRCPPRCFG_MFG (
+                        LINE VARCHAR,
+                        PRODUCT_ID VARCHAR,
+                        MAINPD_ID VARCHAR,
+                        OPERATION VARCHAR,
+                        EQP_ID VARCHAR,
+                        RECIPE_ID VARCHAR,
+                        D_SEQNO VARCHAR,
+                        ACT_FLG_PRC VARCHAR,
+                        ACT_FLG_MFG VARCHAR,
+                        NOTE VARCHAR,
+                        LAST_UPDATE_USER VARCHAR,
+                        LAST_UPDATE_TIME TIMESTAMP
+                    )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_CSCMBMRCPRULE():
+    # Corn In DataBase:
+    source_table = "V_CSCMBMRCPRULE"
+    target_table = "APS_SYNC_CSCMBMRCPRULE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, RECIPE_ID, EQP_ID, CHAMBER_RULE, LAST_UPDATE_USER, LAST_UPDATE_TIME, UPDATE_TIME FROM V_CSCMBMRCPRULE"""
+    create_table_sql = """
+             CREATE TABLE APS_SYNC_CSCMBMRCPRULE (
+                    LINE VARCHAR,
+                    RECIPE_ID VARCHAR,
+                    EQP_ID VARCHAR,
+                    CHAMBER_RULE VARCHAR,
+                    LAST_UPDATE_USER VARCHAR,
+                    LAST_UPDATE_TIME VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_HOLD_DETAIL_HISTORY():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_HOLD_DETAIL_HISTORY"
+    target_table = "APS_SYNC_HOLD_DETAIL_HISTORY"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, HOLD_OPE_NO, PRODSPEC_ID, CLAIM_TIME, HOLD_REASON_CODE, HOLD_TYPE FROM V_HOLD_DETAIL_HISTORY"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_HOLD_DETAIL_HISTORY (
+                    LOT_ID VARCHAR,
+                    HOLD_OPE_NO VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    CLAIM_TIME TIMESTAMP,
+                    HOLD_REASON_CODE VARCHAR,
+                    HOLD_TYPE VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_LOT_PROCESS_MONITOR():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_LOT_PROCESS_MONITOR"
+    target_table = "APS_SYNC_LOT_PROCESS_MONITOR"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, OPE_NO, WAFER_QTY, PRODSPEC_ID, PRODG1, CR, COMMIT_DATE, FORECAST_DATE, DUE_DATE, DELAY_DAY, LAST_CLAIM_TIME, OPE_SEQ, W_O_DATE FROM V_LOT_PROCESS_MONITOR"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_LOT_PROCESS_MONITOR (
+                    LOT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    WAFER_QTY VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    PRODG1 VARCHAR,
+                    CR VARCHAR,
+                    COMMIT_DATE VARCHAR,
+                    FORECAST_DATE VARCHAR,
+                    DUE_DATE VARCHAR,
+                    DELAY_DAY VARCHAR,
+                    LAST_CLAIM_TIME VARCHAR,
+                    OPE_SEQ VARCHAR,
+                    W_O_DATE VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MASK_GROUP_MAPPLING():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_MASK_GROUP_MAPPLING"
+    target_table = "APS_SYNC_MASK_GROUP_MAPPLING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODSPEC_ID, OPE_NO, RTCL_GROUP FROM V_MASK_GROUP_MAPPLING"""
+    create_table_sql = """
+              CREATE TABLE APS_SYNC_MASK_GROUP_MAPPLING (
+                    PRODSPEC_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    RTCL_GROUP VARCHAR
+                )
+             """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_PD_RECIPE_EQP_DYB():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_PD_RECIPE_EQP_DYB"
+    target_table = "APS_SYNC_PD_RECIPE_EQP_DYB"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, LCRECIPE_ID, LOT_ID, M_RECIPE, PF_PD_ID, PRODSPEC_ID, OPE_NO, UPDATE_TIME FROM V_PD_RECIPE_EQP_DYB"""
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_PD_RECIPE_EQP_DYB (
+                    EQP_ID VARCHAR,
+                    LCRECIPE_ID VARCHAR,
+                    LOT_ID VARCHAR,
+                    M_RECIPE VARCHAR,
+                    PF_PD_ID VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_QTIME_CONSTRAINT():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_QTIME_CONSTRAINT"
+    target_table = "APS_SYNC_QTIME_CONSTRAINT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, PRODSPEC_ID, FLOW_KEY, FROM_SEQ, FROM_OPE_NO, TO_SEQ, TO_OPE_NO, QTIME_LIMIT, UPDATE_TIME FROM V_QTIME_CONSTRAINT"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_QTIME_CONSTRAINT (
+                    LINE VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    FLOW_KEY VARCHAR,
+                    FROM_SEQ VARCHAR,
+                    FROM_OPE_NO VARCHAR,
+                    TO_SEQ VARCHAR,
+                    TO_OPE_NO VARCHAR,
+                    QTIME_LIMIT VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RMS_RECIPE_RETICLE():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_RMS_RECIPE_RETICLE"
+    target_table = "APS_SYNC_RMS_RECIPE_RETICLE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT TOOLID, RECIPE_ID, RETICLE_ID, MODIFY_TIME, MODIFY_USER, UPDATE_TIME FROM V_RMS_RECIPE_RETICLE"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_RMS_RECIPE_RETICLE (
+                    TOOLID VARCHAR,
+                    RECIPE_ID VARCHAR,
+                    RETICLE_ID VARCHAR,
+                    MODIFY_TIME TIMESTAMP,
+                    MODIFY_USER VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_SCHE_APC_LOT_SPECIAL_VALUE"
+    target_table = "APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT APC_TYPE, LOT_KEY_NO, OP_NO, UNIT_ID, UPD_DATE FROM V_SCHE_APC_LOT_SPECIAL_VALUE"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE (
+                    APC_TYPE VARCHAR,
+                    LOT_KEY_NO VARCHAR,
+                    OP_NO VARCHAR,
+                    UNIT_ID VARCHAR,
+                    UPD_DATE TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_TMS_EQP_PARAMETER():
+    # Corn In DataBase: 0 6/10 * * * ?
+    source_table = "V_TMS_EQP_PARAMETER"
+    target_table = "APS_SYNC_TMS_EQP_PARAMETER"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQUIPMENT_NO, CHAMBER_NO, PM_TYPE, PM_SPEC, SPEC_UNIT, "RANGE", DC_ITEM_NAME, DC_ITEM_VALUE, TARGET_TIME, FORECAST_TIME, ACT_FORECAST_TIME, TEST_TIME, "STYLE", DOWN_FLAG, PM_GROUP, PM_LOCK_FLAG FROM V_TMS_EQP_PARAMETER"""
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_TMS_EQP_PARAMETER (
+                    EQUIPMENT_NO VARCHAR,
+                    CHAMBER_NO VARCHAR,
+                    PM_TYPE VARCHAR,
+                    PM_SPEC VARCHAR,
+                    SPEC_UNIT VARCHAR,
+                    "RANGE" VARCHAR,
+                    DC_ITEM_NAME VARCHAR,
+                    DC_ITEM_VALUE VARCHAR,
+                    TARGET_TIME VARCHAR,
+                    FORECAST_TIME VARCHAR,
+                    ACT_FORECAST_TIME VARCHAR,
+                    TEST_TIME VARCHAR,
+                    "STYLE" VARCHAR,
+                    DOWN_FLAG VARCHAR,
+                    PM_GROUP VARCHAR,
+                    PM_LOCK_FLAG VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING():
+    # Corn In DataBase:
+    source_table = "V_UMT_EQP_UNIT_PLAN_SETTING"
+    target_table = "APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODULE, MODEL, EQP_G, FAB_EQP_G, EQP_ID, CHAMBER_NAME, CHAMBER_ID, UNIT_TYPE, UNIT_DC_ITEM, UNIT_SPEC, COST_MINS, ACITVE_FLAG, REPLACE(REPLACE(UNIT_NAME, chr(10), ''), chr(13), '') AS UNIT_NAME, REPLACE(REPLACE(FORMULA, chr(10), ''), chr(13), '') AS FORMULA FROM V_UMT_EQP_UNIT_PLAN_SETTING"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING (
+                    MODULE VARCHAR,
+                    MODEL VARCHAR,
+                    EQP_G VARCHAR,
+                    FAB_EQP_G VARCHAR,
+                    EQP_ID VARCHAR,
+                    CHAMBER_NAME VARCHAR,
+                    CHAMBER_ID VARCHAR,
+                    UNIT_TYPE VARCHAR,
+                    UNIT_DC_ITEM VARCHAR,
+                    UNIT_SPEC VARCHAR,
+                    COST_MINS VARCHAR,
+                    ACITVE_FLAG VARCHAR,
+                    UNIT_NAME VARCHAR,
+                    FORMULA VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_UMT_WET_RECIPE_TANK_RULE():
+    # Corn In DataBase:
+    source_table = "V_UMT_WET_RECIPE_TANK_RULE"
+    target_table = "APS_SYNC_UMT_WET_RECIPE_TANK_RULE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_G, EQP_ID, CHAR_TYPE, RECIPE, TANK_NAME, UPDATE_USER, UPDATE_TIME FROM V_UMT_WET_RECIPE_TANK_RULE"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_UMT_WET_RECIPE_TANK_RULE (
+                        EQP_G VARCHAR,
+                        EQP_ID VARCHAR,
+                        CHAR_TYPE VARCHAR,
+                        RECIPE VARCHAR,
+                        TANK_NAME VARCHAR,
+                        UPDATE_USER VARCHAR,
+                        UPDATE_TIME TIMESTAMP
+                    )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_UNIT_EQP_CHAMBER_SETTING():
+    # Corn In DataBase:
+    source_table = "V_UNIT_EQP_CHAMBER_SETTING"
+    target_table = "APS_SYNC_UNIT_EQP_CHAMBER_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODULE, MODEL, EQP_G, FAB_EQP_G, EQP_ID, CHAMBER_NAME, CHAMBER_ID FROM V_UNIT_EQP_CHAMBER_SETTING"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_UNIT_EQP_CHAMBER_SETTING (
+                    MODULE VARCHAR,
+                    MODEL VARCHAR,
+                    EQP_G VARCHAR,
+                    FAB_EQP_G VARCHAR,
+                    EQP_ID VARCHAR,
+                    CHAMBER_NAME VARCHAR,
+                    CHAMBER_ID VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_DIFF_BATCH_SIZE_MIX():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_DIFF_BATCH_SIZE_MIX"
+    target_table = "APS_SYNC_DIFF_BATCH_SIZE_MIX"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, OPE_NO, PHYSICAL_RECIPE, LOGICAL_RECIPE, M_RECIPE, MIN_WAFER, MAX_WAFER, UPDATE_TIME FROM V_DIFF_BATCH_SIZE_MIX """
+    create_table_sql = """
+              CREATE TABLE APS_SYNC_DIFF_BATCH_SIZE_MIX (
+                EQP_ID VARCHAR,
+                OPE_NO VARCHAR,
+                PHYSICAL_RECIPE VARCHAR,
+                LOGICAL_RECIPE VARCHAR,
+                M_RECIPE VARCHAR,
+                MIN_WAFER VARCHAR,
+                MAX_WAFER VARCHAR,
+                UPDATE_TIME TIMESTAMP
+            )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_EQP_RCP_INHIBIT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_EQP_RCP_INHIBIT"
+    target_table = "APS_SYNC_EQP_RCP_INHIBIT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODUCT_ID, EQP_ID, RECIPE_ID, REASON_CODE, SUB_LOT_TYPE FROM V_EQP_RCP_INHIBIT"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_EQP_RCP_INHIBIT (
+                    PRODUCT_ID VARCHAR,
+                    EQP_ID VARCHAR,
+                    RECIPE_ID VARCHAR,
+                    REASON_CODE VARCHAR,
+                    SUB_LOT_TYPE VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_ETL_TOOL():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_ETL_TOOL"
+    target_table = "APS_SYNC_ETL_TOOL"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_AREA, FAB_PHASE, MODULE, MODULE_RANK, SCHE_EQP_G, EQP_G, EQP_ID, EQP_CHAMBER_FLAG, ACTIVE_FLAG, UPDATE_TIME, EQP_CATEGORY, MIN_UNIT_FLAG, HOST_EQP_FLAG, REAL_MODULE, HOST_EQP_ID, PREV_E10_STATE_CODE, PREV_STATE, EQUIPMENT_KEY, E10CHG_STARTTMST, FAB_ID, E10CHG_ENDTMST FROM V_ETL_TOOL"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_ETL_TOOL (
+                    EQP_AREA VARCHAR,
+                    FAB_PHASE VARCHAR,
+                    MODULE VARCHAR,
+                    MODULE_RANK VARCHAR,
+                    SCHE_EQP_G VARCHAR,
+                    EQP_G VARCHAR,
+                    EQP_ID VARCHAR,
+                    EQP_CHAMBER_FLAG VARCHAR,
+                    ACTIVE_FLAG VARCHAR,
+                    UPDATE_TIME VARCHAR,
+                    EQP_CATEGORY VARCHAR,
+                    MIN_UNIT_FLAG VARCHAR,
+                    HOST_EQP_FLAG VARCHAR,
+                    REAL_MODULE VARCHAR,
+                    HOST_EQP_ID VARCHAR,
+                    PREV_E10_STATE_CODE VARCHAR,
+                    PREV_STATE VARCHAR,
+                    EQUIPMENT_KEY VARCHAR,
+                    E10CHG_STARTTMST VARCHAR,
+                    FAB_ID VARCHAR,
+                    E10CHG_ENDTMST VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+
+def sync_APS_SYNC_FVEQP():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_FVEQP"
+    target_table = "APS_SYNC_FVEQP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, OWNER_ID, SUPPLIER, MODEL_NO, SERIAL_NO, BATCH_SIZE_MIN, BATCH_SIZE_MAX, BATCH_SIZE_MAX_PROD, PROCESS_BATCH_UNIT, E10_STATE, CUR_STATE_ID, CUR_ACT_STATE_ID, EQP_CATEGORY, EQP_TYPE, TCS_SERVER_NAME, AREA_ID, CAPABLE_OP_MODE, CUR_OP_MODE, ONLINE_MODE, EQP_CTRL, EQP_TO_EQP_XFER, RETICLE_REQ, FIXTURE_REQ, START_LOTNT_REQ, CAST_CHG_REQ, OUT_IN_XFER_FLAG, AVAIL_STATE_FLAG, FLOWBATCH_ID, MAX_RUN_WAFER_CNT, RUN_WAFER_CNT, MAX_OP_START_CNT, OP_START_CNT, MAX_RUN_TIME, RUN_TIME, MAX_INTERVAL_TIME, USED_RECIPE_ID, CLAIM_TIME, CLAIM_USER_ID, MAINT_TIME, MAINT_USER_ID, STATE_CHG_TIME, STATE_CHG_USER_ID, ACT_STATE_CHG_TIME, STATE_HISTORY_TIME, MONITOR_CREATION, MODE_CHG_USER_ID, MODE_CHG_TIME, RAWEQPSTATE_ID, STD_WPH, RCP_BODY_FLAG, MLTRCP_CAPA, MIN_WAFER_CNT, BATIN_NOTIFICATION, CAST_READABLE, WAFERMAP_CHECKABLE, WAFERID_READABLE, PROCBAT_AVAILABLE, LAST_CTRLJOB_NO, LAST_CTRLJOB_DATE, EMPCAST_EARLYOUT, MAX_RTCL_CAPACITY, SUB_EQP_ID FROM V_FVEQP"""
+    create_table_sql = """
+              CREATE TABLE APS_SYNC_FVEQP (
+                EQP_ID VARCHAR,
+                OWNER_ID VARCHAR,
+                SUPPLIER VARCHAR,
+                MODEL_NO VARCHAR,
+                SERIAL_NO VARCHAR,
+                BATCH_SIZE_MIN VARCHAR,
+                BATCH_SIZE_MAX VARCHAR,
+                BATCH_SIZE_MAX_PROD VARCHAR,
+                PROCESS_BATCH_UNIT VARCHAR,
+                E10_STATE VARCHAR,
+                CUR_STATE_ID VARCHAR,
+                CUR_ACT_STATE_ID VARCHAR,
+                EQP_CATEGORY VARCHAR,
+                EQP_TYPE VARCHAR,
+                TCS_SERVER_NAME VARCHAR,
+                AREA_ID VARCHAR,
+                CAPABLE_OP_MODE VARCHAR,
+                CUR_OP_MODE VARCHAR,
+                ONLINE_MODE VARCHAR,
+                EQP_CTRL VARCHAR,
+                EQP_TO_EQP_XFER VARCHAR,
+                RETICLE_REQ VARCHAR,
+                FIXTURE_REQ VARCHAR,
+                START_LOTNT_REQ VARCHAR,
+                CAST_CHG_REQ VARCHAR,
+                OUT_IN_XFER_FLAG VARCHAR,
+                AVAIL_STATE_FLAG VARCHAR,
+                FLOWBATCH_ID VARCHAR,
+                MAX_RUN_WAFER_CNT VARCHAR,
+                RUN_WAFER_CNT VARCHAR,
+                MAX_OP_START_CNT VARCHAR,
+                OP_START_CNT VARCHAR,
+                MAX_RUN_TIME VARCHAR,
+                RUN_TIME VARCHAR,
+                MAX_INTERVAL_TIME VARCHAR,
+                USED_RECIPE_ID VARCHAR,
+                CLAIM_TIME TIMESTAMP,
+                CLAIM_USER_ID VARCHAR,
+                MAINT_TIME TIMESTAMP,
+                MAINT_USER_ID VARCHAR,
+                STATE_CHG_TIME TIMESTAMP,
+                STATE_CHG_USER_ID VARCHAR,
+                ACT_STATE_CHG_TIME TIMESTAMP,
+                STATE_HISTORY_TIME TIMESTAMP,
+                MONITOR_CREATION VARCHAR,
+                MODE_CHG_USER_ID VARCHAR,
+                MODE_CHG_TIME TIMESTAMP,
+                RAWEQPSTATE_ID VARCHAR,
+                STD_WPH VARCHAR,
+                RCP_BODY_FLAG VARCHAR,
+                MLTRCP_CAPA VARCHAR,
+                MIN_WAFER_CNT VARCHAR,
+                BATIN_NOTIFICATION VARCHAR,
+                CAST_READABLE VARCHAR,
+                WAFERMAP_CHECKABLE VARCHAR,
+                WAFERID_READABLE VARCHAR,
+                PROCBAT_AVAILABLE VARCHAR,
+                LAST_CTRLJOB_NO VARCHAR,
+                LAST_CTRLJOB_DATE VARCHAR,
+                EMPCAST_EARLYOUT VARCHAR,
+                MAX_RTCL_CAPACITY VARCHAR,
+                SUB_EQP_ID VARCHAR
+            )
+                        """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_FVPORT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_FVPORT"
+    target_table = "APS_SYNC_FVPORT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, PORT_ID, LOAD_SEQ_IN_GRP, UNLOAD_SEQ_IN_GRP, LOAD_PURPOSE_TYPE, E10_STATE, PORT_USAGE, PORT_USAGE_TYPE, ASSOC_PORT_ID, PORT_PORT_GRP, PORT_STATE, CLAIM_TIME, CLAIM_USER_ID, STATE_CHG_TIME, STATE_CHG_USER_ID, PORT_CLAIM_MODE, PORT_XFER_MODE, PORT_LOTSEL_MODE, PORT_QUEUE_MODE, PORT_DISP_STATE, PORT_DISP_TIME, LOAD_DISP_LOT_ID, LOAD_DISP_CAST_ID, UNLD_DISP_LOT_ID, UNLD_DISP_CAST_ID, OPEMODE, MCOPEMODE_ID FROM V_FVPORT"""
+    create_table_sql = """
+            CREATE TABLE APS_SYNC_FVPORT (
+                EQP_ID VARCHAR,
+                PORT_ID VARCHAR,
+                LOAD_SEQ_IN_GRP VARCHAR,
+                UNLOAD_SEQ_IN_GRP VARCHAR,
+                LOAD_PURPOSE_TYPE VARCHAR,
+                E10_STATE VARCHAR,
+                PORT_USAGE VARCHAR,
+                PORT_USAGE_TYPE VARCHAR,
+                ASSOC_PORT_ID VARCHAR,
+                PORT_PORT_GRP VARCHAR,
+                PORT_STATE VARCHAR,
+                CLAIM_TIME TIMESTAMP,
+                CLAIM_USER_ID VARCHAR,
+                STATE_CHG_TIME TIMESTAMP,
+                STATE_CHG_USER_ID VARCHAR,
+                PORT_CLAIM_MODE VARCHAR,
+                PORT_XFER_MODE VARCHAR,
+                PORT_LOTSEL_MODE VARCHAR,
+                PORT_QUEUE_MODE VARCHAR,
+                PORT_DISP_STATE VARCHAR,
+                PORT_DISP_TIME TIMESTAMP,
+                LOAD_DISP_LOT_ID VARCHAR,
+                LOAD_DISP_CAST_ID VARCHAR,
+                UNLD_DISP_LOT_ID VARCHAR,
+                UNLD_DISP_CAST_ID VARCHAR,
+                OPEMODE VARCHAR,
+                MCOPEMODE_ID VARCHAR
+            )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_IDLE_DUMMY_SPEC():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_IDLE_DUMMY_SPEC"
+    target_table = "APS_SYNC_IDLE_DUMMY_SPEC"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQPID, CHAMBER, IDLETIMESPEC, START_TIME, END_TIME FROM V_IDLE_DUMMY_SPEC """
+    create_table_sql = """
+             CREATE TABLE APS_SYNC_IDLE_DUMMY_SPEC (
+                EQPID VARCHAR,
+                CHAMBER VARCHAR,
+                IDLETIMESPEC VARCHAR,
+                START_TIME TIMESTAMP,
+                END_TIME TIMESTAMP
+            )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_LOT_TO_EQP():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_LOT_TO_EQP"
+    target_table = "APS_SYNC_LOT_TO_EQP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, OPE_NO, EQP_ID FROM V_LOT_TO_EQP """
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_LOT_TO_EQP (
+                    LOT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    EQP_ID VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MCS_SCHED_LOCATION_INFO():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_MCS_SCHED_LOCATION_INFO"
+    target_table = "APS_SYNC_MCS_SCHED_LOCATION_INFO"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT TOOL_ID, LOCATION FROM V_MCS_SCHED_LOCATION_INFO"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_MCS_SCHED_LOCATION_INFO (
+                    TOOL_ID VARCHAR,
+                    LOCATION VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MLIF_FOR_WOT_MANU_REG():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_MLIF_FOR_WOT_MANU_REG"
+    target_table = "APS_SYNC_MLIF_FOR_WOT_MANU_REG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, OPE_NO, PRODSPEC_ID, QTY, SEQ, APC_RECIPE_ID, M_RECIPE, LCRECIPE_ID, END_OPE_NO, UPDATE_TIME, UPDATE_USER, MLIF_ID, CAST_ID, REMAIN_QTIME FROM V_MLIF_FOR_WOT_MANU_REG """
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_MLIF_FOR_WOT_MANU_REG (
+                    LOT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    QTY VARCHAR,
+                    SEQ VARCHAR,
+                    APC_RECIPE_ID VARCHAR,
+                    M_RECIPE VARCHAR,
+                    LCRECIPE_ID VARCHAR,
+                    END_OPE_NO VARCHAR,
+                    UPDATE_TIME TIMESTAMP,
+                    UPDATE_USER VARCHAR,
+                    MLIF_ID VARCHAR,
+                    CAST_ID VARCHAR,
+                    REMAIN_QTIME VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MLIF_HOLD_LOT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_MLIF_HOLD_LOT"
+    target_table = "APS_SYNC_MLIF_HOLD_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, CAST_ID, OPE_CNT, PRODSPEC_CNT, AHEAD_FLAG, MULTI_LOT_TYPE, MLIF_ACTION, OPE_NO, UPDATE_TIME, RTD_UPDATE_TIME FROM V_MLIF_HOLD_LOT"""
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_MLIF_HOLD_LOT (
+                    LOT_ID VARCHAR,
+                    CAST_ID VARCHAR,
+                    OPE_CNT VARCHAR,
+                    PRODSPEC_CNT VARCHAR,
+                    AHEAD_FLAG VARCHAR,
+                    MULTI_LOT_TYPE VARCHAR,
+                    MLIF_ACTION VARCHAR,
+                    OPE_NO VARCHAR,
+                    UPDATE_TIME VARCHAR,
+                    RTD_UPDATE_TIME VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MM_FRSTK():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_MM_FRSTK"
+    target_table = "APS_SYNC_MM_FRSTK"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT AREA_ID, STK_TYPE, STK_ID, E10_STATE, AVAIL_STATE_FLAG, INV_REPORT_TIME, STATE_CHG_TIME, STATE_CHG_USER_ID, replace(replace(DESCRIPTION,chr(10),''),chr(13),'') as DESCRIPTION, UPDATE_TIME FROM V_MM_FRSTK """
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_MM_FRSTK (
+                    AREA_ID VARCHAR,
+                    STK_TYPE VARCHAR,
+                    STK_ID VARCHAR,
+                    E10_STATE VARCHAR,
+                    AVAIL_STATE_FLAG VARCHAR,
+                    INV_REPORT_TIME TIMESTAMP,
+                    STATE_CHG_TIME TIMESTAMP,
+                    STATE_CHG_USER_ID VARCHAR,
+                    DESCRIPTION VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_PRODUCT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_PRODUCT"
+    target_table = "APS_SYNC_PRODUCT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODSPEC_ID, PRODG1, GROUP_TECH FROM V_PRODUCT"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_PRODUCT (
+                    PRODSPEC_ID VARCHAR,
+                    PRODG1 VARCHAR,
+                    GROUP_TECH VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_MFG_HWLD_SPEC():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_RTD_MFG_HWLD_SPEC"
+    target_table = "APS_SYNC_RTD_MFG_HWLD_SPEC"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_G, EQP_ID, FLAG, QTY_SPEC, USERID, UPDATETIME, REPLACE(REPLACE(MEMO, chr(10), ''), chr(13), '') AS MEMO, MODULE FROM V_RTD_MFG_HWLD_SPEC"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_RTD_MFG_HWLD_SPEC (
+                    EQP_G VARCHAR,
+                    EQP_ID VARCHAR,
+                    FLAG VARCHAR,
+                    QTY_SPEC VARCHAR,
+                    USERID VARCHAR,
+                    UPDATETIME TIMESTAMP,
+                    MEMO VARCHAR,
+                    MODULE VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_RUN_LOTBYEQP_COUNT():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_RTD_RUN_LOTBYEQP_COUNT"
+    target_table = "APS_SYNC_RTD_RUN_LOTBYEQP_COUNT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, LAYER, PD_ID, LOT_COUNT, REPLACE(REPLACE(DESCRIPTION, chr(10), ''), chr(13), '') AS DESCRIPTION FROM V_RTD_RUN_LOTBYEQP_COUNT"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_RTD_RUN_LOTBYEQP_COUNT (
+                    EQP_ID VARCHAR,
+                    LAYER VARCHAR,
+                    PD_ID VARCHAR,
+                    LOT_COUNT VARCHAR,
+                    DESCRIPTION VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_SGS_LOT_WIP():
+    # Corn In DataBase: 30 5/5 * * * ?
+    source_table = "V_SGS_LOT_WIP"
+    target_table = "APS_SYNC_SGS_LOT_WIP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODG1, LOT_ID, OPE_NO, OPE_SEQ, WAFER_QTY, LAYER, PRODSPEC_ID, PHOTO_EQP_ID, CURRENT_SGS_GROUP, CURRENT_SGS_WEIGHT, EQP_G, LAST_CLAIM_TIME, CUSTOMER2, LOT_PROC_STATE FROM V_SGS_LOT_WIP"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_SGS_LOT_WIP (
+                    PRODG1 VARCHAR,
+                    LOT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    OPE_SEQ VARCHAR,
+                    WAFER_QTY VARCHAR,
+                    LAYER VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    PHOTO_EQP_ID VARCHAR,
+                    CURRENT_SGS_GROUP VARCHAR,
+                    CURRENT_SGS_WEIGHT VARCHAR,
+                    EQP_G VARCHAR,
+                    LAST_CLAIM_TIME TIMESTAMP,
+                    CUSTOMER2 VARCHAR,
+                    LOT_PROC_STATE VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_SCHE_APC_PB():
+    # Corn In DataBase: 0 7/10 * * * ?
+    source_table = "V_SCHE_APC_PB"
+    target_table = "APS_SYNC_SCHE_APC_PB"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODSPEC_ID, PR_OP_NO, PR_UNIT_ID, PB_FLAG, REPLACE(REPLACE(PB_COMMENT, chr(10), ''), chr(13), '') AS PB_COMMENT, FOURTH_VAL_FLG, PB_UPD_DATE, JOB_NO, MAX_EFEC_DAY, PIRUN_EFEC_DAY, UPDATE_TIME, REMAIN_DAY, MASK, FOURTH_PARM_VAL_FLAG FROM V_SCHE_APC_PB"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_SCHE_APC_PB (
+                    PRODSPEC_ID VARCHAR,
+                    PR_OP_NO VARCHAR,
+                    PR_UNIT_ID VARCHAR,
+                    PB_FLAG VARCHAR,
+                    PB_COMMENT VARCHAR,
+                    FOURTH_VAL_FLG VARCHAR,
+                    PB_UPD_DATE TIMESTAMP,
+                    JOB_NO VARCHAR,
+                    MAX_EFEC_DAY VARCHAR,
+                    PIRUN_EFEC_DAY VARCHAR,
+                    UPDATE_TIME TIMESTAMP,
+                    REMAIN_DAY VARCHAR,
+                    MASK VARCHAR,
+                    FOURTH_PARM_VAL_FLAG VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY():
+    # Corn In DataBase: 0 7/10 * * * ?
+    source_table = "V_WP_SPLIT_MERGE_DETAIL_HISTORY"
+    target_table = "APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT FROM_LOT, TO_LOT, ACTION_IND, CLAIM_DATE_TIME, FROM_OPE_NO, FROM_WAFER_QTY, TO_OPE_NO, TO_WAFER_QTY, PRODSPEC_ID FROM V_WP_SPLIT_MERGE_DETAIL_HISTORY """
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY (
+                    FROM_LOT VARCHAR,
+                    TO_LOT VARCHAR,
+                    ACTION_IND VARCHAR,
+                    CLAIM_DATE_TIME TIMESTAMP,
+                    FROM_OPE_NO VARCHAR,
+                    FROM_WAFER_QTY VARCHAR,
+                    TO_OPE_NO VARCHAR,
+                    TO_WAFER_QTY VARCHAR,
+                    PRODSPEC_ID VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_QTIME_FLOW():
+    source_table = "V_RTD_QTIME_FLOW"
+    target_table = "APS_SYNC_RTD_QTIME_FLOW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, PRODSPEC_ID, FLOW_KEY, FROM_OPE_NO, FROM_OPE_SEQ, TO_OPE_NO, TO_OPE_SEQ, OPER_NO, OPER_SEQ, QTIME_LIMIT, CONTINUS_ENTRY_OPE_NO, CONTINUS_TARGET_OPE_NO, UPDATE_TIME FROM V_RTD_QTIME_FLOW"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_RTD_QTIME_FLOW (
+                    LINE VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    FLOW_KEY VARCHAR,
+                    FROM_OPE_NO VARCHAR,
+                    FROM_OPE_SEQ VARCHAR,
+                    TO_OPE_NO VARCHAR,
+                    TO_OPE_SEQ VARCHAR,
+                    OPER_NO VARCHAR,
+                    OPER_SEQ VARCHAR,
+                    QTIME_LIMIT VARCHAR,
+                    CONTINUS_ENTRY_OPE_NO VARCHAR,
+                    CONTINUS_TARGET_OPE_NO VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_LOT_RESOURCE_FLAG():
+    source_table = "V_RTD_LOT_RESOURCE_FLAG"
+    target_table = "APS_SYNC_RTD_LOT_RESOURCE_FLAG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PRODSPEC_ID, MAINPD_ID, OPE_NO, EQP_ID, LOT_ID, QTIME_FLAG, UPDATE_TIME, COMING_FLAG FROM V_RTD_LOT_RESOURCE_FLAG """
+    create_table_sql = """
+              CREATE TABLE APS_SYNC_RTD_LOT_RESOURCE_FLAG (
+                    PRODSPEC_ID VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    EQP_ID VARCHAR,
+                    LOT_ID VARCHAR,
+                    QTIME_FLAG VARCHAR,
+                    UPDATE_TIME TIMESTAMP,
+                    COMING_FLAG VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_FRLOT_FUTUREHOLD():
+    source_table = "V_FRLOT_FUTUREHOLD"
+    target_table = "APS_SYNC_FRLOT_FUTUREHOLD"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, OPE_NO, REASON_CODE, HOLD_TYPE, RELATED_LOT_ID, replace(replace(CLAIM_MEMO,chr(10),''),chr(13),'') as CLAIM_MEMO, CLAIM_TIME, SINGLE_TRIG_FLAG, POST_FLAG FROM V_FRLOT_FUTUREHOLD """
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_FRLOT_FUTUREHOLD (
+                    LOT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    REASON_CODE VARCHAR,
+                    HOLD_TYPE VARCHAR,
+                    RELATED_LOT_ID VARCHAR,
+                    CLAIM_MEMO VARCHAR,
+                    CLAIM_TIME VARCHAR,
+                    SINGLE_TRIG_FLAG VARCHAR,
+                    POST_FLAG VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RSPILOT_RUN_HS():
+    source_table = "V_RSPILOT_RUN_HS"
+    target_table = "APS_SYNC_RSPILOT_RUN_HS"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT JOB_NO, APC_TYPE, LOT_KEY_NO, DEVICE_GRP, DEVICE_NM, DEVICE_NM1, C_OP_NO, C_UNIT_ID, E_OP_NO, OP_NO_1, UNIT_ID_1, OP_NO_2, UNIT_ID_2, OP_NO_3, UNIT_ID_3, START_DATE, STATUS, DEL_MAN_NO, DEL_DATE, REPLACE(REPLACE(PILOT_COMMENT, chr(10), ''), chr(13), '') AS PILOT_COMMENT, PILOT_CHUCK, MASK_NM, PILOT_CNT, PIRUN_LOG FROM V_RSPILOT_RUN_HS"""
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_RSPILOT_RUN_HS (
+                    JOB_NO VARCHAR,
+                    APC_TYPE VARCHAR,
+                    LOT_KEY_NO VARCHAR,
+                    DEVICE_GRP VARCHAR,
+                    DEVICE_NM VARCHAR,
+                    DEVICE_NM1 VARCHAR,
+                    C_OP_NO VARCHAR,
+                    C_UNIT_ID VARCHAR,
+                    E_OP_NO VARCHAR,
+                    OP_NO_1 VARCHAR,
+                    UNIT_ID_1 VARCHAR,
+                    OP_NO_2 VARCHAR,
+                    UNIT_ID_2 VARCHAR,
+                    OP_NO_3 VARCHAR,
+                    UNIT_ID_3 VARCHAR,
+                    START_DATE TIMESTAMP,
+                    STATUS VARCHAR,
+                    DEL_MAN_NO VARCHAR,
+                    DEL_DATE TIMESTAMP,
+                    PILOT_COMMENT VARCHAR,
+                    PILOT_CHUCK VARCHAR,
+                    MASK_NM VARCHAR,
+                    PILOT_CNT VARCHAR,
+                    PIRUN_LOG VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RECIPE_NPW_RULEMAP():
+    source_table = "V_RECIPE_NPW_RULEMAP"
+    target_table = "APS_SYNC_RECIPE_NPW_RULEMAP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT TOOLID, CASEID, SEQNO, MODULE, "TYPE", SUBTYPE, PRE_PRODID, PRE_OPENO, CUR_PRODID, CUR_OPENO, DMY_PRODID, RUN_DUMMY, PRE_VALUE, CUR_VALUE, COL_NAME FROM V_RECIPE_NPW_RULEMAP"""
+    create_table_sql = """
+              CREATE TABLE APS_SYNC_RECIPE_NPW_RULEMAP (
+                    TOOLID VARCHAR,
+                    CASEID VARCHAR,
+                    SEQNO VARCHAR,
+                    MODULE VARCHAR,
+                    TYPE VARCHAR,
+                    SUBTYPE VARCHAR,
+                    PRE_PRODID VARCHAR,
+                    PRE_OPENO VARCHAR,
+                    CUR_PRODID VARCHAR,
+                    CUR_OPENO VARCHAR,
+                    DMY_PRODID VARCHAR,
+                    RUN_DUMMY VARCHAR,
+                    PRE_VALUE VARCHAR,
+                    CUR_VALUE VARCHAR,
+                    COL_NAME VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_OCS_AUTODUMMY_COMPLETE():
+    source_table = "V_OCS_AUTODUMMY_COMPLETE"
+    target_table = "APS_SYNC_OCS_AUTODUMMY_COMPLETE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT CASEID, CARRIERID, CHAMBERINFO, SELECTTYPE, LOTID, PRODID, OPENO, ROUTEID, STARTRECIPE, XFERSTATE, JOBSTATE, STARTTIME, SYS_DATE, TOOLID, WAFER_QTY, PROCESS_START_TIME, PROCESS_END_TIME FROM V_OCS_AUTODUMMY_COMPLETE"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_OCS_AUTODUMMY_COMPLETE (
+                    CASEID VARCHAR,
+                    CARRIERID VARCHAR,
+                    CHAMBERINFO VARCHAR,
+                    SELECTTYPE VARCHAR,
+                    LOTID VARCHAR,
+                    PRODID VARCHAR,
+                    OPENO VARCHAR,
+                    ROUTEID VARCHAR,
+                    STARTRECIPE VARCHAR,
+                    XFERSTATE VARCHAR,
+                    JOBSTATE VARCHAR,
+                    STARTTIME TIMESTAMP,
+                    SYS_DATE TIMESTAMP,
+                    TOOLID VARCHAR,
+                    WAFER_QTY VARCHAR,
+                    PROCESS_START_TIME TIMESTAMP,
+                    PROCESS_END_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW():
+    source_table = "V_RTD_WET_SPECIAL_LOT_CTRL_NEW"
+    target_table = "APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT CONTROL_TYPE, MODULE, EQP_ID, CHAMBER_ID, CONTROL_ITEM, TO_ITEM, CONTROL_OPE, REPLACE(REPLACE(CONTROL_COMMENT, chr(10), ''), chr(13), '') AS CONTROL_COMMENT, OPTIONS, NEED_TIME, MIN_MOVE_PCS, START_TIME, END_TIME FROM V_RTD_WET_SPECIAL_LOT_CTRL_NEW """
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW (
+                    CONTROL_TYPE VARCHAR,
+                    MODULE VARCHAR,
+                    EQP_ID VARCHAR,
+                    CHAMBER_ID VARCHAR,
+                    CONTROL_ITEM VARCHAR,
+                    TO_ITEM VARCHAR,
+                    CONTROL_OPE VARCHAR,
+                    CONTROL_COMMENT VARCHAR,
+                    OPTIONS VARCHAR,
+                    NEED_TIME VARCHAR,
+                    MIN_MOVE_PCS VARCHAR,
+                    START_TIME VARCHAR,
+                    END_TIME VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_CSDYNAMICMWF():
+    source_table = "V_CSDYNAMICMWF"
+    target_table = "APS_SYNC_CSDYNAMICMWF"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, PROD_ID, ROUTE_ID, OPE_NO, CLAIM_USER, CLAIM_TIME, REPLACE(REPLACE(CLAIM_MEMO, chr(10), ''), chr(13), '') AS CLAIM_MEMO FROM V_CSDYNAMICMWF"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_CSDYNAMICMWF (
+                    LOT_ID VARCHAR,
+                    PROD_ID VARCHAR,
+                    ROUTE_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    CLAIM_USER VARCHAR,
+                    CLAIM_TIME TIMESTAMP,
+                    CLAIM_MEMO VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_SAMPLING_RATE():
+    source_table = "V_SAMPLING_RATE"
+    target_table = "APS_SYNC_SAMPLING_RATE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LINE, PRODG1, MODULE, OPE_NO, OPE_NM, EQP_G, SAMPLING_RATE, OPER_SEQ, PRODSPEC_ID, MAINCHIP FROM V_SAMPLING_RATE """
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_SAMPLING_RATE (
+                    LINE VARCHAR,
+                    PRODG1 VARCHAR,
+                    MODULE VARCHAR,
+                    OPE_NO VARCHAR,
+                    OPE_NM VARCHAR,
+                    EQP_G VARCHAR,
+                    SAMPLING_RATE VARCHAR,
+                    OPER_SEQ VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    MAINCHIP VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_EQP_RECIPE_ED_ADD_VALUE():
+    source_table = "V_EQP_RECIPE_ED_ADD_VALUE"
+    target_table = "APS_SYNC_EQP_RECIPE_ED_ADD_VALUE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_G, ED_PARAMETER_ID, RECIPE, ADD_TYPE, ADD_VAL, REPORT_TIME, UPDATE_TIME FROM V_EQP_RECIPE_ED_ADD_VALUE"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_EQP_RECIPE_ED_ADD_VALUE (
+                    EQP_G VARCHAR,
+                    ED_PARAMETER_ID VARCHAR,
+                    RECIPE VARCHAR,
+                    ADD_TYPE VARCHAR,
+                    ADD_VAL VARCHAR,
+                    REPORT_TIME TIMESTAMP,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_OUT_DF_PURGE_COMBINE():
+    source_table = "V_OUT_DF_PURGE_COMBINE"
+    target_table = "APS_SYNC_OUT_DF_PURGE_COMBINE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, EVENT_TIME_ST, EVENT_TIME_END FROM V_OUT_DF_PURGE_COMBINE """
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_OUT_DF_PURGE_COMBINE (
+                    EQP_ID VARCHAR,
+                    EVENT_TIME_ST VARCHAR,
+                    EVENT_TIME_END VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_ID_OPE_CONFIG():
+    source_table = "V_RTD_ID_OPE_CONFIG"
+    target_table = "APS_SYNC_RTD_ID_OPE_CONFIG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID, PRODG, START_OPE, TARGET_OPE, REPLACE(REPLACE(MEMO,chr(10), ''), chr(13), '') AS MEMO FROM V_RTD_ID_OPE_CONFIG """
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_RTD_ID_OPE_CONFIG (
+                    EQP_ID VARCHAR,
+                    PRODG VARCHAR,
+                    START_OPE VARCHAR,
+                    TARGET_OPE VARCHAR,
+                    MEMO VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MLIF_EQP_SETTING():
+    source_table = "v_mlif_eqp_setting"
+    target_table = "APS_SYNC_MLIF_EQP_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODULE, EQP_G, EQP_ID, MIN_WAFER, MIN_LOT, MAX_LOT FROM v_mlif_eqp_setting"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_MLIF_EQP_SETTING (
+                    MODULE VARCHAR,
+                    EQP_G VARCHAR,
+                    EQP_ID VARCHAR,
+                    MIN_WAFER VARCHAR,
+                    MIN_LOT VARCHAR,
+                    MAX_LOT VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_UMT_BOTTLENECK_EQPG_SETTING():
+    source_table = "v_umt_bottleneck_eqpg_setting"
+    target_table = "APS_SYNC_UMT_BOTTLENECK_EQPG_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODULE, EQP_G, START_DAY, END_DAY, UPDATE_USER, UPDATE_TIME FROM v_umt_bottleneck_eqpg_setting"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_UMT_BOTTLENECK_EQPG_SETTING (
+                    MODULE VARCHAR,
+                    EQP_G VARCHAR,
+                    START_DAY TIMESTAMP,
+                    END_DAY TIMESTAMP,
+                    UPDATE_USER VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_EQP_ED_DATA_REPORT():
+    source_table = "V_EQP_ED_DATA_REPORT"
+    target_table = "APS_SYNC_EQP_ED_DATA_REPORT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT ED_PARAMETER_ID, VALUE, EQUIPMENT_ID, CHAMBER, RECIPE, REPORT_TIME FROM V_EQP_ED_DATA_REPORT"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_EQP_ED_DATA_REPORT (
+                    ED_PARAMETER_ID VARCHAR,
+                    VALUE VARCHAR,
+                    EQUIPMENT_ID VARCHAR,
+                    CHAMBER VARCHAR,
+                    RECIPE VARCHAR,
+                    REPORT_TIME TIMESTAMP
+                )
+                 """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_EQP_MODE_SETTING():
+    source_table = "V_EQP_MODE_SETTING"
+    target_table = "APS_SYNC_EQP_MODE_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODULE, EQP_G, FAB_EQP_G, EQP_ID, EQP_MODE, UPDATE_USER, UPDATE_TIME FROM V_EQP_MODE_SETTING"""
+    create_table_sql = """
+              CREATE TABLE APS_SYNC_EQP_MODE_SETTING (
+                    MODULE VARCHAR,
+                    EQP_G VARCHAR,
+                    FAB_EQP_G VARCHAR,
+                    EQP_ID VARCHAR,
+                    EQP_MODE VARCHAR,
+                    UPDATE_USER VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_PREFER_TOOL():
+    source_table = "V_RTD_PREFER_TOOL"
+    target_table = "APS_SYNC_RTD_PREFER_TOOL"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODULE, TECH, PRODUCT_ID, OPE_NO, EQP_ID, CREATE_TIME, CREATE_USER FROM V_RTD_PREFER_TOOL"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_RTD_PREFER_TOOL (
+                    MODULE VARCHAR,
+                    TECH VARCHAR,
+                    PRODUCT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    EQP_ID VARCHAR,
+                    CREATE_TIME TIMESTAMP,
+                    CREATE_USER VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_FREQP_UTS():
+    source_table = "V_FREQP_UTS"
+    target_table = "APS_SYNC_FREQP_UTS"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT OWNER_ID, EQP_ID, STK_ID FROM V_FREQP_UTS"""
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_FREQP_UTS (
+                    OWNER_ID VARCHAR,
+                    EQP_ID VARCHAR,
+                    STK_ID VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MES_FRLOT_RETNLIST():
+    source_table = "V_MES_FRLOT_RETNLIST"
+    target_table = "APS_SYNC_MES_FRLOT_RETNLIST"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, PRODSPEC_ID, MAINPD_ID, OPE_NO, OPE_NAME, RETN_MAINPD_ID, RETN_OPE_NO, D_SEQNO, RETN_REMAIN_TIME, UPDATE_TIME FROM V_MES_FRLOT_RETNLIST"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_MES_FRLOT_RETNLIST (
+                    LOT_ID VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    MAINPD_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    OPE_NAME VARCHAR,
+                    RETN_MAINPD_ID VARCHAR,
+                    RETN_OPE_NO VARCHAR,
+                    D_SEQNO VARCHAR,
+                    RETN_REMAIN_TIME VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MAJOR_ANOMALY_EWS_LOT():
+    source_table = "V_MAJOR_ANOMALY_EWS_LOT"
+    target_table = "APS_SYNC_MAJOR_ANOMALY_EWS_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT CASEID, FAB_ID, LOT_ID, OPE_NO, EQP_ID, CONTROL_ITEM, STATUS, JUDGE_RESULT, OPEN_TIME, CLOSE_TIME, UPDATE_TIME, PRODSPEC_ID, INSERT_TIME FROM V_MAJOR_ANOMALY_EWS_LOT """
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_MAJOR_ANOMALY_EWS_LOT (
+                    CASEID VARCHAR,
+                    FAB_ID VARCHAR,
+                    LOT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    EQP_ID VARCHAR,
+                    CONTROL_ITEM VARCHAR,
+                    STATUS VARCHAR,
+                    JUDGE_RESULT VARCHAR,
+                    OPEN_TIME VARCHAR,
+                    CLOSE_TIME VARCHAR,
+                    UPDATE_TIME VARCHAR,
+                    PRODSPEC_ID VARCHAR,
+                    INSERT_TIME VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_APC_INHIBIT_LOT():
+    source_table = "V_APC_INHIBIT_LOT"
+    target_table = "APS_SYNC_APC_INHIBIT_LOT"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, OPE_NO, EQP_ID, INHIBIT_TIME, UPDATE_TIME FROM V_APC_INHIBIT_LOT"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_APC_INHIBIT_LOT (
+                    LOT_ID VARCHAR,
+                    OPE_NO VARCHAR,
+                    EQP_ID VARCHAR,
+                    INHIBIT_TIME TIMESTAMP,
+                    UPDATE_TIME TIMESTAMP
+                )
+                """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_NPW_RECIPE_GROUP():
+    source_table = "V_NPW_RECIPE_GROUP"
+    target_table = "APS_SYNC_NPW_RECIPE_GROUP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT TOOL_ID, RECIPE_ID, GROUP_ID, USER_ID, DATE_TIME FROM V_NPW_RECIPE_GROUP """
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_NPW_RECIPE_GROUP (
+                    TOOL_ID VARCHAR,
+                    RECIPE_ID VARCHAR,
+                    GROUP_ID VARCHAR,
+                    USER_ID VARCHAR,
+                    DATE_TIME TIMESTAMP
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_IMP_SOURCE():
+    source_table = "V_RTD_IMP_SOURCE"
+    target_table = "APS_SYNC_RTD_IMP_SOURCE"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MAINPD_ID, OPE_NO, SOURCE, LINE FROM V_RTD_IMP_SOURCE """
+    create_table_sql = """
+              CREATE TABLE APS_SYNC_RTD_IMP_SOURCE (
+                MAINPD_ID VARCHAR,
+                OPE_NO VARCHAR,
+                SOURCE VARCHAR,
+                LINE VARCHAR
+            );
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_MES_FRLRCP():
+    source_table = "V_MES_FRLRCP"
+    target_table = "APS_SYNC_MES_FRLRCP"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LCRECIPE_ID, MNTR_PRODSPEC_ID, MNTR_HOLD_FLAG, SUB_LOT_TYPE, RECIPE_TYPE FROM V_MES_FRLRCP"""
+    create_table_sql = """
+                 CREATE TABLE APS_SYNC_MES_FRLRCP (
+                    LCRECIPE_ID VARCHAR,
+                    MNTR_PRODSPEC_ID VARCHAR,
+                    MNTR_HOLD_FLAG VARCHAR,
+                    SUB_LOT_TYPE VARCHAR,
+                    RECIPE_TYPE VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_STRIP_CHAMBER():
+    source_table = "V_STRIP_CHAMBER"
+    target_table = "APS_SYNC_STRIP_CHAMBER"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MODULE, EQP_G, STRIP_CHAMBER FROM V_STRIP_CHAMBER"""
+    create_table_sql = """
+               CREATE TABLE APS_SYNC_STRIP_CHAMBER (
+                    MODULE VARCHAR,
+                    EQP_G VARCHAR,
+                    STRIP_CHAMBER VARCHAR
+                )
+                       """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_CSFLOWSAMPLINGCFG():
+    source_table = "V_CSFLOWSAMPLINGCFG"
+    target_table = "APS_SYNC_CSFLOWSAMPLINGCFG"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    # query_sql = """SELECT MAINPD_ID, OPE_NO, SAMPLING_TYPE, SAMPLING_GROUP1, SAMPLING_GROUP2, SAMPLING_GROUP3, SAMPLING_GROUP4, SAMPLING_GROUP5, SAMPLING_GROUP6, SAMPLING_GROUP7, SAMPLING_GROUP8, SAMPLING_GROUP9, SAMPLING_GROUP10, CLAIM_USER, REPLACE(REPLACE(CLAIM_MEMO, chr(10), ''), chr(13), '') AS CLAIM_MEMO, CLAIM_TIME FROM V_CSFLOWSAMPLINGCFG"""
+    # create_table_sql = """
+    #             CREATE TABLE APS_SYNC_CSFLOWSAMPLINGCFG (
+    #                 MAINPD_ID VARCHAR,
+    #                 OPE_NO VARCHAR,
+    #                 SAMPLING_TYPE VARCHAR,
+    #                 SAMPLING_GROUP1 VARCHAR,
+    #                 SAMPLING_GROUP2 VARCHAR,
+    #                 SAMPLING_GROUP3 VARCHAR,
+    #                 SAMPLING_GROUP4 VARCHAR,
+    #                 SAMPLING_GROUP5 VARCHAR,
+    #                 SAMPLING_GROUP6 VARCHAR,
+    #                 SAMPLING_GROUP7 VARCHAR,
+    #                 SAMPLING_GROUP8 VARCHAR,
+    #                 SAMPLING_GROUP9 VARCHAR,
+    #                 SAMPLING_GROUP10 VARCHAR,
+    #                 CLAIM_USER VARCHAR,
+    #                 CLAIM_MEMO VARCHAR,
+    #                 CLAIM_TIME TIMESTAMP
+    #             )
+    #                    """
+    oracle_to_duck_common.sync_oracle_to_duck(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_VIRT_QT_SETTING():
+    source_table = "V_VIRT_QT_SETTING"
+    target_table = "APS_SYNC_VIRT_QT_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MUDULE, EQP_G, TECH, PRODUCT_ID, PRODG, TO_OPER_NO, FORM_OPER_NO, QTIME_SPEC, QTIME_GRADE, REPLACE(REPLACE(REMARK,chr(10), ''), chr(13), '') AS REMARK, UPDATE_USER, UPDATE_TIME FROM V_VIRT_QT_SETTING"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_VIRT_QT_SETTING (
+                    MUDULE VARCHAR,
+                    EQP_G VARCHAR,
+                    TECH VARCHAR,
+                    PRODUCT_ID VARCHAR,
+                    PRODG VARCHAR,
+                    TO_OPER_NO VARCHAR,
+                    FORM_OPER_NO VARCHAR,
+                    QTIME_SPEC VARCHAR,
+                    QTIME_GRADE VARCHAR,
+                    REMARK VARCHAR,
+                    -- START_TIME TIMESTAMP,
+                    -- END_TIME TIMESTAMP,
+                    UPDATE_USER VARCHAR,
+                    UPDATE_TIME TIMESTAMP
+                )
+                """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_LIFE_TIME_CONTROL():
+    source_table = "V_RTD_LIFE_TIME_CONTROL"
+    target_table = "APS_SYNC_RTD_LIFE_TIME_CONTROL"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT EQP_ID,CHAMBER_ID,PRODG1,OPE_NO,RECIPE_ID,TYPE,SPEC_TYPE,ITEM_SVID,ITEM_NAME,LST,UST FROM V_RTD_LIFE_TIME_CONTROL"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_RTD_LIFE_TIME_CONTROL (
+                    EQP_ID     VARCHAR,
+                    CHAMBER_ID VARCHAR,
+                    PRODG1     VARCHAR,
+                    OPE_NO     VARCHAR,
+                    RECIPE_ID  VARCHAR,
+                    TYPE       VARCHAR,
+                    SPEC_TYPE  VARCHAR,
+                    ITEM_SVID  VARCHAR,
+                    ITEM_NAME  VARCHAR,
+                    LST        VARCHAR,
+                    UST        VARCHAR
+                )
+                """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_FRQTIME_ACTION():
+    source_table = "V_FRQTIME_ACTION"
+    target_table = "APS_SYNC_FRQTIME_ACTION"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT CUSTOM_FIELD,LOT_ID,TRIGGER_MAINPD_ID,TRIGGER_OPE_NO,TRIGGER_TIME,TARGET_MAINPD_ID,TARGET_OPE_NO,TARGET_TIME FROM V_FRQTIME_ACTION"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_FRQTIME_ACTION (
+                    CUSTOM_FIELD      VARCHAR,
+                    LOT_ID            VARCHAR,
+                    TRIGGER_MAINPD_ID VARCHAR,
+                    TRIGGER_OPE_NO    VARCHAR,
+                    TRIGGER_TIME      TIMESTAMP,
+                    TARGET_MAINPD_ID  VARCHAR,
+                    TARGET_OPE_NO     VARCHAR,
+                    TARGET_TIME       TIMESTAMP
+                )
+                """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_FLOW_SUBFLOW_RETURN():
+    source_table = "V_FLOW_SUBFLOW_RETURN"
+    target_table = "APS_SYNC_FLOW_SUBFLOW_RETURN"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT MAINPD_ID,OPE_NO,BRANCH_MAINPD_ID,RTN_OPE_NO FROM V_FLOW_SUBFLOW_RETURN"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_FLOW_SUBFLOW_RETURN (
+                     MAINPD_ID        VARCHAR(64),
+                     OPE_NO           VARCHAR(144),
+                     BRANCH_MAINPD_ID VARCHAR(64),
+                     RTN_OPE_NO       VARCHAR(73)
+                )
+                """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_UMT_EQP_PM_DEFAULT_SETTING():
+    source_table = "V_UMT_EQP_PM_DEFAULT_SETTING"
+    target_table = "APS_SYNC_UMT_EQP_PM_DEFAULT_SETTING"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT module, eqp_g, eqp_id, chamber_no, pm_type, item_name, item_type, remark FROM V_UMT_EQP_PM_DEFAULT_SETTING"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_UMT_EQP_PM_DEFAULT_SETTING (
+                    module     VARCHAR(64) not null,
+                    eqp_g      VARCHAR(64) not null,
+                    eqp_id     VARCHAR(64) not null,
+                    chamber_no VARCHAR(64) not null,
+                    pm_type    VARCHAR(300) not null,
+                    item_name  VARCHAR(64),
+                    item_type  VARCHAR(64),
+                    remark     VARCHAR(300)
+                )
+                """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+def sync_APS_SYNC_LOT_ANNOTATION_INFO_BRANCH():
+    source_table = "V_LOT_ANNOTATION_INFO_BRANCH"
+    target_table = "APS_SYNC_LOT_ANNOTATION_INFO_BRANCH"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT LOT_ID, MAINPD_ID, OPE_NO, ANNOTATION_FLAG, UPDATE_TIME FROM V_LOT_ANNOTATION_INFO_BRANCH"""
+    create_table_sql = """
+                CREATE TABLE APS_SYNC_LOT_ANNOTATION_INFO_BRANCH (
+                      LOT_ID          VARCHAR(64),
+                      MAINPD_ID       VARCHAR(64),
+                      OPE_NO          VARCHAR(64),
+                      ANNOTATION_FLAG VARCHAR(1),
+                      UPDATE_TIME     TIMESTAMP
+                )
+                """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_SYNC_RTD_WET_SPECIAL_LOT_CONTROL():
+    source_table = "v_rtd_wet_special_lot_control"
+    target_table = "APS_SYNC_RTD_WET_SPECIAL_LOT_CONTROL"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT CONTROL_TYPE,CONTROL_ITEM,CONTROL_OPE,REPLACE(REPLACE(CONTROL_COMMENT, chr(10), ''), chr(13), '') AS CONTROL_COMMENT,CREATER,CREATE_TIME,UPDATER,UPDATE_TIME,FLAG,OPTIONS,NEED_TIME,MIN_MOVE_PCS,MODULE,TO_ITEM,EQP_ID,START_TIME,END_TIME,ID,CHAMBER_ID FROM v_rtd_wet_special_lot_control"""
+    create_table_sql = """
+            create table APS_SYNC_RTD_WET_SPECIAL_LOT_CONTROL
+            (
+              control_type    VARCHAR(20),
+              control_item    VARCHAR(30),
+              control_ope     VARCHAR(20),
+              control_comment VARCHAR(200),
+              creater         VARCHAR(30),
+              create_time     VARCHAR(30),
+              updater         VARCHAR(30),
+              update_time     VARCHAR(30),
+              flag            VARCHAR(20),
+              options         VARCHAR(20),
+              need_time       VARCHAR(10),
+              min_move_pcs    VARCHAR(10),
+              module          VARCHAR(10),
+              to_item         VARCHAR(200),
+              eqp_id          VARCHAR(10),
+              start_time      VARCHAR(20),
+              end_time        VARCHAR(20),
+              id              VARCHAR(30),
+              chamber_id      VARCHAR(10)
+            )
+            """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+if __name__ == '__main__':
+    warnings.filterwarnings("ignore")
+    sync_APS_SYNC_SCHE_APC_PA()
+
+
+
+

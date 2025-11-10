@@ -1,0 +1,339 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons
+
+
+def create_temp_table(duck_db):
+    pass
+
+
+def biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO APS_ETL_RTDQTTIME (PARENTID,LOT_ID,TARGET_PROD_ID,TARGET_PLAN_ID,TARGET_OPE_NO,REMAIN_QTIME,FLOW_KEY,FROM_OPE_NO,PRODSPEC_ID,QTIME_ISSUE,OTHER_Q,QTIME_ISSUE_H,SYNC_TIME,PARTCODE)
+    WITH DATA_1 AS (
+      SELECT
+        DS_CAPACITY_ISSUE, DS_PATH_ISSUE, DS_SEQ_NO, DS_OPE_NO, MAINPD_ID AS FLOW_KEY, PRODSPEC_ID, ENTRY_OPE_NO AS FROM_OPE_NO, 'N1' AS LINE
+      FROM APS_SYNC_QTIME_EQP_LOADING.APS_SYNC_QTIME_EQP_LOADING
+    ), DATA_2 AS (
+      SELECT
+        LINE, PRODSPEC_ID, FLOW_KEY, FROM_OPE_NO, 0 AS OTHER_Q
+      FROM DATA_1
+    ), QTIME_CONSTRAINT AS (
+      SELECT
+        T1.PRODSPEC_ID,
+        T1.FLOW_KEY,
+        T1.FROM_OPE_NO,
+        T1. OTHER_Q
+      FROM APS_MID_RLS_RTD_QTIME_DATA3.APS_MID_RLS_RTD_QTIME_DATA3 T1
+    ), DATA_3 AS (
+      SELECT
+        'N1' AS LINE, PRODSPEC_ID, FLOW_KEY, FROM_OPE_NO, OTHER_Q
+      FROM QTIME_CONSTRAINT
+    ), DATA_4 AS (
+      SELECT * FROM DATA_2
+      UNION
+      SELECT * FROM DATA_3
+    ), DATA_5 AS (
+      SELECT
+        FLOW_KEY, FROM_OPE_NO, PRODSPEC_ID, LINE, MAX(OTHER_Q) AS OTHER_Q
+      FROM DATA_4
+      GROUP BY FLOW_KEY, FROM_OPE_NO, PRODSPEC_ID, LINE
+    ), DATA_6 AS (
+      SELECT
+        A.*, B.DS_CAPACITY_ISSUE, B.DS_PATH_ISSUE, B.DS_SEQ_NO 
+      FROM DATA_5 A
+      LEFT JOIN DATA_1 B
+      ON A.FLOW_KEY = B.FLOW_KEY
+      AND A.PRODSPEC_ID = B.PRODSPEC_ID
+      AND A.FROM_OPE_NO = B.FROM_OPE_NO
+      AND A.LINE = B.LINE
+      AND A.FROM_OPE_NO = B.DS_OPE_NO
+    ), DATA_7 AS (
+      SELECT
+        A.*,
+        CASE
+          WHEN DS_PATH_ISSUE IS NOT NULL AND DS_CAPACITY_ISSUE IS NOT NULL THEN 'RTD_PATH_ISSUE:' || DS_PATH_ISSUE || ';RTD_CAPACITY_ISSUE:' || DS_CAPACITY_ISSUE
+          WHEN DS_PATH_ISSUE IS NOT NULL AND DS_CAPACITY_ISSUE IS NULL THEN 'RTD_PATH_ISSUE:' || DS_PATH_ISSUE
+          WHEN DS_SEQ_NO IS NULL THEN 'RTD_DATA_LOSS : QTIME_EQP_LOADING'
+          ELSE 'CAPACITY_ISSUE_H:' || DS_CAPACITY_ISSUE
+        END AS QTIME_ISSUE
+      FROM DATA_6 A
+      WHERE A.DS_PATH_ISSUE IS NOT NULL OR A. DS_CAPACITY_ISSUE IS NOT NULL OR A. DS_SEQ_NO IS NULL
+    ), DATA_9 AS (
+      SELECT
+        FLOW_KEY,
+        FROM_OPE_NO,
+        PRODSPEC_ID,
+        MIN(QTIME_ISSUE) AS QTIME_ISSUE,
+        MAX(OTHER_Q) AS OTHER_Q
+      FROM DATA_7 GROUP BY FLOW_KEY, FROM_OPE_NO, PRODSPEC_ID
+    ),DATA_10 AS (
+      SELECT
+      EW.LOT_ID,
+      EW.TARGET_PROD_ID,
+      EW.TARGET_PLAN_ID,
+      EW.TARGET_OPE_NO,
+      QT.REMAIN_QTIME,
+      T.*,
+      CASE
+        WHEN  QT.REMAIN_QTIME < 2
+            OR (T.OTHER_Q > 0 AND QT.REMAIN_QTIME IS NOT NULL)
+            OR T.QTIME_ISSUE IS NULL
+          THEN NULL
+        ELSE T.QTIME_ISSUE
+      END AS QTIME_ISSUE_H
+    FROM (SELECT * FROM APS_ETL_WIP.APS_ETL_WIP  WHERE position('Hold' in LOT_STATUS)= 0 AND position('Future' in LOT_STATUS)= 0) EW
+    LEFT JOIN DATA_9 T
+    ON EW.TARGET_PROD_ID = T.PRODSPEC_ID
+    AND EW.TARGET_PLAN_ID = T.FLOW_KEY
+    AND EW.TARGET_OPE_NO = T.FROM_OPE_NO
+    LEFT JOIN APS_SYNC_FVLOT_QTIME.APS_SYNC_FVLOT_QTIME QT
+    ON QT.LOT_ID = EW.LOT_ID
+    )
+    SELECT '{uuid}',LOT_ID,
+      TARGET_PROD_ID,
+      TARGET_PLAN_ID,
+      TARGET_OPE_NO,
+      REMAIN_QTIME,
+      FLOW_KEY,
+      FROM_OPE_NO,
+      PRODSPEC_ID,
+      REPLACE(REPLACE(QTIME_ISSUE,':','(')||')',';','') QTIME_ISSUE,
+      OTHER_Q,
+      REPLACE(REPLACE(QTIME_ISSUE_H,':','(')||')',';','') QTIME_ISSUE_H,
+      '{current_time}',
+      '{part_code}'
+      FROM DATA_10
+      WHERE SUBSTRING(TARGET_OPE_NO,4,1) ='F'
+      AND POSITION('CAPACITY_ISSUE_H' in QTIME_ISSUE_H) = 0
+      AND QTIME_ISSUE_H IS NOT NULL
+      --AND INSTR(QTIME_ISSUE_H,'RTD_DATA_LOSS')=0
+      and  POSITION('RTD_DATA_LOSS' in QTIME_ISSUE_H) = 0
+      --AND INSTR(QTIME_ISSUE_H,'RTD_PATH_ISSUE')=0
+      and  POSITION('RTD_PATH_ISSUE' in QTIME_ISSUE_H) = 0
+    """.format(uuid=uuid, current_time=current_time, part_code=cons.RLS_PART_VALUE_NEW)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_RTDQTTIME",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_RTDQTTIME")
+
+
+def biz_method_02(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO APS_ETL_RTDQTTIME (PARENTID,LOT_ID,TARGET_PROD_ID,TARGET_PLAN_ID,TARGET_OPE_NO,REMAIN_QTIME,FLOW_KEY,FROM_OPE_NO,PRODSPEC_ID,QTIME_ISSUE,OTHER_Q,QTIME_ISSUE_H,SYNC_TIME,PARTCODE)
+    WITH DATA_1 AS (
+      SELECT
+        DS_CAPACITY_ISSUE, DS_PATH_ISSUE, DS_SEQ_NO, DS_OPE_NO, MAINPD_ID AS FLOW_KEY, PRODSPEC_ID, ENTRY_OPE_NO AS FROM_OPE_NO, 'N1' AS LINE
+      FROM APS_SYNC_QTIME_EQP_LOADING.APS_SYNC_QTIME_EQP_LOADING
+    ), DATA_2 AS (
+      SELECT
+        LINE, PRODSPEC_ID, FLOW_KEY, FROM_OPE_NO, 0 AS OTHER_Q
+      FROM DATA_1
+    ), QTIME_CONSTRAINT AS (
+      SELECT
+        T1.PRODSPEC_ID,
+        T1.FLOW_KEY,
+        T1.FROM_OPE_NO,
+        T1. OTHER_Q
+      FROM APS_MID_RLS_RTD_QTIME_DATA3.APS_MID_RLS_RTD_QTIME_DATA3 T1
+    ), DATA_3 AS (
+      SELECT
+        'N1' AS LINE, PRODSPEC_ID, FLOW_KEY, FROM_OPE_NO, OTHER_Q
+      FROM QTIME_CONSTRAINT
+    ), DATA_4 AS (
+      SELECT * FROM DATA_2
+      UNION
+      SELECT * FROM DATA_3
+    ), DATA_5 AS (
+      SELECT
+        FLOW_KEY, FROM_OPE_NO, PRODSPEC_ID, LINE, MAX(OTHER_Q) AS OTHER_Q
+      FROM DATA_4
+      GROUP BY FLOW_KEY, FROM_OPE_NO, PRODSPEC_ID, LINE
+    ), DATA_6 AS (
+      SELECT
+        A.*, B.DS_CAPACITY_ISSUE, B.DS_PATH_ISSUE, B.DS_SEQ_NO 
+      FROM DATA_5 A
+      LEFT JOIN DATA_1 B
+      ON A.FLOW_KEY = B.FLOW_KEY
+      AND A.PRODSPEC_ID = B.PRODSPEC_ID
+      AND A.FROM_OPE_NO = B.FROM_OPE_NO
+      AND A.LINE = B.LINE
+      AND A.FROM_OPE_NO = B.DS_OPE_NO
+    ), DATA_7 AS (
+      SELECT
+        A.*,
+        CASE
+          WHEN DS_PATH_ISSUE IS NOT NULL AND DS_CAPACITY_ISSUE IS NOT NULL THEN 'RTD_PATH_ISSUE:' || DS_PATH_ISSUE || ';RTD_CAPACITY_ISSUE:' || DS_CAPACITY_ISSUE
+          WHEN DS_PATH_ISSUE IS NOT NULL AND DS_CAPACITY_ISSUE IS NULL THEN 'RTD_PATH_ISSUE:' || DS_PATH_ISSUE
+          WHEN DS_SEQ_NO IS NULL THEN 'RTD_DATA_LOSS : QTIME_EQP_LOADING'
+          ELSE 'CAPACITY_ISSUE_H:' || DS_CAPACITY_ISSUE
+        END AS QTIME_ISSUE
+      FROM DATA_6 A
+      WHERE A.DS_PATH_ISSUE IS NOT NULL OR A. DS_CAPACITY_ISSUE IS NOT NULL OR A. DS_SEQ_NO IS NULL
+    ), DATA_9 AS (
+      SELECT
+        FLOW_KEY,
+        FROM_OPE_NO,
+        PRODSPEC_ID,
+        MIN(QTIME_ISSUE) AS QTIME_ISSUE,
+        MAX(OTHER_Q) AS OTHER_Q
+      FROM DATA_7 GROUP BY FLOW_KEY, FROM_OPE_NO, PRODSPEC_ID
+    ),DATA_10 AS (
+      SELECT
+      EW.LOT_ID,
+      EW.TARGET_PROD_ID,
+      EW.TARGET_PLAN_ID,
+      EW.TARGET_OPE_NO,
+      QT.REMAIN_QTIME,
+      T.*,
+      CASE
+        WHEN  QT.REMAIN_QTIME < 2
+            OR (T.OTHER_Q > 0 AND QT.REMAIN_QTIME IS NOT NULL)
+            OR T.QTIME_ISSUE IS NULL
+          THEN NULL
+        ELSE T.QTIME_ISSUE
+      END AS QTIME_ISSUE_H
+    FROM (SELECT * FROM APS_ETL_WIP.APS_ETL_WIP  WHERE position('Hold' in LOT_STATUS)= 0 AND position('Future' in LOT_STATUS)= 0) EW
+    LEFT JOIN DATA_9 T
+    ON EW.TARGET_PROD_ID = T.PRODSPEC_ID
+    AND EW.TARGET_PLAN_ID = T.FLOW_KEY
+    AND EW.TARGET_OPE_NO = T.FROM_OPE_NO
+    LEFT JOIN APS_SYNC_FVLOT_QTIME.APS_SYNC_FVLOT_QTIME QT
+    ON QT.LOT_ID = EW.LOT_ID
+    )
+    SELECT '{uuid}',LOT_ID,
+      TARGET_PROD_ID,
+      TARGET_PLAN_ID,
+      TARGET_OPE_NO,
+      REMAIN_QTIME,
+      FLOW_KEY,
+      FROM_OPE_NO,
+      PRODSPEC_ID,
+      REPLACE(REPLACE(QTIME_ISSUE,':','(')||')',';','') QTIME_ISSUE,
+      OTHER_Q,
+      REPLACE(REPLACE(QTIME_ISSUE_H,':','(')||')',';','') QTIME_ISSUE_H,
+      '{current_time}',
+      '{part_code}'
+      FROM DATA_10
+      INNER JOIN APS_SYNC_PF_PO_N1.APS_SYNC_PF_PO_N1 N ON N.MAINPD_ID =TARGET_PLAN_ID AND N.OPE_NO=TARGET_OPE_NO 
+      AND BATCH_NAME IS NOT NULL
+      WHERE SUBSTR(TARGET_OPE_NO,4,1) ='W'
+      AND INSTR(QTIME_ISSUE_H,'CAPACITY_ISSUE_H') = 0
+      AND QTIME_ISSUE_H IS NOT NULL
+        --AND INSTR(QTIME_ISSUE_H,'RTD_DATA_LOSS')=0
+      and  POSITION('RTD_DATA_LOSS' in QTIME_ISSUE_H) = 0
+      --AND INSTR(QTIME_ISSUE_H,'RTD_PATH_ISSUE')=0
+      and  POSITION('RTD_PATH_ISSUE' in QTIME_ISSUE_H) = 0
+    """.format(uuid=uuid, current_time=current_time, part_code=cons.RLS_PART_VALUE_NEW)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_RTDQTTIME",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_RTDQTTIME")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "SQL_TO_TABLE.APS_ETL_RTDQTTIME"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str();
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_ETL_RTDQTTIME"
+    used_table_list = ['APS_SYNC_QTIME_EQP_LOADING',
+                       'APS_ETL_WIP',
+                       'APS_SYNC_FVLOT_QTIME',
+                       'APS_MID_RLS_RTD_QTIME_DATA3',
+                       'APS_SYNC_PF_PO_N1']
+    target_table_sql = """
+        create table {}APS_ETL_RTDQTTIME
+        (
+          parentid       VARCHAR(60) not null,
+          lot_id         VARCHAR(60) not null,
+          target_prod_id VARCHAR(60) not null,
+          target_plan_id VARCHAR(60) not null,
+          target_ope_no  VARCHAR(60) not null,
+          remain_qtime   DECIMAL,
+          flow_key       VARCHAR(32),
+          from_ope_no    VARCHAR(20),
+          prodspec_id    VARCHAR(32),
+          qtime_issue    VARCHAR(283),
+          other_q        DECIMAL,
+          qtime_issue_h  VARCHAR(283),
+          sync_time      VARCHAR(60) not null,
+          partcode       VARCHAR(60) not null
+        )
+    """.format("") # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_memory.sql('SET threads TO 2')
+            # 加上TMP目录:LQN:2023/08/21
+            duck_db_memory.execute(
+                "SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+        # 创建Temp表
+        create_temp_table(duck_db_memory)
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+        biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        biz_method_02(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+                                                                                  target_table,
+                                                                                  target_table_sql.format("file_db."),
+                                                                                  current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, cons_error_code.APS_ETL_SGS_RLS_CODE_XX_ETL) # TODO 改成你自己的CODE
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            # 删除TMP目录:LQN:2023/08/21
+            if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+                os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

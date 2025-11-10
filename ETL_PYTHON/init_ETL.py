@@ -1,0 +1,556 @@
+import logging
+import os
+
+import duckdb
+
+from xinxiang import config
+from xinxiang.jobs_etl import aps_tr_type11_30m, aps_tr_type12_30m, aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN, aps_tmp_type21_median_1d_APS_MID_PURGE11, \
+    aps_tmp_type21_median_1d_APS_MID_PURGE12, aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN, \
+    aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN, aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN, aps_mid_rls_30m, \
+    aps_etl_lothistory_60m, aps_tmp_type11_median_1d_APS_TMP_TYPE11_TECH_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_TMP_TYPE12_OPE_MEDIAN, aps_tr_type3_5m, aps_tmp_type11_median_1d_APS_MID_TYPE3_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_MID_TYPE33_MEDIAN, aps_tr_charge_time_10m, \
+    aps_tmp_type11_median_1d_APS_MID_OCS_MEASURE_CT, aps_tmp_type11_median_1d_APS_MID_TYPE31_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_MID_TYPE32_MEDIAN, aps_mid_type_runtime_1d_APS_MID_TYPE31_RUNTIME_ALL, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE32_RUNTIME_ALL
+from xinxiang.util import my_file, my_oracle, my_date, oracle_to_duck_common
+import pandas as pd
+
+
+def sync_APS_ETL_LOT_OP_HIST():
+    source_table = "APS_ETL_LOT_OP_HIST"
+    target_table = "APS_ETL_LOT_OP_HIST"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    conn = my_oracle.oracle_get_connection()
+    partcode = my_oracle.GetLastPartCodeData(conn, "APS_ETL_LOT_OP_HIST")
+    conn.close()
+    query_sql = """select lot_id,toolg_id,tool_id,prod_id,plan_id,step_id,lot_type,pty,shr_flag,layer,stage,recipe,ppid,qty,reticle_id,tech_id,customer,arrival,job_prepare,track_in,process_start,process_end,track_out,rework_flag,backup_flag,update_time,module,prodg_id,prodg_tech,partkey,scanner_start,scanner_end,recipe_setup from APS_ETL_LOT_OP_HIST"""
+    create_table_sql = """
+    create table APS_ETL_LOT_OP_HIST
+    (
+      lot_id        VARCHAR(60) not null,
+      toolg_id      VARCHAR(60) not null,
+      tool_id       VARCHAR(60) not null,
+      prod_id       VARCHAR(60) not null,
+      plan_id       VARCHAR(60) not null,
+      step_id       VARCHAR(60),
+      lot_type      VARCHAR(30),
+      pty           DECIMAL not null,
+      shr_flag      DECIMAL not null,
+      layer         VARCHAR(60),
+      stage         VARCHAR(60),
+      recipe        VARCHAR(60),
+      ppid          VARCHAR(60),
+      qty           DECIMAL not null,
+      reticle_id    VARCHAR(60),
+      tech_id       VARCHAR(60),
+      customer      VARCHAR(60),
+      arrival       VARCHAR(60) not null,
+      job_prepare   VARCHAR(60),
+      track_in      VARCHAR(60) not null,
+      process_start VARCHAR(60),
+      process_end   VARCHAR(60),
+      track_out     VARCHAR(60),
+      rework_flag   VARCHAR(1),
+      backup_flag   VARCHAR(2),
+      update_time   VARCHAR(60) not null,
+      module        VARCHAR(60),
+      prodg_id      VARCHAR(60),
+      prodg_tech    VARCHAR(60),
+      partkey       VARCHAR(60) not null,
+      scanner_start VARCHAR(60),
+      scanner_end   VARCHAR(60),
+      recipe_setup  VARCHAR(64),
+      PRIMARY KEY (LOT_ID, TOOL_ID, PROD_ID, PLAN_ID, TRACK_IN, PARTKEY)
+    )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+def sync_APS_ETL_FLOW():
+    source_table = "APS_ETL_FLOW"
+    target_table = "APS_ETL_FLOW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    conn = my_oracle.oracle_get_connection()
+    partcode = my_oracle.GetLastPartCodeData(conn, "APS_ETL_FLOW")
+    conn.close()
+    query_sql = """SELECT parentid, prod_id, plan_no, plan_id, step_id, layer, stage, toolg_id, recipe, reticle_group, step_type, toolg_type, process_time, cycle_time, update_time, ope_no, capability, sgs_flag, prodg_id, prodg_tech, partcode, sgs_group, batch_name, batch_target_flag, multi_group, multi_target_flag, SKIP_FLAG,main_plan_id,entry_step_id,retn_step_id FROM APS_ETL_FLOW WHERE PARTCODE = '{partcode}'""".format(partcode=partcode)
+    create_table_sql = """
+    create table APS_ETL_FLOW
+    (
+        parentid          VARCHAR(60) not null,
+        prod_id           VARCHAR(60) not null,
+        plan_no           INTEGER not null,
+        plan_id           VARCHAR(60) not null,
+        step_id           VARCHAR(60) not null,
+        layer             VARCHAR(60),
+        stage             VARCHAR(60),
+        toolg_id          VARCHAR(60) not null,
+        recipe            VARCHAR(60),
+        reticle_group     VARCHAR(60),
+        step_type         VARCHAR(1),
+        toolg_type        VARCHAR(1),
+        process_time      DECIMAL not null,
+        cycle_time        DECIMAL not null,
+        update_time       VARCHAR(60) not null,
+        ope_no            VARCHAR(60),
+        capability        VARCHAR(500),
+        sgs_flag          VARCHAR(2),
+        prodg_id          VARCHAR(60),
+        prodg_tech        VARCHAR(60),
+        partcode          VARCHAR(60) not null,
+        sgs_group         VARCHAR(60),
+        batch_name        VARCHAR(64),
+        batch_target_flag VARCHAR(64),
+        multi_group       VARCHAR(64),
+        multi_target_flag INTEGER,
+        SKIP_FLAG         VARCHAR(64),
+        main_plan_id      VARCHAR(64),
+        entry_step_id     VARCHAR(64),
+        retn_step_id      VARCHAR(64),
+        PRIMARY KEY (PARENTID, PROD_ID, PLAN_NO, PLAN_ID, STEP_ID, PARTCODE)
+    )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_TR_TYPE11():
+    source_table = "APS_TR_TYPE11"
+    target_table = "APS_TR_TYPE11"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT prod_id, toolg_id, recipe, arrival, track_in, track_out, guid, partkey, ope_no, bank_time FROM APS_TR_TYPE11"""
+    create_table_sql = """
+        create table APS_TR_TYPE11
+        (
+          prod_id   VARCHAR(60) not null,
+          toolg_id  VARCHAR(60) not null,
+          recipe    VARCHAR(60),
+          arrival   VARCHAR(60),
+          track_in  VARCHAR(60) not null,
+          track_out VARCHAR(60),
+          guid      VARCHAR(60) not null,
+          partkey   VARCHAR(60) not null,
+          ope_no    VARCHAR(60) not null,
+          bank_time decimal
+        )
+        """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_TR_TYPE12():
+    source_table = "APS_TR_TYPE12"
+    target_table = "APS_TR_TYPE12"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT toolg_id, arrival, track_in, track_out, guid, partkey, bank_time FROM APS_TR_TYPE12"""
+    create_table_sql = """
+    create table APS_TR_TYPE12
+    (
+     toolg_id  VARCHAR(60) not null,
+      arrival   VARCHAR(60),
+      track_in  VARCHAR(60) not null,
+      track_out VARCHAR(60),
+      guid      VARCHAR(60) not null,
+      partkey   VARCHAR(60) not null,
+      bank_time DECIMAL
+    )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_TR_TYPE3():
+    source_table = "APS_TR_TYPE3"
+    target_table = "APS_TR_TYPE3"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT module_id, toolg_id, tool_id, ppid, qty, process_start, process_end,guid,partkey FROM APS_TR_TYPE3"""
+    create_table_sql = """
+    create table APS_TR_TYPE3
+    (
+      module_id     VARCHAR(60),
+      toolg_id      VARCHAR(60),
+      tool_id       VARCHAR(60),
+      ppid          VARCHAR(60),
+      qty           VARCHAR(60),
+      process_start VARCHAR(60),
+      process_end   VARCHAR(60),
+      guid          VARCHAR(60) not null,
+      partkey       VARCHAR(60)
+    )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_TR_TYPE21():
+    source_table = "APS_TR_TYPE21"
+    target_table = "APS_TR_TYPE21"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT module_id, toolg_id, tool_id, ppid, process_start, scanner_start, scanner_end,process_end,qty,guid,partkey,operation_complete FROM APS_TR_TYPE21"""
+    create_table_sql = """
+        create table APS_TR_TYPE21
+        (
+          module_id          VARCHAR(60) not null,
+          toolg_id           VARCHAR(60) not null,
+          tool_id            VARCHAR(60) not null,
+          ppid               VARCHAR(60) not null,
+          process_start      VARCHAR(60) not null,
+          scanner_start      VARCHAR(60),
+          scanner_end        VARCHAR(60),
+          process_end        VARCHAR(60),
+          qty                VARCHAR(60),
+          guid               VARCHAR(60) not null,
+          partkey            VARCHAR(60) not null,
+          operation_complete VARCHAR(64)
+        )
+        """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_TR_TYPE22():
+    source_table = "APS_TR_TYPE22"
+    target_table = "APS_TR_TYPE22"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT module_id, toolg_id, ppid, process_start, scanner_start, scanner_end,process_end,qty,guid,partkey,operation_complete FROM APS_TR_TYPE22"""
+    create_table_sql = """
+    create table APS_TR_TYPE22
+    (
+      module_id          VARCHAR(60) not null,
+      toolg_id           VARCHAR(60) not null,
+      ppid               VARCHAR(60) not null,
+      process_start      VARCHAR(60) not null,
+      scanner_start      VARCHAR(60),
+      scanner_end        VARCHAR(60),
+      process_end        VARCHAR(60),
+      qty                VARCHAR(60),
+      guid               VARCHAR(60) not null,
+      partkey            VARCHAR(60) not null,
+      operation_complete VARCHAR(64)
+    )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_TR_TYPE31():
+    source_table = "APS_TR_TYPE31"
+    target_table = "APS_TR_TYPE31"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT module_id, toolg_id,tool_id, plan_id, qty, process_start, process_end,guid,partkey,batch_flag FROM APS_TR_TYPE31"""
+    create_table_sql = """
+        create table APS_TR_TYPE31
+        (
+          module_id     VARCHAR(60),
+          toolg_id      VARCHAR(60),
+          tool_id       VARCHAR(60),
+          plan_id       VARCHAR(60),
+          qty           VARCHAR(60),
+          process_start VARCHAR(60),
+          process_end   VARCHAR(60),
+          guid          VARCHAR(60) not null,
+          partkey       VARCHAR(60) not null,
+          batch_flag    VARCHAR(64)
+        )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_TR_TYPE32():
+    source_table = "APS_TR_TYPE32"
+    target_table = "APS_TR_TYPE32"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT module_id, toolg_id, qty, process_start, process_end,guid,partkey,BATCH_FLAG FROM APS_TR_TYPE32"""
+    create_table_sql = """
+    create table APS_TR_TYPE32
+    (
+          module_id     VARCHAR(60),
+          toolg_id      VARCHAR(60),
+          qty           VARCHAR(60),
+          process_start VARCHAR(60),
+          process_end   VARCHAR(60),
+          guid          VARCHAR(60) not null,
+          partkey       VARCHAR(60) not null,
+          batch_flag    VARCHAR(64)
+    )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_TR_TYPE221():
+    source_table = "APS_TR_TYPE221"
+    target_table = "APS_TR_TYPE221"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT module_id, toolg_id,tool_id, ch_cnt, process_start, scanner_start,scanner_end,process_end,qty,guid,partkey,operation_complete FROM APS_TR_TYPE221"""
+    create_table_sql = """
+    create table APS_TR_TYPE221
+    (
+      module_id          VARCHAR(60) not null,
+      toolg_id           VARCHAR(60) not null,
+      tool_id            VARCHAR(60) not null,
+      ch_cnt             VARCHAR(60) not null,
+      process_start      VARCHAR(60) not null,
+      scanner_start      VARCHAR(60),
+      scanner_end        VARCHAR(60),
+      process_end        VARCHAR(60),
+      qty                VARCHAR(60),
+      guid               VARCHAR(60) not null,
+      partkey            VARCHAR(60) not null,
+      operation_complete VARCHAR(64)
+    )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_MID_PH_LOTHISTORY():
+    source_table = "APS_MID_PH_LOTHISTORY"
+    target_table = "APS_MID_PH_LOTHISTORY"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT PARENTID,LOT_ID,OPE_NO,OPE_SEQ,PASS_COUNT,LINE,CLAIM_TIME,MAINPD_ID,EQP_ID,MOVE_FLAG,REWORK_MOVE_FLAG,PURE_MOVE_FLAG,DUMMY_MOVE_FLAG,PROCESS_AREA,MODULE_ID,DETAIL_MODULE_ID,PRIORITY,PRIORITY_CLASS,SHL_FLAG,CYCLE_TIME,PREV_OP_COMP_TIME,BANK_ID,PREV_BANK_ID,REWORK_CHILD_FLAG,PW_FLAG,PRODSPEC_ID,PHOTO_LAYER,SHIFT_DATE,SHIFT_HOUR,SHIFT,RECIPE_ID,RETICLE_ID,WAFER_QTY,PRODGRP_ID,EQP_TYPE,CTRL_JOB,SUB_LOT_TYPE,OP_START_DATE_TIME,OPE_CATEGORY,LAYER,CHIP_BODY,SUFFIX,CLAIM_USER,replace(replace(CLAIM_MEMO, chr(10), null), chr(13), null) as CLAIM_MEMO,LOT_OWNER_ID,NENG_FLAG,LOCATION_ID,PROCESS_START_TIME,CAST_ID,BANK_PERIOD_TIME,HOLD_PERIOD_TIME,BATCH_ID,LAST_MAIN_CTRL_JOB,UPDATE_TIME,PARTKEY FROM APS_MID_PH_LOTHISTORY"""
+    create_table_sql = """
+    create table APS_MID_PH_LOTHISTORY
+    (
+      parentid           VARCHAR(64) not null,
+      lot_id             VARCHAR(64) not null,
+      ope_no             VARCHAR(64) not null,
+      ope_seq            VARCHAR(64),
+      pass_count         VARCHAR(64),
+      line               VARCHAR(64),
+      claim_time         VARCHAR(64) not null,
+      mainpd_id          VARCHAR(64),
+      eqp_id             VARCHAR(64),
+      move_flag          VARCHAR(1),
+      rework_move_flag   VARCHAR(1),
+      pure_move_flag     VARCHAR(1),
+      dummy_move_flag    VARCHAR(1),
+      process_area       VARCHAR(64),
+      module_id          VARCHAR(64),
+      detail_module_id   VARCHAR(64),
+      priority           VARCHAR(64),
+      priority_class     VARCHAR(64),
+      shl_flag           VARCHAR(1),
+      cycle_time         VARCHAR(64),
+      prev_op_comp_time  VARCHAR(64),
+      bank_id            VARCHAR(64),
+      prev_bank_id       VARCHAR(64),
+      rework_child_flag  VARCHAR(1),
+      pw_flag            VARCHAR(1),
+      prodspec_id        VARCHAR(64),
+      photo_layer        VARCHAR(64),
+      shift_date         VARCHAR(64),
+      shift_hour         VARCHAR(64),
+      shift              VARCHAR(1),
+      recipe_id          VARCHAR(64),
+      reticle_id         VARCHAR(64),
+      wafer_qty          VARCHAR(64),
+      prodgrp_id         VARCHAR(64),
+      eqp_type           VARCHAR(64),
+      ctrl_job           VARCHAR(64),
+      sub_lot_type       VARCHAR(64),
+      op_start_date_time VARCHAR(64),
+      ope_category       VARCHAR(64),
+      layer              VARCHAR(64),
+      chip_body          VARCHAR(64),
+      suffix             VARCHAR(64),
+      claim_user         VARCHAR(64),
+      claim_memo         VARCHAR(4000),
+      lot_owner_id       VARCHAR(64),
+      neng_flag          VARCHAR(1),
+      location_id        VARCHAR(64),
+      process_start_time VARCHAR(64),
+      cast_id            VARCHAR(64),
+      bank_period_time   VARCHAR(64),
+      hold_period_time   VARCHAR(64),
+      batch_id           VARCHAR(64),
+      last_main_ctrl_job VARCHAR(64),
+      update_time        VARCHAR(64),
+      partkey            VARCHAR(64) not null
+    )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def sync_APS_ETL_LOTHISTORY():
+    source_table = "APS_ETL_LOTHISTORY"
+    target_table = "APS_ETL_LOTHISTORY"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    logging.info("Start " + etl_name)
+    query_sql = """SELECT lot_id ,toolg_id,tool_id,prod_id,plan_id,step_id,lot_type,pty,shr_flag,layer,stage,recipe,ppid,qty,reticle_id,tech_id,customer,arrival,job_prepare,track_in,process_start,process_end,track_out,rework_flag,backup_flag,update_time,module,prodg_id,prodg_tech,partkey,scanner_start,scanner_end,recipe_setup,ch_set FROM APS_ETL_LOTHISTORY"""
+    create_table_sql = """
+   create table APS_ETL_LOTHISTORY
+        (
+            lot_id        VARCHAR(60) not null,
+            toolg_id      VARCHAR(60) not null,
+            tool_id       VARCHAR(60) not null,
+            prod_id       VARCHAR(60) not null,
+            plan_id       VARCHAR(60) not null,
+            step_id       VARCHAR(60),
+            lot_type      VARCHAR(30),
+            pty           INTEGER not null,
+            shr_flag      INTEGER not null,
+            layer         VARCHAR(60),
+            stage         VARCHAR(60),
+            recipe        VARCHAR(60),
+            ppid          VARCHAR(60),
+            qty           DECIMAL not null,
+            reticle_id    VARCHAR(60),
+            tech_id       VARCHAR(60),
+            customer      VARCHAR(60),
+            arrival       TIMESTAMP,
+            job_prepare   TIMESTAMP,
+            track_in      TIMESTAMP,
+            process_start TIMESTAMP,
+            process_end   TIMESTAMP,
+            track_out     TIMESTAMP,
+            rework_flag   VARCHAR(1),
+            backup_flag   VARCHAR(2),
+            update_time   TIMESTAMP not null,
+            module        VARCHAR(60),
+            prodg_id      VARCHAR(60),
+            prodg_tech    VARCHAR(60),
+            partkey       VARCHAR(60),
+            scanner_start VARCHAR(64),
+            scanner_end   VARCHAR(64),
+            recipe_setup  VARCHAR(64),
+            ch_set        VARCHAR(512)
+        )
+    """
+    oracle_to_duck_common.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                                     source_table=source_table,
+                                                     target_table=target_table,
+                                                     query_sql=query_sql,
+                                                     create_table_sql=create_table_sql)
+    logging.info("End " + etl_name)
+
+
+def init():
+    """
+    這裏只執行未依賴任何其他ETL產出的ETL
+    """
+    # 需要用到Oracle上版本数据的
+    # sync_APS_ETL_LOTHISTORY()
+    # # 檢查是否存在 APS_ETL_FLOW的結果,若沒有則手動Sync現在的Oracle結果到DuckDB文件中
+    # sync_APS_TR_TYPE31()
+    # sync_APS_TR_TYPE221()
+    # sync_APS_TR_TYPE32()
+    # sync_APS_TR_TYPE22()
+    sync_APS_MID_PH_LOTHISTORY()
+    # sync_APS_TR_TYPE21()
+    # sync_APS_TR_TYPE12()
+    # sync_APS_TR_TYPE11()
+    # sync_APS_ETL_FLOW()
+    # sync_APS_ETL_LOT_OP_HIST()
+
+    # 被很多Job使用到的基础数据
+    # aps_tr_type11_30m.execute()
+    # aps_tr_type12_30m.execute()
+    # aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN.execute()
+    # aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN.execute()
+    # aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN.execute()
+    # aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN.execute()
+    # aps_tmp_type21_median_1d_APS_MID_PURGE11.execute()
+    # aps_tmp_type21_median_1d_APS_MID_PURGE12.execute()
+    # aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN.execute()
+    # aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN.execute()
+    # aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN.execute()
+
+
+# def init_for_phase2():
+#     # aps_tr_type11_30m.execute()
+#     # aps_mid_rls_30m.execute()
+#     # aps_tmp_type21_median_1d_APS_MID_PURGE11.execute()
+#     # aps_tmp_type21_median_1d_APS_MID_PURGE12.execute()
+#     # aps_etl_lothistory_60m.execute()
+#     # aps_tmp_type11_median_1d_APS_TMP_TYPE11_TECH_MEDIAN.execute()
+#     # aps_tmp_type11_median_1d_APS_TMP_TYPE12_OPE_MEDIAN.execute()
+#     # aps_tr_type3_5m.execute()
+#     # aps_tmp_type11_median_1d_APS_MID_TYPE3_MEDIAN.execute()
+#     # aps_tmp_type11_median_1d_APS_MID_TYPE33_MEDIAN.execute()
+#     # aps_tr_charge_time_10m.execute()
+#
+# def init_for_phase3():
+#     # aps_tmp_type11_median_1d_APS_MID_OCS_MEASURE_CT.execute()
+#     # aps_tmp_type21_median_1d_APS_MID_PURGE12.execute()
+#     # aps_tmp_type21_median_1d_APS_MID_PURGE11.execute()
+#     # aps_tmp_type11_median_1d_APS_MID_TYPE31_MEDIAN.execute()
+#     # aps_tmp_type11_median_1d_APS_MID_TYPE32_MEDIAN.execute()
+#     # aps_mid_type_runtime_1d_APS_MID_TYPE31_RUNTIME_ALL.execute()
+#     # aps_mid_type_runtime_1d_APS_MID_TYPE32_RUNTIME_ALL.execute()
+# pass
+
+
+if __name__ == '__main__':
+    init()

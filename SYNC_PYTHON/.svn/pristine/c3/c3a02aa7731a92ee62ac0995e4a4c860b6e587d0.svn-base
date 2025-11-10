@@ -1,0 +1,439 @@
+import logging
+import os
+from datetime import datetime
+
+from xinxiang import config
+from xinxiang.util import my_file, my_oracle
+
+
+def delete_backup_files_by_day():
+    '''
+    按天执行的JOB
+    需要修改的地方:表名称， save_days：保存几天
+    '''
+    now = datetime.now()
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_APC_INHIBIT_BATCH"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_EQP_STATUS_BOOKING_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_EQP_STATUS_E10_FORECAST"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MASK_INFO"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_WIP"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FRDRBL_ID_DYB"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FUR_ED_CONTROL_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MASK_MES_STATUS"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MOVE_TARGET_RANK"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PHOTO_PATH_CONVERT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_GROUP_EQPG_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_LOT_PURPTY_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_LOT_TO_EQPG"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_OPE_NO_MODULE_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_PM_PROP_TIME"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_UMT_MODULE_EQPG"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SETTING_MCS_LOCATION_MANUAL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_TRANSFER_TIME_DEFALUTE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_CONTROL_LOT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_EQP_CAP_STD"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_PATH_CONVERT_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_RUN_RULE_BATCH_SIZE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_WET_ACID_CONTROL_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_WET_ACID_DATA"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_WS_SCHEDULE_LOT_INFO"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_DAILY_MOVE_TARGET"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RDS_RECIPEINFO"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_CSLOT_FORCESAMP"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RETICLE_USE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FLOW_DYB_RETURN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FRLOT_EQP_RESOURCE_FLAG"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FVLOT_QTIME"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_OCS_JOB_GROUP_SPEC"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RETICLE_PROD"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RSSPLIT_INFO"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_QTIME_PROD_EQP"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_RTD_BATCH_INFO"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FLOW"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_QTIME_EQP_LOADING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_QTIME_EQP_LOADING_AM"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_RECIPEGROUP"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_CUT_LINE"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FLOW_ORDER_CHANGE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_LOT_LOCATION"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_LOT_PURPOSE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MCS_SCHED_TRANSFER_TIME"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MLIF_FOR_BATCH_MANU_REG"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PRODUCT_INFO"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RSPILOT_RUNING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_MOVE_TARGET"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_WET_BATCH_SIZE_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SELECT_LOT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SHL_LOT_FIRE_NUMBER"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SHR_PRI"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_BOAT_CONSTAINT_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_WET_ED_DATA"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_WET_EXCHANGE_ACID_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_OP_CHAMBER_RULE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PD_RECIPE_EQP_MAIN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PD_RECIPE_EQP_LOAD"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PF_PO_N1"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_APC_PA"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_OCS_JOB_SPEC_GROUP_PO"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_APC_RECIPE_EFFECT_TIME"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_APC_SPLIT_WAFER"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_CSCMBMRCPPRCFG_MFG"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_CSCMBMRCPRULE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_HOLD_DETAIL_HISTORY"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_LOT_PROCESS_MONITOR"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MASK_GROUP_MAPPLING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PD_RECIPE_EQP_DYB"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PD_RECIPE_EQP_REWORK"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_QTIME_CONSTRAINT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RMS_RECIPE_RETICLE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_TMS_EQP_PARAMETER"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UMT_WET_RECIPE_TANK_RULE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_UNIT_EQP_CHAMBER_SETTING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_DIFF_BATCH_SIZE_MIX"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_EQP_RCP_INHIBIT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_ETL_TOOL"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FVEQP"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FVPORT"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_IDLE_DUMMY_SPEC"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_LOT_TO_EQP"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MCS_SCHED_LOCATION_INFO"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MLIF_FOR_WOT_MANU_REG"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MLIF_HOLD_LOT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_MM_FRSTK"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PRODUCT"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_MFG_HWLD_SPEC"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_RUN_LOTBYEQP_COUNT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SGS_LOT_WIP"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SCHE_APC_PB"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_LOTHISTORY"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_RSPILOT_RUN_HS"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_FHOPEHS"), current_datetime=now,
+                                save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_MASK_HISTORY"),
+                                current_datetime=now, save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_FHOPEHS_RETICLE"),
+                                current_datetime=now, save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_OCS_MAIN_H"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_QTIME_FLOW"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_LOT_RESOURCE_FLAG"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_TRANSFER_TIME_DEFALUTE"), current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RSPILOT_RUN_HS"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_ETL_TOOL"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RECIPE_NPW_RULEMAP"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FRLOT_FUTUREHOLD"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_CSFRINHIBIT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_FHOPEH_DELAY"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_OCS_AUTODUMMY_COMPLETE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_OCS_JOB_GROUP_PO_STATE_H"),
+                                current_datetime=now, save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_CSDYNAMICMWF"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_SAMPLING_RATE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_SGS_RLS"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_RLS_RTD_QTIME_DATA3"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_RTDQTTIME_WMTWID"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_RTDQTTIME_UN_WMTWID"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_PH_RTDQTIME"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_RTDQTTIME"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_RLS"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PD_RECIPE_EQP_ALL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE3"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE33"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE32"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE31"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE26"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE25"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE22"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE221"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE21"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE12"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE11"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_RSPILOT_RUNING"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_RCP_INHIBIT"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_LOTHISTORY"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_CSFRINHIBIT"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_CHARGE_TIME"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_APC_PB"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_APC_PA"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_TYPE21_MEDIAN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_TYPE22_MEDIAN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_TYPE221_MEDIAN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_TYPE11_MEDIAN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_TYPE12_MEDIAN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_TYPE31_MEDIAN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_TYPE32_MEDIAN"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_OCS_MEASURE_CT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_OCS_MAIN_H"), current_datetime=now,
+                                save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_MASK_HISTORY"),
+                                current_datetime=now, save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_FHOPEHS_RETICLE"),
+                                current_datetime=now, save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_LOTHISTORY"), current_datetime=now,
+                                save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_RSPILOT_RUN_HS"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_FHOPEHS"), current_datetime=now,
+                                save_days=1)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TMP_CHARGE_TIME"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_TYPE21_RUNTIME_P_ALL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_TYPE22_RUNTIME_P_ALL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_TYPE221_RUNTIME_P_ALL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_TYPE21_RUNTIME_ALL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_TYPE22_RUNTIME_ALL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_TYPE221_RUNTIME_ALL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_MID_RLS_RTD_QTIME_DATA3"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_WIP"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_WAFER_START"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_VC_RECORD"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_TRANSPORT"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_TOOL_DOWN"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_TOOL"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_SPECIAL_CONS"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_SIZE_CONTROL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_SEASON_RULE"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_SAMPLING_LOT"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_SYNC_PD_RECIPE_EQP_ALL"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_QTIME_SPEC"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_QTIME_HOLD"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_PPID_INFO"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_PIRUN"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_MONITOR"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_MASK_INFO"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_MASK_HISTORY"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_LOTHISTORY"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_LOT_OP_HIST"),
+                                current_datetime=now, save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_HOLD_RLS"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_FLOW"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_DEMAND"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_TR_CSFRINHIBIT"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "APS_ETL_APC_RESULT"), current_datetime=now,
+                                save_days=3)
+    my_file.delete_backup_files(os.path.join(config.g_mem_sync_result_path, "sync_APS_SYNC_EQP_RECIPE_ED_ADD_VALUE"), current_datetime=now,
+                                save_days=3)
+
+
+def delete_oracle_db_log_by_12_hours():
+    oracle_conn = my_oracle.oracle_get_connection()
+    dbcursor = None
+    try:
+        dbcursor = oracle_conn.cursor()
+        # 删除表数据
+        sql = """
+            delete from ETL_EXEC_LOG where end_time < SYSDATE - 14
+            """
+        dbcursor.execute(sql)
+        sql = """
+            delete from APS_ETL_VER_CONTROL_DUCK  where update_time < SYSDATE - 30
+            """
+        dbcursor.execute(sql)
+        sql = """
+                delete from APS_ETL_METHOD_LOG_DUCK  where end_time < SYSDATE - 7
+            """
+        dbcursor.execute(sql)
+    except Exception as e:
+        logging.error(e)
+        raise e
+    finally:
+        oracle_conn.commit()
+        if dbcursor:
+            dbcursor.close()
+
+
+
+def delete_backup_files_by_6_hours():
+    '''
+    按6小时执行的JOB
+    需要修改的地方:表名称， save_days：保存几天
+    '''
+    now = datetime.now()
+    print("TODO")
+

@@ -1,0 +1,18 @@
+schtasks /create /tn xinxiang_aps_etl_monitor /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_monitor.vbs /sc minute /mo 10 /st 00:09 /f
+
+schtasks /create /tn xinxiang_aps_his_aps_mid_fhopehs_reticle /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_mid_fhopehs_reticle.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_his_aps_mid_ocs_job_group_po_state_h /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_mid_ocs_job_group_po_state_h.vbs /sc minute /mo 10 /st 00:08 /f
+schtasks /create /tn xinxiang_aps_his_aps_mid_rspilot_run_hs /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_mid_rspilot_run_hs.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_his_aps_tmp_lothistory /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_tmp_lothistory.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_his_aps_tmp_mask_history /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_tmp_mask_history.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_his_aps_tmp_ocs_main_h /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_his_aps_tmp_ocs_main_h.vbs /sc minute /mo 10 /st 00:08 /f
+
+
+schtasks /delete /tn "xinxiang_aps_etl_monitor"
+schtasks /delete /tn "xinxiang_aps_his_aps_mid_fhopehs_reticle"
+schtasks /delete /tn "xinxiang_aps_his_aps_mid_ocs_job_group_po_state_h"
+schtasks /delete /tn "xinxiang_aps_his_aps_mid_rspilot_run_hs"
+schtasks /delete /tn "xinxiang_aps_his_aps_tmp_lothistory"
+schtasks /delete /tn "xinxiang_aps_his_aps_tmp_mask_history"
+schtasks /delete /tn "xinxiang_aps_his_aps_tmp_ocs_main_h"
+

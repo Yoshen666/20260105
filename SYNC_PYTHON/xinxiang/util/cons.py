@@ -1,0 +1,11 @@
+RLS_PART_VALUE1 = "2000"
+RLS_PART_VALUE2 = "4000"
+RLS_PART_VALUE3 = "6000"
+RLS_PART_VALUE_NEW = "6666"
+
+user_Flag1 = "Userflag(1)"
+user_Flag2 = "Userflag(2)"
+user_Flag3 = "Userflag(3)"
+user_Flag4 = "Userflag(4)"
+user_Flag5 = "Userflag(5)"
+user_Flag7 = "Userflag(7)"

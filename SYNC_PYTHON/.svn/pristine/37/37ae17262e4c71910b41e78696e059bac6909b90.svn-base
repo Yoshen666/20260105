@@ -1,0 +1,24 @@
+import logging
+import os
+import warnings
+
+from xinxiang import config
+from xinxiang.util import my_log
+
+warnings.filterwarnings("ignore")
+my_log.init_log(os.path.join(config.g_log_path, "NextChipETL.APS_ETL.log"))
+
+
+def aaa():
+    try:
+        a = 10 / 0
+    except Exception as e:
+        print("aaaaaaa111111")
+        logging.exception(" {a} :: 處理錯誤 :: {e}".format(a="aaa", e=e))
+        # logging.exception(">>>>>>>>>>" + "ETL_RLS" + " 处理出错: %s", e)
+        print("aaaaaaaaaaa")
+        raise e
+
+
+if __name__ == '__main__':
+    aaa()

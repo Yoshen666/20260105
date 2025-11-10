@@ -1,0 +1,2 @@
+Set objShell = CreateObject("WScript.Shell")
+objShell.Run "cmd.exe /c D:\XinXiang\ETL_PYTHON\runner\run_copy_etl_for_backup_123.bat", 0, True

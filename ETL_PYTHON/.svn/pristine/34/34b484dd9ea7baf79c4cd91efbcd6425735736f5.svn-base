@@ -1,0 +1,156 @@
+import socket
+import time
+from datetime import datetime
+
+import pandas as pd
+from xinxiang import config
+from xinxiang.util import my_oracle
+import logging
+from datetime import timedelta
+
+
+g_ETL_NAME = "APS_ETL_DETL_SERVICE"
+g_ETL_START_TIME = ""
+g_TABLE_DETL_SERVICE = "APS_ETL_DETL_SERVICE"
+g_HOSTNAME = ""
+g_CHECK_TIMES_IN_MINUTE = 2
+g_SLEEP_SECONDS = 25
+g_SECONDS_DONW_SPEC = 59
+g_process_start_time = None
+g_ETL_START_TIME  = datetime.now().strftime('%Y%m%d %H%M%S')
+
+# Get host name
+g_HOSTNAME = socket.gethostname()
+
+# 使用ETL里面的oracle connection，取消service里自定义的oracle connection
+# def connect():
+#     try:
+#         # Open connection
+#         dsn_tns = cx_Oracle.makedsn('192.168.253.135', '1521', sid='ORCLCDB')
+#         conn = cx_Oracle.connect(user='capasim', password='pwdcapasim', dsn=dsn_tns)
+#         return conn
+#
+#     except Exception as e:
+#         print(e)
+#         return None
+
+
+def sendAlarm(oracle_con, alarmMsg):
+    global g_ETL_NAME
+
+    cursor = None
+    try:
+        DETL_END_TIME = datetime.now().strftime('%Y%m%d %H%M%S')
+
+        sql_cmd = """ INSERT INTO ALARM_SEND_LOG(CODE, MODULE, LEVEL_ID, MSG, SEND_ALARM, DISPATCH_TIME, START_TIME, END_TIME, JOB, JOB_MSG) VALUES ('XETL00','XX_ETL','L2','ETL_SERVER异常:{alarmMsg}', 1, TO_DATE('{DETL_END_TIME}','YYYYMMDD HH24MISS'), TO_DATE('{g_ETL_START_TIME}','YYYYMMDD HH24MISS'), TO_DATE('{DETL_END_TIME}','YYYYMMDD HH24MISS'), '{g_ETL_NAME}', '{alarmMsg}') """.format(
+            DETL_END_TIME=DETL_END_TIME, g_ETL_START_TIME=g_ETL_START_TIME,g_ETL_NAME=g_ETL_NAME, alarmMsg=alarmMsg)
+        cursor = oracle_con.cursor()
+        cursor.execute(sql_cmd)
+        oracle_con.commit()
+        cursor.close()
+    except Exception as e:
+        print(e)
+        logging.error(e)
+        raise
+
+
+def updateSelfStatus(oracle_con):
+    cursor = None
+    try:
+        # dt = datetime.fromtimestamp(int(str(datetime.timestamp(datetime.now())).split('.')[0]))
+        # print(str(datetime.timestamp(datetime.now())).split('.')[0])
+        sql_cmd = f"""
+                    UPDATE {g_TABLE_DETL_SERVICE}
+                     SET SRV_STATUS = 'RUN', LAST_ONLINE_TIME = '{str(datetime.now()).split('.')[0] }'
+                   WHERE SRV_NAME = '{g_HOSTNAME}'
+                   """
+
+        cursor = oracle_con.cursor()
+        cursor.execute(sql_cmd)
+        oracle_con.commit()
+        cursor.close()
+    except Exception as e:
+        print(e)
+        logging.error(e)
+        sendAlarm(oracle_con, str(e))
+
+
+def checkOtherServerState(oracle_con):
+    cursor = None
+    try:
+        sql_cmd =f"""SELECT SRV_NAME, IS_MAIN_DISPATCH, LAST_ONLINE_TIME 
+                     FROM {g_TABLE_DETL_SERVICE} 
+                     WHERE SRV_NAME <> '{g_HOSTNAME}'
+                        AND (SRV_STATUS = 'RUN' OR SRV_STATUS = 'DOWN')
+                  """
+
+        df_OtherServer = pd.read_sql(sql_cmd, oracle_con)
+        # print(df_OtherServer)
+        for i, srv in df_OtherServer.iterrows():
+            now_struct = datetime.now()
+            srv_online_time_struct= None
+            if srv['LAST_ONLINE_TIME'] is None:
+                srv_online_time_struct= g_process_start_time
+            else:
+                srv_online_time_struct = datetime.strptime(srv['LAST_ONLINE_TIME'], "%Y-%m-%d %H:%M:%S")
+            seconds = (now_struct - srv_online_time_struct).seconds
+            # print(seconds, now_struct, srv_online_time_struct)
+            print(seconds)
+            # >= 50 seconds, means it is probably down
+            if seconds >= g_SECONDS_DONW_SPEC:
+                sql_cmd = f"""UPDATE {g_TABLE_DETL_SERVICE} 
+                             SET IS_MAIN_DISPATCH = 'N', SRV_STATUS = 'DOWN'
+                           WHERE SRV_NAME = '{srv['SRV_NAME']}' 
+                           """
+                cursor = oracle_con.cursor()
+                cursor.execute(sql_cmd)
+                alarm_message = srv['SRV_NAME'] + " is Down!!"
+
+                if srv['IS_MAIN_DISPATCH'] == 'Y':
+                    sql_cmd = f"""UPDATE {g_TABLE_DETL_SERVICE}
+                                 SET IS_MAIN_DISPATCH = 'Y' 
+                               WHERE SRV_NAME = '{g_HOSTNAME}'
+                               """
+                    cursor = oracle_con.cursor()
+                    cursor.execute(sql_cmd)
+                    alarm_message = alarm_message + " " + g_HOSTNAME + " switch to MAIN."
+
+                oracle_con.commit()
+                cursor.close()
+                if seconds // 1200 == 0 and seconds%1200 <=25:
+                    sendAlarm(oracle_con, alarm_message)
+                elif seconds // 1200 >0  and seconds%1200 <=25:
+                    sendAlarm(oracle_con, alarm_message)
+                else:
+                    break
+
+    except Exception as e:
+        print(e)
+        logging.error(e)
+        sendAlarm(oracle_con, str(e))
+
+def execute():
+    oracle_con = None
+    g_process_start_time = datetime.now()
+    my_timedelta = timedelta(seconds=20)
+    g_process_start_time = g_process_start_time - my_timedelta
+    try:
+        for i in range(g_CHECK_TIMES_IN_MINUTE):
+            if config.g_debug_mode:
+                oracle_con = my_oracle.oracle_get_connection_local()
+            else:
+                oracle_con = my_oracle.oracle_get_connection()
+
+            updateSelfStatus(oracle_con)
+            checkOtherServerState(oracle_con)
+
+            oracle_con.close()
+
+            time.sleep(g_SLEEP_SECONDS)
+
+    except Exception as e:
+        logging.error(e)
+        print(e)
+
+if __name__ == '__main__':
+    execute()

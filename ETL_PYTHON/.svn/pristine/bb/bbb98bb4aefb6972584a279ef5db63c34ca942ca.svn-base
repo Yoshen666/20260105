@@ -1,0 +1,60 @@
+import logging
+from datetime import datetime, timedelta
+
+from apscheduler import events
+from apscheduler.executors.pool import ProcessPoolExecutor
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.blocking import BlockingScheduler
+
+from xinxiang import config
+from xinxiang.jobs_etl import etl_cron
+from xinxiang.util import my_file, my_date, my_cron
+
+
+def handle_job_exception(event):
+    logging.info("Job处理错误 - {job}：{traceback_str}".format(job=event.job_id, traceback_str=event.exception))
+
+
+def main():
+    '''
+    这里编写所有JOB注册的代码
+    :return:
+    '''
+    my_file.init_folder()
+
+    logging.info("ELT JOB Runing...")
+
+    # executor = ThreadPoolExecutor(max_workers=2000)
+    # schedule = BlockingScheduler({
+    #     'executors': {'default': executor},
+    #     'misfire_grace_time': 3600,
+    #     'coalesce': False,
+    #     'max_instances': 200
+    # })
+    schedule = BlockingScheduler({
+        # 'apscheduler.jobstores.default': {
+        #     'type':'sqlalchemy',
+        #     'url': 'sqlite:///jobs.sqlite'
+        # },
+        'apscheduler.executors.default': {
+            'class': 'apscheduler.executors.pool:ThreadPoolExecutor',
+            'max_workers': '2000'
+        },
+        'apscheduler.executors.default': {
+            'class': 'apscheduler.executors.pool:ThreadPoolExecutor',
+            'max_workers': '2000'
+        },
+        'apscheduler.executors.processpool': {
+            'type': 'processpool',
+            'max_workers': '50'
+        },
+        'apscheduler.job_defaults.coalesce': True,
+        'apscheduler.job_defaults.max_instances': 200,
+    })
+
+    # Etl
+    etl_cron.set_etl_cron(schedule)
+
+    schedule.add_listener(handle_job_exception, events.EVENT_JOB_ERROR)
+
+    schedule.start()

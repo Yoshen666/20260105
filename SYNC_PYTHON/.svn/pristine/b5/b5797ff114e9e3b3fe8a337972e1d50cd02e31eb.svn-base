@@ -1,0 +1,151 @@
+schtasks /create /tn sync_xinxiang.jobs_manager_delete_backup_files_by_6_hours /tr D:\XinXiang\SYNC_PYTHON\runner\manager_jobs_delete_backup_files_by_6_hours.vbs /sc hourly /mo 6 /f
+schtasks /create /tn sync_xinxiang.jobs_manager_delete_backup_files_by_day /tr D:\XinXiang\SYNC_PYTHON\runner\manager_jobs_delete_backup_files_by_day.vbs /sc hourly /mo 6 /f
+schtasks /create /tn sync_xinxiang.jobs_manager_delete_oracle_db_log_by_12_hours /tr D:\XinXiang\SYNC_PYTHON\runner\manager_jobs_delete_oracle_db_log_by_12_hours.vbs /sc hourly /mo 6 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_his_delete_over_three_version /tr D:\XinXiang\SYNC_PYTHON\runner\sync_his_jobs_delete_over_three_version.vbs /sc minute /mo 5 /f
+
+schtasks /create /tn sync_xinxiang.jobs_sync_his_sync_APS_MID_FHOPEHS_RETICLE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_his_jobs_sync_APS_MID_FHOPEHS_RETICLE.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_his_sync_APS_MID_OCS_JOB_GROUP_PO_STATE_H /tr D:\XinXiang\SYNC_PYTHON\runner\sync_his_jobs_sync_APS_MID_OCS_JOB_GROUP_PO_STATE_H.vbs /sc minute /mo 10 /st 00:08 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_his_sync_APS_MID_RSPILOT_RUN_HS /tr D:\XinXiang\SYNC_PYTHON\runner\sync_his_jobs_sync_APS_MID_RSPILOT_RUN_HS.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_his_sync_APS_TMP_LOTHISTORY /tr D:\XinXiang\SYNC_PYTHON\runner\sync_his_jobs_sync_APS_TMP_LOTHISTORY.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_his_sync_APS_TMP_MASK_HISTORY /tr D:\XinXiang\SYNC_PYTHON\runner\sync_his_jobs_sync_APS_TMP_MASK_HISTORY.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_his_sync_APS_TMP_OCS_MAIN_H /tr D:\XinXiang\SYNC_PYTHON\runner\sync_his_jobs_sync_APS_TMP_OCS_MAIN_H.vbs /sc minute /mo 10 /st 00:08 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_APC_INHIBIT_BATCH /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_APC_INHIBIT_BATCH.vbs /sc minute /mo 10
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_APC_INHIBIT_LOT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_APC_INHIBIT_LOT.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_APC_RECIPE_EFFECT_TIME /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_APC_RECIPE_EFFECT_TIME.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_APC_SPLIT_WAFER /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_APC_SPLIT_WAFER.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_CSCMBMRCPPRCFG_MFG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_CSCMBMRCPPRCFG_MFG.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_CSCMBMRCPRULE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_CSCMBMRCPRULE.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_CSDYNAMICMWF /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_CSDYNAMICMWF.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_CSFLOWSAMPLINGCFG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_CSFLOWSAMPLINGCFG.vbs /sc minute /mo 30 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_CSLOT_FORCESAMP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_CSLOT_FORCESAMP.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_CUT_LINE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_CUT_LINE.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_DAILY_MOVE_TARGET /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_DAILY_MOVE_TARGET.vbs /sc minute /mo 10 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_DIFF_BATCH_SIZE_MIX /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_DIFF_BATCH_SIZE_MIX.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_EQP_ED_DATA_REPORT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_EQP_ED_DATA_REPORT.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_EQP_MODE_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_EQP_MODE_SETTING.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_EQP_RCP_INHIBIT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_EQP_RCP_INHIBIT.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_EQP_RECIPE_ED_ADD_VALUE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_EQP_RECIPE_ED_ADD_VALUE.vbs /sc minute /mo 30 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_EQP_STATUS_BOOKING_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_EQP_STATUS_BOOKING_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_EQP_STATUS_E10_FORECAST /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_EQP_STATUS_E10_FORECAST.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_ETL_TOOL /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_ETL_TOOL.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FLOW /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FLOW.vbs /sc minute /mo 30 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FLOW_DYB_RETURN /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FLOW_DYB_RETURN.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FLOW_ORDER_CHANGE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FLOW_ORDER_CHANGE.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FRDRBL_ID_DYB /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FRDRBL_ID_DYB.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FREQP_UTS /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FREQP_UTS.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FRLOT_EQP_RESOURCE_FLAG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FRLOT_EQP_RESOURCE_FLAG.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FRLOT_FUTUREHOLD /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FRLOT_FUTUREHOLD.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FRQTIME_ACTION /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FRQTIME_ACTION.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FUR_ED_CONTROL_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FUR_ED_CONTROL_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FVEQP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FVEQP.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FVLOT_QTIME /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FVLOT_QTIME.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_FVPORT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FVPORT.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_HOLD_DETAIL_HISTORY /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_HOLD_DETAIL_HISTORY.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_IDLE_DUMMY_SPEC /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_IDLE_DUMMY_SPEC.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_LOT_LOCATION /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_LOT_LOCATION.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_LOT_PROCESS_MONITOR /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_LOT_PROCESS_MONITOR.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_LOT_PURPOSE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_LOT_PURPOSE.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_LOT_TO_EQP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_LOT_TO_EQP.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MAJOR_ANOMALY_EWS_LOT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MAJOR_ANOMALY_EWS_LOT.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MASK_GROUP_MAPPLING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MASK_GROUP_MAPPLING.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MASK_INFO /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MASK_INFO.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MASK_MES_STATUS /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MASK_MES_STATUS.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MCS_SCHED_LOCATION_INFO /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MCS_SCHED_LOCATION_INFO.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MCS_SCHED_TRANSFER_TIME /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MCS_SCHED_TRANSFER_TIME.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MES_FRLOT_RETNLIST /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MES_FRLOT_RETNLIST.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MES_FRLRCP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MES_FRLRCP.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MLIF_EQP_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MLIF_EQP_SETTING.vbs /sc minute /mo 5 /st 00:04 /f
+
+
+
+
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MLIF_FOR_BATCH_MANU_REG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MLIF_FOR_BATCH_MANU_REG.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MLIF_FOR_WOT_MANU_REG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MLIF_FOR_WOT_MANU_REG.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MLIF_HOLD_LOT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MLIF_HOLD_LOT.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MM_FRSTK /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MM_FRSTK.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_MOVE_TARGET_RANK /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_MOVE_TARGET_RANK.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_NPW_RECIPE_GROUP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_NPW_RECIPE_GROUP.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_OCS_AUTODUMMY_COMPLETE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_OCS_AUTODUMMY_COMPLETE.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_OCS_JOB_GROUP_SPEC /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_OCS_JOB_GROUP_SPEC.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_OCS_JOB_SPEC_GROUP_PO /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_OCS_JOB_SPEC_GROUP_PO.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_OP_CHAMBER_RULE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_OP_CHAMBER_RULE.vbs /sc minute /mo 60 /st 00:13 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_OUT_DF_PURGE_COMBINE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_OUT_DF_PURGE_COMBINE.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_PD_RECIPE_EQP_DYB /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_PD_RECIPE_EQP_DYB.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_PD_RECIPE_EQP_MAIN /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_PD_RECIPE_EQP_MAIN.vbs /sc minute /mo 60 /st 00:13 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_PF_PO_N1 /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_PF_PO_N1.vbs /sc minute /mo 10 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_PHOTO_PATH_CONVERT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_PHOTO_PATH_CONVERT.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_PRODUCT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_PRODUCT.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_PRODUCT_INFO /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_PRODUCT_INFO.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_QTIME_CONSTRAINT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_QTIME_CONSTRAINT.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_QTIME_EQP_LOADING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_QTIME_EQP_LOADING.vbs /sc minute /mo 10 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_QTIME_EQP_LOADING_AM /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_QTIME_EQP_LOADING_AM.vbs /sc minute /mo 10 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RDS_RECIPEINFO /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RDS_RECIPEINFO.vbs /sc minute /mo 10 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RECIPE_NPW_RULEMAP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RECIPE_NPW_RULEMAP.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RETICLE_PROD /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RETICLE_PROD.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RETICLE_USE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RETICLE_USE.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RMS_RECIPE_RETICLE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RMS_RECIPE_RETICLE.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RSPILOT_RUNING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RSPILOT_RUNING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RSSPLIT_INFO /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RSSPLIT_INFO.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_ID_OPE_CONFIG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_ID_OPE_CONFIG.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_IMP_SOURCE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_IMP_SOURCE.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_LIFE_TIME_CONTROL /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_LIFE_TIME_CONTROL.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_LOT_RESOURCE_FLAG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_LOT_RESOURCE_FLAG.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_MFG_HWLD_SPEC /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_MFG_HWLD_SPEC.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_MOVE_TARGET /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_MOVE_TARGET.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_PREFER_TOOL /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_PREFER_TOOL.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_QTIME_FLOW /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_QTIME_FLOW.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_QTIME_PROD_EQP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_QTIME_PROD_EQP.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_RECIPEGROUP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_RECIPEGROUP.vbs /sc minute /mo 10 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_RUN_LOTBYEQP_COUNT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_RUN_LOTBYEQP_COUNT.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_WET_BATCH_SIZE_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_WET_BATCH_SIZE_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SAMPLING_RATE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SAMPLING_RATE.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_APC_PA /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_APC_PA.vbs /sc minute /mo 10 /st 00:06 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_APC_PB /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_APC_PB.vbs /sc minute /mo 10 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_GROUP_EQPG_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_GROUP_EQPG_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_LOT_PURPTY_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_LOT_PURPTY_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_LOT_TO_EQPG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_LOT_TO_EQPG.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_OPE_NO_MODULE_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_OPE_NO_MODULE_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_PM_PROP_TIME /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_PM_PROP_TIME.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SCHE_UMT_MODULE_EQPG /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SCHE_UMT_MODULE_EQPG.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SELECT_LOT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SELECT_LOT.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SETTING_MCS_LOCATION_MANUAL /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SETTING_MCS_LOCATION_MANUAL.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SGS_LOT_WIP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SGS_LOT_WIP.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SHL_LOT_FIRE_NUMBER /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SHL_LOT_FIRE_NUMBER.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_SHR_PRI /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_SHR_PRI.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_STRIP_CHAMBER /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_STRIP_CHAMBER.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_TMS_EQP_PARAMETER /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_TMS_EQP_PARAMETER.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_TRANSFER_TIME_DEFALUTE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_TRANSFER_TIME_DEFALUTE.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_BOAT_CONSTAINT_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_BOAT_CONSTAINT_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_BOTTLENECK_EQPG_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_BOTTLENECK_EQPG_SETTING.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_EQP_CAP_STD /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_EQP_CAP_STD.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_EQP_PM_DEFAULT_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_EQP_PM_DEFAULT_SETTING.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_PATH_CONVERT_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_PATH_CONVERT_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_RTD_BATCH_INFO /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_RTD_BATCH_INFO.vbs /sc minute /mo 5 /st 00:03 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_RUN_RULE_BATCH_SIZE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_RUN_RULE_BATCH_SIZE.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_WET_RECIPE_TANK_RULE /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_WET_RECIPE_TANK_RULE.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UNIT_EQP_CHAMBER_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UNIT_EQP_CHAMBER_SETTING.vbs /sc minute /mo 10 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_VIRT_QT_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_VIRT_QT_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_WET_ACID_CONTROL_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_WET_ACID_CONTROL_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_WET_ACID_DATA /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_WET_ACID_DATA.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_WET_ED_DATA /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_WET_ED_DATA.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_WET_EXCHANGE_ACID_SETTING /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_WET_EXCHANGE_ACID_SETTING.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_WIP /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_WIP.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY.vbs /sc minute /mo 10 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_WS_SCHEDULE_LOT_INFO /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_WS_SCHEDULE_LOT_INFO.vbs /sc minute /mo 5 /st 00:02 /f
+schtasks /create /tn sync_xinxiang.jobs_manager_sync_duckdb_to_pg_test_db /tr D:\XinXiang\SYNC_PYTHON\runner\sync_to_pg_jobs_sync_duckdb_to_pg_test_db.vbs /sc minute /mo 5
+
+schtasks /create /tn sync_xinxiang.jobs_sync_viewsync_view_jobs_sync_APS_SYNC_FLOW_SUBFLOW_RETURN /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_FLOW_SUBFLOW_RETURN.vbs /sc minute /mo 30 /st 00:01 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_viewsync_view_jobs_sync_APS_SYNC_LOT_ANNOTATION_INFO_BRANCH /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_LOT_ANNOTATION_INFO_BRANCH.vbs /sc minute /mo 5 /st 00:02 /f
+
+schtasks /create /tn sync_xinxiang.jobs_sync_his_jobs_sync_APS_SYNC_RTD_WET_SPECIAL_LOT_CONTROL /tr D:\XinXiang\SYNC_PYTHON\runner\sync_his_jobs_sync_APS_SYNC_RTD_WET_SPECIAL_LOT_CONTROL.vbs /sc minute /mo 5 /st 00:02 /f
+
+
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_RSPILOT_RUN_HS /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_RSPILOT_RUN_HS.vbs /sc minute /mo 10 /st 00:04 /f
+schtasks /create /tn sync_xinxiang.jobs_sync_view_sync_APS_SYNC_UMT_CONTROL_LOT /tr D:\XinXiang\SYNC_PYTHON\runner\sync_view_jobs_sync_APS_SYNC_UMT_CONTROL_LOT.vbs /sc minute /mo 5 /f

@@ -1,0 +1,139 @@
+# 确认内存使用的写法
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_APC_INHIBIT_BATCH, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+    # 确认内存使用的写法
+    # schedule.add_job(measure_memory,  "cron", minute = "2-59/5", misfire_grace_time=60, args=[sync_view_jobs.sync_APS_SYNC_APC_INHIBIT_BATCH])
+
+# 记录Method日志
+    # duck_db_memory.sql(sql)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_VC_RECORD_SGS",
+                     sql=sql,
+                     current_time=current_time)
+
+# DuckDB > Postgres
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        # 如果需要向Postgres中同步的时候
+        if config.g_copy_to_pg:
+            select_sql_in_duck = """ select PARENTID, LOT_ID, TOOLG_ID, TOOL_ID, REST_TIME, QTY, UPDATE_TIME,  VC_GROUP from {}
+            """.format(target_table) # TODO
+            postgres_table_define = """ etl_vc_record(PARENTID, LOT_ID, TOOLG_ID, TOOL_ID, REST_TIME, QTY, UPDATE_TIME, VC_GROUP)
+            """ # TODO
+            my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                                duckdb=duck_db_memory,
+                                                table_name_in_duckdb=target_table,
+                                                table_name_in_pg="ETL_VC_RECORD", # TODO
+                                                select_sql_in_duck=select_sql_in_duck,
+                                                postgres_table_define=postgres_table_define)
+
+
+# Pandas相关
+问题：
+	duckdb.InvalidInputException: Invalid Input Error: Failed to cast value: Unimplemented type for cast (VARCHAR -> NULL)
+
+解决方法
+pd_result = pd.read_sql(query_sql, conn)
+pd_result['DS_PATH_ISSUE'] = pd_result['DS_PATH_ISSUE'].fillna('null') # 重点在这里，找出所有的可能为空的列，都这么设置一把
+duck_db_cursor.sql(" create table {table_name} as select * from pd_result".format(table_name=target_table))
+
+# Cron 相关
+问题: 
+	cron 的设定
+	譬如之前是0 8/10 * * * ? 代表10分钟轮回，每第8分钟执行
+
+解决办法
+	schedule.add_job(sync_his_jobs.sync_APS_TMP_OCS_MAIN_H, "cron", minute="8-59/10")
+	
+	8-59/10的意义是从第8分钟到59分钟之间，每隔10分钟做一次，与之前Java效果一样
+	
+# 类型转换
+	VARCHAR2 > VARCHAR
+	NUMBER > DECIMAL
+	
+# SQL变换
+	
+	Oracle: AND SUBSTR(F.PLAN_ID, 1, INSTR(F.PLAN_ID,'.',-1)-1) = C.PLAN_ID
+	DuckDB: AND SUBSTRING(F.PLAN_ID, 1, POSITION('.' IN F.PLAN_ID)-1) = C.PLAN_ID
+	
+	Oracle: LISTAGG(OPE_NO2,'~')
+	DuckDB: STRING_AGG(OPE_NO2,'~')
+	
+	Oracle: COALESCE(FE.BATCH_SIZE_MAX, 0)  * 25
+	DuckDB: CAST(COALESCE(FE.BATCH_SIZE_MAX, 0) AS DECIMAL) * 25
+	
+	Oracle: UNION
+	DuckDB: UNION ALL 
+	这个不一定，需要测试看结果的 
+	
+	Oracle:  TO_CHAR(SP.START_TIME,'YYYY-MM-DD HH24:MI:SS') AS PROCESS_START,  
+	DuckDB:  STRFTIME(SP.START_TIME, '%Y-%m-%d %H:%M:%S') AS PROCESS_START, 
+	
+	Oracle: SP.END_TIME BETWEEN TO_DATE(TO_CHAR(SYSDATE,'YYYY-MM-DD'), 'YYYY-MM-DD')-30 AND TO_DATE(TO_CHAR(SYSDATE,'YYYY-MM-DD'),'YYYY-MM-DD') +1 
+	DuckDB: SP.END_TIME BETWEEN DATE_TRUNC('day', CURRENT_DATE) - INTERVAL '30 day' AND DATE_TRUNC('day', CURRENT_DATE) + INTERVAL '1 day'
+	
+	Oracle: SYS_GUID()
+	DuckDB: gen_random_uuid()
+	
+	Oracle: NVL(T221.CH_CNT,0)
+	DuckDB: COALESCE(T221.CH_CNT,0)
+	
+	Oracle: TRUNC(LH.BANK_PERIOD_TIME*24,2) AS BANK_TIME
+	DuckDB: CAST(LH.BANK_PERIOD_TIME*24 AS DECIMAL(18,2)) AS BANK_TIME
+	
+	Oracle: TRUNC((PROCESS_START - NEXT_TRACK_OUT)*24,2) AS CHARGE_TIME, 这里计算两个时间的时间差是多少个小时，保存小数点后面2位
+	DuckDB: round((extract(epoch from(PROCESS_START - NEXT_TRACK_OUT))) / 3600.0, 2) AS CHARGE_TIME,
+	
+	Oracle: ROW_NUMBER()
+	DuckDB: ROW_NUMBER() 或者 DENSE_RANK()来替代，要根据具体业务来确认
+	
+	Oracle: PERCENTILE_CONT()
+	DuckDB: PERCENTILE_CONT()
+	
+	Oracle: PERCENTILE_CONT
+	DuckDB: 参考aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN写法，就算错了，将来统一修改
+	 SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 2) T ON T.DZ >= 1 AND T.DZ <= 2 
+	Oracle: LEFT JOIN (SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 24) T ON T.DZ >= 1 AND T.DZ <= DD.DISPATCH_TYPE
+	DuckDB: LEFT JOIN (WITH RECURSIVE cte(DZ) as ( select 1 as dz union all select dz + 1 from cte where dz < 24) select dz from cte ) T ON T.DZ >= 1 AND T.DZ <= DD.DISPATCH_TYPE
+	
+	Oracle:  DECODE(TOOL_ID,'*','',TOOL_ID) AS TOOL_ID,
+	DuckDB： CASE WHEN TOOL_ID = '*' THEN '' ELSE TOOL_ID END AS TOOL_ID 
+	
+	Oracle: FROM DUAL
+    DuckDB： FROM (VALUES(1))
+    
+    Oracle: LEFT JOIN (SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 24) T
+    DuckDB： LEFT JOIN (WITH RECURSIVE cte(DZ) as ( select 1 as dz union all select dz + 1 from cte where dz < 24) select dz from cte ) T 
+    
+    Oracle: TO_CHAR(B.OPE_SEQ,'0000.0000')
+    DuckDB：FORMAT(CAST(B.OPE_SEQ AS DECIMAL), '0000.0000')
+    
+    Oracle： START WITH A.LOT_ID = W.LOT_ID CONNECT BY PRIOR A.PARENT_LOT_ID = A.LOT_ID 递归写法
+    DuckDB： 参考 aps_etl_wip_5m_helper_02 # Line 1377 
+             WITH RECURSIVE rec(PROD_ID, PLAN_ID, OPE_NO, TARGET_PLAN_ID 
+             
+    Oracle： AND  DECODE(UCL.TECH,'ALL',WIP.PRODG_TECH,UCL.TECH) = WIP.PRODG_TECH 放在Where条件中的写法
+    DuckDB： AND 
+            ((UCL.TECH <> 'ALL'
+             AND
+             UCL.TECH = WIP.PRODG_TECH
+            ) OR UCL.TECH = 'ALL')
+            
+    Oracle：TRIM(S.CHAMBER_NAME)
+    DuckDB：TRIM(' ' FROM S.CHAMBER_NAME)
+    
+    Oracle：SELECT DISTINCT  PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY PROCESS_TIME) 
+                OVER(PARTITION BY TOOLID,PRODID,CASEID) AS PROCESS_TIME,TOOLID,PRODID,CASEID                                                                
+            FROM COMPLETE_DATA
+    DuckDB： WITH RANKED_DATA AS(
+            SELECT TOOLID,PRODID,CASEID,PROCESS_TIME,ROW_NUMBER() 
+            OVER(PARTITION BY TOOLID,PRODID,CASEID ORDER BY PROCESS_TIME) AS rn,
+            COUNT(*) OVER(PARTITION BY TOOLID, PRODID, CASEID) as total_rows from COMPLETE_DATA
+         )
+         select TOOLID,PRODID,CASEID,AVG(PROCESS_TIME) as PROCESS_TIME from RANKED_DATA WHERE rn in 
+                (FLOOR(total_rows * 0.5),CEIL(total_rows * 0.5)) 
+         GROUP BY TOOLID,PRODID,CASEID
+	

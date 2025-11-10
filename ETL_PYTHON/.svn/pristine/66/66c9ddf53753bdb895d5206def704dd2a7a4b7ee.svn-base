@@ -1,0 +1,207 @@
+import gc
+import logging
+import os
+import shutil
+from datetime import datetime, timedelta, time
+
+import duckdb
+
+from xinxiang import config
+from xinxiang.util import my_oracle, my_date, cons_error_code, oracle_to_duck_common
+import pandas as pd
+import numpy as np
+
+from xinxiang.util.oracle_to_duck_his import delete_over_three_version
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.sync_APS_TMP_OCS_MAIN_H"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    source_table = "VIEW_OCS_MAIN_H"
+    target_table_name = "APS_TMP_OCS_MAIN_H_VIEW"
+    check_date_column = "STATUS_TIME"
+    sync_day = 5
+    query_sql = """SELECT JOB_SPEC_GROUP_PO_ID, JOB_SPEC_GROUP_ID, JOB_SPEC_ID, SUB_NAME, MTOOL_ID, FOUP_ID, RECIPE, CJ_ID, PJ_ID, PROCESS_ST_TIME, PROCESS_ED_TIME, SLOT, STATUS, STATUS_TIME, RETICLE, TEST_FOR FROM VIEW_OCS_MAIN_H"""
+    create_table_sql = """
+               CREATE TABLE APS_TMP_OCS_MAIN_H_VIEW (
+                   JOB_SPEC_GROUP_PO_ID VARCHAR,
+                   JOB_SPEC_GROUP_ID VARCHAR,
+                   JOB_SPEC_ID VARCHAR,
+                   SUB_NAME VARCHAR,
+                   MTOOL_ID VARCHAR,
+                   FOUP_ID VARCHAR,
+                   RECIPE VARCHAR,
+                   CJ_ID VARCHAR,
+                   PJ_ID VARCHAR,
+                   PROCESS_ST_TIME VARCHAR,
+                   PROCESS_ED_TIME VARCHAR,
+                   SLOT VARCHAR,
+                   STATUS VARCHAR,
+                   STATUS_TIME VARCHAR,
+                   RETICLE VARCHAR,
+                   TEST_FOR VARCHAR
+               );
+               """
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+
+        _now = my_date.date_time_second_str()
+        _now_short = my_date.date_time_second_short_str()
+
+        target_path = config.g_mem_sync_result_path
+
+        # 创建目录
+        target_folder = os.path.join(target_path, target_table_name, "inprocess")
+        if not os.path.exists(target_folder):
+            os.makedirs(target_folder)
+
+        # 创建DuckDB的文件
+        _file_name = target_table_name + "_" + my_date.date_time_second_short_str() + ".db"
+        _file_name_csv = target_table_name + "_" + my_date.date_time_second_short_str() + ".csv"
+        in_process_db_file = os.path.join(target_folder, _file_name)
+        target_db_file = os.path.join(target_path, target_table_name, _file_name)  # 最终文件在inprocess目录上层
+
+        # 创建DuckDB文件
+        duck_db_cursor = None
+        # 记录开始日志
+        my_oracle.StartCleanUpAndLog(conn=oracle_conn, ETLProcName=ETL_Proc_Name, ETLStartTime=_now)
+
+        # 把历史数据先ATTACH过来，再拷贝到新的库中去
+        last_file_name = my_oracle.get_last_create_file(my_oracle.oracle_get_connection(), target_table_name)
+        print(last_file_name)
+        if last_file_name:
+            shutil.copy2(last_file_name, in_process_db_file)
+            duck_db_cursor = duckdb.connect(in_process_db_file)
+            # 追加最新的数据
+            # 上次执行文件的创建时间戳
+            sql = """SELECT MAX({check_date_column}) FROM {target_table}""".format(check_date_column=check_date_column,
+                                                                                   target_table=target_table_name)
+            duck_db_cursor.execute(sql)
+            last_date = duck_db_cursor.fetchall()
+
+            _create_time_date = last_date[0][0]
+            if _create_time_date is not None:
+                if type(_create_time_date) is str:
+                    _create_time = datetime.strptime(_create_time_date, '%Y-%m-%d %H:%M:%S')
+                else:
+                    _create_time = _create_time_date
+                _create_time = _create_time - timedelta(hours=2) # 提前兩個小時
+                print(_create_time)
+
+                query_sql = query_sql \
+                            + " where 1=1 and {check_date_column} >= TO_DATE('{create_time}', 'YYYY-MM-DD HH24:MI:SS')" \
+                                .format(check_date_column=check_date_column,
+                                        create_time=_create_time)
+                last_one_hour_date = pd.read_sql(query_sql, oracle_conn)
+                last_one_hour_date = last_one_hour_date.replace(pd.NaT, np.nan)
+                last_one_hour_date = last_one_hour_date.replace(np.nan, '')
+                last_one_hour_date = last_one_hour_date.replace('', None)
+
+                query_duck_sql = """
+                    select * from {target_table} where 1=1 and {check_date_column} >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '2 day'
+                """.format(target_table=target_table_name,
+                           check_date_column=check_date_column
+                           )
+                last_one_hour_date_duck = pd.read_sql(query_duck_sql, duck_db_cursor)
+                last_one_hour_date_duck = last_one_hour_date_duck.replace(pd.NaT, np.nan)
+                last_one_hour_date_duck = last_one_hour_date_duck.replace(np.nan, '')
+                last_one_hour_date_duck = last_one_hour_date_duck.replace('', None)
+
+                columns_str = ", ".join(last_one_hour_date.columns)
+
+                select_insert_item = """
+                    insert into {target_table_name} ({columns_str})
+                    select {columns_str}  FROM last_one_hour_date HS
+                    where 1=1
+                    and  NOT EXISTS (
+                        SELECT HL.JOB_SPEC_GROUP_PO_ID FROM last_one_hour_date_duck HL
+                        WHERE 
+                        CASE WHEN HL.JOB_SPEC_GROUP_PO_ID IS NULL OR HL.JOB_SPEC_GROUP_PO_ID = '' THEN '*' ELSE HL.JOB_SPEC_GROUP_PO_ID END = CASE WHEN HS.JOB_SPEC_GROUP_PO_ID IS NULL OR HS.JOB_SPEC_GROUP_PO_ID = '' THEN '*' ELSE HS.JOB_SPEC_GROUP_PO_ID END                                                                
+                        AND CASE WHEN HL.JOB_SPEC_GROUP_ID IS NULL OR HL.JOB_SPEC_GROUP_ID = '' THEN '*' ELSE HL.JOB_SPEC_GROUP_ID END = CASE WHEN HS.JOB_SPEC_GROUP_ID IS NULL OR HS.JOB_SPEC_GROUP_ID = '' THEN '*' ELSE HS.JOB_SPEC_GROUP_ID END      
+                        AND CASE WHEN HL.JOB_SPEC_ID IS NULL OR HL.JOB_SPEC_ID = '' THEN '*' ELSE HL.JOB_SPEC_ID END = CASE WHEN HS.JOB_SPEC_ID IS NULL OR HS.JOB_SPEC_ID = '' THEN '*' ELSE HS.JOB_SPEC_ID END      
+                        AND CASE WHEN HL.SUB_NAME IS NULL OR HL.SUB_NAME = '' THEN '*' ELSE HL.SUB_NAME END = CASE WHEN HS.SUB_NAME IS NULL OR HS.SUB_NAME = '' THEN '*' ELSE HS.SUB_NAME END      
+                        AND CASE WHEN HL.MTOOL_ID IS NULL OR HL.MTOOL_ID = '' THEN '*' ELSE HL.MTOOL_ID END = CASE WHEN HS.MTOOL_ID IS NULL OR HS.MTOOL_ID = '' THEN '*' ELSE HS.MTOOL_ID END      
+                        AND CASE WHEN HL.FOUP_ID IS NULL OR HL.FOUP_ID = '' THEN '*' ELSE HL.FOUP_ID END = CASE WHEN HS.FOUP_ID IS NULL OR HS.FOUP_ID = '' THEN '*' ELSE HS.FOUP_ID END      
+                        AND CASE WHEN HL.RECIPE IS NULL OR HL.RECIPE = '' THEN '*' ELSE HL.RECIPE END = CASE WHEN HS.RECIPE IS NULL OR HS.RECIPE = '' THEN '*' ELSE HS.RECIPE END      
+                        AND CASE WHEN HL.CJ_ID IS NULL OR HL.CJ_ID = '' THEN '*' ELSE HL.CJ_ID END = CASE WHEN HS.CJ_ID IS NULL OR HS.CJ_ID = '' THEN '*' ELSE HS.CJ_ID END      
+                        AND CASE WHEN HL.PJ_ID IS NULL OR HL.PJ_ID = '' THEN '*' ELSE HL.PJ_ID END = CASE WHEN HS.PJ_ID IS NULL OR HS.PJ_ID = '' THEN '*' ELSE HS.PJ_ID END           
+                        AND CASE WHEN HL.SLOT IS NULL OR HL.SLOT = '' THEN '*' ELSE HL.SLOT END = CASE WHEN HS.SLOT IS NULL OR HS.SLOT = '' THEN '*' ELSE HS.SLOT END                              
+                        AND CASE WHEN HL.PROCESS_ST_TIME IS NULL  THEN CAST('1901-01-01 00:00:00' AS TIMESTAMP) ELSE CAST(HL.PROCESS_ST_TIME AS TIMESTAMP) END = CASE WHEN HS.PROCESS_ST_TIME IS NULL  THEN CAST('1901-01-01 00:00:00' AS TIMESTAMP) ELSE CAST(HS.PROCESS_ST_TIME AS TIMESTAMP) END
+                        AND CASE WHEN HL.PROCESS_ED_TIME IS NULL THEN CAST('1901-01-01 00:00:00' AS TIMESTAMP) ELSE CAST(HL.PROCESS_ED_TIME AS TIMESTAMP) END = CASE WHEN HS.PROCESS_ED_TIME IS NULL  THEN CAST('1901-01-01 00:00:00' AS TIMESTAMP) ELSE CAST(HS.PROCESS_ED_TIME AS TIMESTAMP) END
+                        AND CASE WHEN HL.STATUS IS NULL OR HL.STATUS = '' THEN '*' ELSE HL.STATUS END = CASE WHEN HS.STATUS IS NULL OR HS.STATUS = '' THEN '*' ELSE HS.STATUS END                                          
+                        AND CASE WHEN HL.STATUS_TIME IS NULL  THEN CAST('1901-01-01 00:00:00' AS TIMESTAMP) ELSE CAST(HL.STATUS_TIME AS TIMESTAMP) END = CASE WHEN HS.STATUS_TIME IS NULL THEN CAST('1901-01-01 00:00:00' AS TIMESTAMP) ELSE CAST(HS.STATUS_TIME AS TIMESTAMP) END             
+                        AND CASE WHEN HL.RETICLE IS NULL OR HL.RETICLE = '' THEN '*' ELSE HL.RETICLE END = CASE WHEN HS.RETICLE IS NULL OR HS.RETICLE = '' THEN '*' ELSE HS.RETICLE END                                          
+                        AND CASE WHEN HL.TEST_FOR IS NULL OR HL.TEST_FOR = '' THEN '*' ELSE HL.TEST_FOR END = CASE WHEN HS.TEST_FOR IS NULL OR HS.TEST_FOR = '' THEN '*' ELSE HS.TEST_FOR END                                            
+                    )
+                """.format(target_table_name=target_table_name, columns_str=columns_str)
+                duck_db_cursor.execute(select_insert_item)
+
+                # 删除老数据
+                delete_sql = """
+                       delete from {target_table} where {check_date_column} < DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '60 day'
+                       """.format(target_table=target_table_name,
+                                  check_date_column=check_date_column,
+                                  save_day=sync_day + 1)
+                duck_db_cursor.execute(delete_sql)
+                duck_db_cursor.close()
+                try:
+                    os.rename(in_process_db_file, target_db_file)
+                except Exception as eee:
+                    logging.exception("文件太大，等待20秒后再拷贝... %s", eee)
+                    time.sleep(20)
+                    os.rename(in_process_db_file, target_db_file)
+
+                # 写版本号
+                my_oracle.HandlingVerControl(oracle_conn, uuid, target_table_name, target_db_file, current_time_short)
+                # 写完成日志
+                my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        else:
+            # 做全量
+            query_sql = query_sql + """ where 1=1 and {check_date_column} >= SYSDATE - {sync_day}""".format(
+                source_table=source_table,
+                check_date_column=check_date_column,
+                sync_day=sync_day)
+            print(query_sql)
+            oracle_to_duck_common.oracle_to_duck_csv(
+                conn=oracle_conn,
+                etl_name=ETL_Proc_Name,
+                source_table=source_table,
+                target_table=target_table_name,
+                query_sql=query_sql,
+                create_table_sql=create_table_sql
+            )
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, "XETL078")
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+
+        raise e
+    finally:
+        delete_over_three_version(table_name=target_table_name)
+        oracle_conn.commit()
+        oracle_conn.close()
+        # 删除TMP目录:LQN:2023/08/21
+        if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+            os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

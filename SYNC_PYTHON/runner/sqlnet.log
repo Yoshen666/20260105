@@ -1,0 +1,5 @@
+NL-08014: Failed to initialize Diagnosability framework, falling back to old network tracing/logging 
+ 
+ NL-08015: Client(OCI) side initialization of Diagnosability framework failed
+  ORA-48002: thread terminated by fatal error
+Directory does not exist for read/write [D:\app\Administrator\product\11.2.0\client_1\log] []

@@ -1,0 +1,267 @@
+>>>>>>>>>>>>>>>>>
+目录结构说明 2023年6月12日说明
+>>>>>>>>>>>>>>>>>
+E:\ETLPYTHON
+│  ETL.py                                                                  >ETL服务主程序
+│  init_his.py                                                             >历史数据因做增量处理，速度慢，故在部署前需要提前执行该脚本
+│  test.py
+├─doc
+│      list.md                                                              >各种特殊SQL写法说明
+│
+├─testcase                                                                  >各种测试工具，或者自己写的实验性脚本
+│      a.txt
+│      common.py
+│      date_and_time.py
+│      duck.py
+│      join_duck_file_for_test.py                                           >已经被整合到test_etl，py中去了
+│      make_list_to_duck_file.py                                            >这个提供给Amy，目的是做出 DB2到Inhibit(UserFlag)的DuckFile数据
+                                                                            >最早是db2 > dat档案 > sqldr到oracle > 做业务处理
+																			>今后的做法就是Python读DB2,结果放在Pandas里面 > Pandas写到DuckFile里面
+│      oracle.py
+│      result.txt
+│      source_createor.py
+│      test.py
+│      test_etl.py                                                          》测试工具，根据g_debug_mode=True的时候，指定的g_debug_file文件来对比Oracle和duckdb的区别（包括TMP表，结果表，但是可以引入Used表（没对比））
+│      __init__.py
+│
+└─xinxiang
+    │  __init__.py                                                          >本ETL最重要的注册函数，注册schedule，引入所有的Cron
+	                                                                        >关键词说明：coalesce=True代表的意思是，这个JOB如果执行多次失败了，那么无视之前的失败，确保下次能执行一次就好
+																			>  coalesce=False代表的意思就是，之前失败多少次，一旦该JOB被激活，要把之前所有失败的动作都跑一次
+    │
+    ├─config
+    │  │  __init__.py                                                       >目录结构配置，DB连接的配置，
+	                                                                        >g_all_varchar_table用途：列表内的涉及表的所有字段都强制指定为Varchar
+																			>      没在表格里的，那么就通过oracle>pandas的自动类型转换
+																			> g_debug_mode模式的,true和false的区别
+																			> True: ETL过程产物都生成在 g_debug_file文件里
+																			  False：ETL过程产物都生成在内存中
+																			> True的时候,可以使用test_etl来测试，False的时候是没办法测试的
+																			> True的时候，因为产生文件，所以慢，Flase的时候很快
+    │
+    ├─jobs_etl
+    │  │  aps_etl_recipe_eqp_all_10m.py                                     >具体的ETL
+    │  │  aps_etl_rls_5m.py
+    │  │  aps_etl_sgs_rls_60m.py
+    │  │  aps_etl_wafer_start_60m.py
+    │  │  aps_mid_rls_30m.py
+    │  │  aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_ALL.py
+    │  │  aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_P_ALL.py
+    │  │  aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_ALL.py
+    │  │  aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_P_ALL.py
+    │  │  aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_ALL.py
+    │  │  aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_P_ALL.py
+    │  │  aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN.py
+    │  │  aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN.py
+    │  │  aps_tmp_type11_median_1d_APS_TMP_TYPE31_MEDIAN.py
+    │  │  aps_tmp_type11_median_1d_APS_TMP_TYPE32_MEDIAN.py
+    │  │  aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN.py
+    │  │  aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN.py
+    │  │  aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN.py
+    │  │  aps_tr_charge_time_10m.py
+    │  │  aps_tr_lothistory_5m.py
+    │  │  aps_tr_rcp_inhibit_10m.py
+    │  │  aps_tr_rspilot_runing_10m.py
+    │  │  aps_tr_type11_30m.py
+    │  │  aps_tr_type12_30m.py
+    │  │  aps_tr_type21_30m.py
+    │  │  aps_tr_type221_30m.py
+    │  │  aps_tr_type22_30m.py
+    │  │  aps_tr_type25_30m.py
+    │  │  .py
+    │  │  aps_tr_type31_30m.py
+    │  │  aps_tr_type32_30m.py
+    │  │  aps_tr_type33_5m.py
+    │  │  aps_tr_type3_5m.py
+    │  │  etl_cron.py                                                        >ETL的CRON注册模块
+    │  │  sql_to_table_APS_ETL_PH_RTDQTIME.py
+    │  │  sql_to_table_APS_ETL_RTDQTTIME.py
+    │  │  sql_to_table_APS_ETL_RTDQTTIME_UN_WMTWID.py
+    │  │  sql_to_table_APS_ETL_RTDQTTIME_WMTWID.py
+    │  │  template_for_copy.py                                               >ETL的Sample，拷贝，复制，消灭TODO
+    │  │  __init__.py
+    │  │
+    │  ├─helper                                                              >当ETL执行模块很大，或超大的时候，将函数进行拆分
+    │  │  │  aps_etl_rls_new_5m_helper_01.py
+    │  │  │  aps_etl_rls_new_5m_helper_02.py
+    │  │  │  __init__.py
+    │
+    ├─jobs_fake                                                               >随便写随便玩，但是别注册到xinxiang/__init__.py就好
+    │  │  sync_fake_jobs.py
+    │  │  __init__.py
+    │
+    ├─jobs_manager
+    │  │  manager_cron.py                                                     >略
+    │  │  manager_jobs.py                                                     >这里存放的都是系统共通级别的ETL，譬如定时文件删除
+	                                                                          >真正的执行函数都封装到my_file.delete_backup_files里面了，这里只负责调用
+    │  │  __init__.py
+    │
+    ├─jobs_sync_his
+    │  │  sync_his_cron.py                                                     >略
+    │  │  sync_his_jobs.py                                                     >6张His表的增量Sync
+    │  │  __init__.py
+    │
+    ├─jobs_sync_view
+    │  │  sync_view_cron.py                                                     >略
+    │  │  sync_view_jobs.py                                                      >所有基础表的Sync
+    │  │  __init__.py
+    │  │
+    ├─util
+    │  │  cons.py                                                               >常量
+    │  │  cons_error_code.py                                                    >常量，对应Java里的AlarmSendCode
+    │  │  cons_table_name.py                                                    >常量，对应Java里的Constants.TableName
+    │  │  my_cmder.py                                                           >暂时没用到，计划用来Python执行系统本地命令，譬如window命令，或者oracle命令
+    │  │  my_cron.py                                                            >扩充apscheduler的Cron，使其支持6位的Cron表达式
+    │  │  my_date.py                                                            >日期处理共通函数集合
+    │  │  my_duck.py                                                            >DuckDB的处理共通函数集合
+    │  │  my_file.py                                                            >文件，以及路径的处理共通函数集合
+    │  │  my_log.py                                                             >日志文件的处理共通函数集合
+    │  │  my_oracle.py                                                          >Oracle的处理共通函数集合
+    │  │  oracle_to_duck_common.py                                              >oracle到duckdb的sync处理共通函数，主要给jobs_sync_view/sync_view_jobs调用
+    │  │  oracle_to_duck_his.py                                                 >oracle到duckdb的增量sync处理共通函数，主要给jobs_sync_his/sync_his_jobs调用
+    │  │  Params.py                                                             >没用到，暂时保留
+    │  │  __init__.py
+
+>>>>>>>>>>>>>>>>>
+产出文件路径，以及duckfile产出规则说明 2023年6月20日说明
+>>>>>>>>>>>>>>>>>
+1）重要的配置项
+    g_mem_sync_result_path  >>>> sync_view_jobs & sync_his_jobs的产出目录
+                                 单纯的理解为Oracle到Duckdb，不会使用到其他的Duckdb
+    g_mem_etl_output_path   >>>> jobs_etl/*.*的产出目录
+                                 不读取任何Oracle数据
+                                 只读取 [g_mem_sync_result_path] 和 [g_mem_etl_output_path]目录下的文件
+2） 数据流向
+    2.1 最简单的模式
+    Oracle > Sync       >  Sync结果文件
+             Sync His   >  Sync结果文件
+
+    2.2 简单的ETL
+    Oracle > Sync       |
+                        | >  ETL > [etl_output]ETL产出
+             Sync His   |
+
+    2.3 复杂的ETL
+    Oracle > Sync                   |
+                                    |
+             Sync His               | >  ETL > [etl_output]ETL产出
+                                    |
+             [etl_output]ETL产出     |
+
+>>>>>>>>>>>>>>>>>
+简单的Sync逻辑说明 2023年6月20日说明
+>>>>>>>>>>>>>>>>>
+1) Cron 都在  [sync_view_cron]里注册
+2) Job函数都在 [sync_view_jobs]里实现
+3) 调用共通函数
+    oracle_to_duck_common.sync_oracle_to_duck函数实现
+    etl_name,                                   | 单纯的名称，默认规则设定为 etl_name = "Sync " + source_table + " to " + target_table
+    source_table,                               | Oracle中的表名或者是View的名称
+    target_table,                               | 对应的DuckDB的文件，以及文件中主表的名称，一般以Aps_sync_xxxx命名
+    where_start_sql=None,                       | 如果只Sync部分数据，那么加上对Oracle数据的过滤条件 以 Where 开始，也就是说要类似 “Where 1=1 And xxx”
+    target_path=config.g_mem_sync_result_path,  | Sync的结果保存到哪里去，不需要自己写，直接看配置文件
+    create_table_sql=None                       | 如果Oracle表结构和DuckDB表结构，或者字段类型有很大差异，需要自己手动创建DuckDb的DDL，那么就在这里写Create Table的SQL
+4) 程序逻辑步骤
+    1.创建目录 config.g_mem_sync_result_path + [target_table] + "inprocess"
+    2.在inprocess目录中创建DuckDB的文件 命名规则是 [target_table] + %Y%m%d%H%M%S + ".db"
+    3.在Oracle中写入开始日志
+    4.读取Oracle中的数据 读取的Sql= SELECT * FROM [source_table] + [where_start_sql(一般为空)]
+      保存到Pandas的DataFrame中（内存中）
+    5.查看[create_table_sql]是否为空
+        不为空，则拿create_table_sql在DuckDB中创建表结构
+        为空，  则拿Pandas的DataFrame结构在DuckDB中创建表结构
+               > 检查表名是否则 config.g_all_varchar_table中存在，
+                    > 存在的话，则设置DuckDB中的所有字段均为 varchar
+                    > 不存在的话，按照这样的对应规则来创建表结构
+                        VARCHAR2 > VARCHAR
+                        NUMBER   > VARCHAR
+                        DATE     > TIMESTAMP
+                        FLOAT    > VARCHAR
+                        CHAR     > VARCHAR
+                        TIMESTAMP(6)     > TIMESTAMP
+    6.对第4）的结果，进行数据清洗（处理Null列），基本上解决的是Oracle中某列都为Null值的时候，Pandas无法确定该列的类型
+    7.插入数据
+    8.在Oracle中写入版本号
+    9.对应第3）步，在Oracle中写入结束日志
+    10. 移动文件
+        config.g_mem_sync_result_path + [target_table] + "inprocess" + [target_table] + %Y%m%d%H%M%S + ".db"
+        >
+        config.g_mem_sync_result_path + [target_table] + [target_table] + %Y%m%d%H%M%S + ".db"
+
+>>>>>>>>>>>>>>>>>
+His表的Sync逻辑说明(增量Sync) 2023年6月21日说明
+>>>>>>>>>>>>>>>>>
+1） 整体思路
+    准备前工作，先产生指定时间内的Sync文件(init_his里面做)，这个任务是在ETL服务启动前做一次，其实每台服务器只要做一次就好了。
+    ETL执行过程中，做4件事情，
+                        A:将最后一次执行的sync结果拷贝一份到inprocess中去
+                        B：insert 当前时间-最后一次执行时间的更新数据
+                        C: delete 超出 【 天数（譬如180天） - 当前时间-最后一次执行时间】的数据，确保文件中是指定天数的数据，譬如180天
+                        D：将结果写到Sync结果中去
+
+2) Cron 都在  [sync_his_cron]里注册
+3) Job函数都在 [sync_his_jobs]里实现
+4）函数说明
+    sync_oracle_to_duck(
+    etl_name,                                          | 单纯的名称，默认规则设定为 etl_name = "Sync " + source_table + " to " + target_table
+    source_table,                                      | Oracle中的表名或者是View的名称
+    target_table,                                      | 对应的DuckDB的文件，以及文件中主表的名称，一般以Aps_sync_xxxx_his命名
+    check_date_column,                                 | 用来作为时间比较的字段
+    sync_day,                                          | 抽取Oracle中多少天的数据，也就是说DuckDB中保留多少天的数据
+    duration_minute=5 ,                                | 多久做一次增量的操作
+    target_path=config.g_mem_sync_result_path)         | 保存目录
+4) 程序逻辑步骤
+    模式1：[init_his]中的初次导入 ,逻辑完全等同与[简单的Sync逻辑],做全量的Sync
+    模式2：ETL正常执行
+        1）得到上次的sync结果，拷贝到inprocess目录中去
+        2）连接这个中间DuckDB文件
+        3）得到最后一次执行的时间戳
+        4）追加最新的数据
+        5）删除老数据
+
+>>>>>>>>>>>>>>>>>
+ETL的处理逻辑说明 2023年6月21日说明
+>>>>>>>>>>>>>>>>>
+1）几个重要的概念，参考【template_for_copy.py】
+    ETL_Proc_Name                        | ETL名称
+    current_time&current_time_short      | 当前ETL启动的时候的时间
+    uuid                                 | 当前ETL执行的时候唯一识别,uuid
+    target_table                         | 当前ETL目标是产生什么表的数据，表名
+    used_table_list                      | 为了产生目标数据，我们要参考那些表数据
+    target_table_sql                     | 当前ETL目标表的DDL
+
+2）开发顺序
+    1）拷贝template_for_copy.py 成为自己的ETL文件
+    2）按照实际逻辑先消灭execute()函数中的  TODO
+    3) 如果使用了TMP表等中间表数据，对应的是Java版本中的 TRUNCATE 那么需要在create_temp_table函数中写中间表的DDL，并执行生成中间表
+    4）按照实际逻辑来实现业务代码，也就是将Java版本中的OracleSQL修改为Python+DuckDBSQL
+    5）注意点：
+        特殊SQL参考 /doc/list.md
+        特别大的ETL 要拆分，否则代码不能看，参考例子：aps_etl_rls_5m + aps_etl_rls_new_5m_helper_01 + aps_etl_rls_new_5m_helper_02
+
+
+>>>>>>>>>>>>>>>>>
+测试工具的逻辑 2023年6月25日说明
+>>>>>>>>>>>>>>>>>
+1）在debug模式的情况下，会在g_debug_file中产生一个db文件
+
+2）测试方法参考【python版ETL测试方法.xls】
+
+3）执行逻辑
+    3.1 删除上次的全部测试结果，只保留.db文件
+    3.2 对比的是所有tmp表，以及ETL的结果表的行数，看是否一致                                      》测试Where条件中是否有错误
+    3.3 将被使用的表（记录在APS_SRCFILE）汇入到.db文件文件中去，再比较参考的表中的数据是否一致
+    3.4 逐行比较所有表的记录是否一致（除了APS_SRCFILE），然后组装所有的select xxx1,xxx2的顺序，再组装 order by xxx1 desc, xxx2 desc确保
+        DuckDB和Oracle抽取的字段顺序，以及排序顺序完全一致
+        最后将DuckDb结果和Oracle的结果的Pandas DataFrame进行逐行逐列对比，分别写到按照表名命名的文件中 》 测试insert或者其他计算函数是否正确
+
+
+
+>>>>>>>>>>>>>>>>>
+环境安装
+生产环境
++ Python to Service的处理
+的部署说明
+>>>>>>>>>>>>>>>>>
+
+参考【python环境.txt】

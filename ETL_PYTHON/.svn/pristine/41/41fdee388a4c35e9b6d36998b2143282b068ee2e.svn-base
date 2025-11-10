@@ -1,0 +1,430 @@
+import gc
+import logging
+import os
+import shutil
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, my_file
+
+
+def create_temp_table(duck_db):
+    '''
+        这里在内存中创建使用到的临时表
+        '''
+    sql = """
+        create table APS_ETL_TMP_TR_TYPE31_LOT_HIST
+        (
+          eqp_id     VARCHAR(64),
+          claim_time VARCHAR(64)
+        )
+        """
+    duck_db.sql(sql)
+
+    sql = """
+          create table APS_ETL_TMP_TR_TYPE31_TOOL
+          (
+            tool_id   VARCHAR(64),
+            toolg_id  VARCHAR(64),
+            module_id VARCHAR(64),
+            eqp_category VARCHAR(64)
+          )
+          """
+    duck_db.sql(sql)
+
+    sql = """
+          create table APS_ETL_TMP_TR_TYPE31_OCS_HIST
+          (
+            module_id       VARCHAR(64),
+            toolg_id        VARCHAR(64),
+            tool_id         VARCHAR(64),
+            plan_id         VARCHAR(64),
+            qty             decimal,
+            process_start   VARCHAR(64),
+            process_st_time VARCHAR(64),
+            process_end     VARCHAR(64),
+            BATCH_FLAG      VARCHAR(64)
+          )
+              """
+    duck_db.sql(sql)
+
+    sql = """
+            create table APS_ETL_TMP_TR_TYPE31_OCS_QTY
+            (
+                cj_id   VARCHAR(64),
+                foup_id VARCHAR(64),
+                qty     decimal
+            )
+                """
+    duck_db.sql(sql)
+
+
+# 先把针对DF的RUN货历史找出来
+def GetDFRunHistSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+     INSERT INTO APS_ETL_TMP_TR_TYPE31_LOT_HIST(                               
+         EQP_ID, CLAIM_TIME                                             
+         )                                                                  
+          SELECT DISTINCT S.EQP_ID,S.CLAIM_TIME                                
+          FROM APS_MID_FHOPEHS_VIEW.APS_MID_FHOPEHS_VIEW S                                            
+          WHERE position('F' in S.EQP_ID)=1                                       
+          AND S.CLAIM_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '60 day'                                   
+          AND S.OPE_CATEGORY = 'OperationComplete'                                                                   
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TMP_TR_TYPE31_LOT_HIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TMP_TR_TYPE31_LOT_HIST")
+
+
+# 把ETL_TOOL拆分出来
+def GetToolDataSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO APS_ETL_TMP_TR_TYPE31_TOOL(                                
+         TOOL_ID, TOOLG_ID, MODULE_ID                                                
+         )                                                                   
+          SELECT EQP_ID AS TOOL_ID,MAX(EQP_G) AS TOOLG_ID,                                                     
+                 MAX(REAL_MODULE) AS MODULE_ID                                                                                    
+          FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL                                                                   
+          WHERE EQP_CATEGORY <> 'Measurement'                          
+          GROUP BY EQP_ID                                                                   
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TMP_TR_TYPE31_TOOL",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TMP_TR_TYPE31_TOOL")
+
+
+def GetOcsHistQtySql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT INTO APS_ETL_TMP_TR_TYPE31_OCS_QTY(                                                                     
+           CJ_ID, FOUP_ID, QTY
+           )                                                                                                     
+         WITH SLOT_DATA AS (                                                                                                                                               
+            SELECT H.CJ_ID,H.FOUP_ID,                                                                  
+                  CASE WHEN MAX(T.TOOL_ID) IS NOT NULL AND MAX(T.TOOL_ID) <> '' THEN 'Y' ELSE 'N' END AS BATCH_FLAG,            
+                  STRING_AGG(H.SLOT,',' ORDER BY H.SLOT) AS SLOT                  
+            FROM  APS_TMP_OCS_MAIN_H_VIEW.APS_TMP_OCS_MAIN_H_VIEW H                                                                 
+            LEFT JOIN APS_ETL_TMP_TR_TYPE31_TOOL T                                                          
+            ON T.TOOL_ID = H.MTOOL_ID  AND T.EQP_CATEGORY = 'Internal Buffer'                          
+            WHERE H.PROCESS_ED_TIME IS NOT NULL AND H.PROCESS_ED_TIME <> '' AND H.STATUS_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '60 day'                              
+           AND H.PROCESS_ST_TIME IS NOT NULL AND H.PROCESS_ST_TIME <> ''  AND H.STATUS='OpeStart'                              
+           GROUP BY H.CJ_ID,H.FOUP_ID                                                             
+         )                                                                                                  
+         SELECT CJ_ID,FOUP_ID,                                                                              
+                CASE WHEN BATCH_FLAG = 'Y' THEN 1                                                      
+               ELSE LENGTH(SLOT) - LENGTH(REPLACE(SLOT,',',''))+1 END AS QTY                                
+         FROM SLOT_DATA                                                                                                                                 
+       """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TMP_TR_TYPE31_OCS_QTY",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TMP_TR_TYPE31_OCS_QTY")
+
+
+# 获取OCS的HIST
+def GetOcsHistSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+     INSERT INTO APS_ETL_TMP_TR_TYPE31_OCS_HIST(                                                                     
+         MODULE_ID, TOOLG_ID, TOOL_ID, PLAN_ID, QTY, PROCESS_START, PROCESS_ST_TIME, PROCESS_END,BATCH_FLAG
+        )                                                                                                     
+         WITH MAIN_DATA AS (                                                                                  
+               SELECT H.MTOOL_ID AS TOOL_ID,                                                                  
+                      H.CJ_ID,                                                                                
+                      H.JOB_SPEC_GROUP_ID AS PLAN_ID,                                                         
+                      CASE WHEN T.QTY > 25 THEN 25 ELSE T.QTY END AS QTY,                 
+                      CASE WHEN H.STATUS='OpeStart' THEN H.STATUS_TIME  END AS PROCESS_START,                 
+                      CASE WHEN H.STATUS='OpeStart' THEN H.PROCESS_ST_TIME  END AS PROCESS_ST_TIME,           
+                      CASE WHEN H.STATUS='OpeComplete' THEN H.STATUS_TIME  END AS PROCESS_END                 
+               FROM APS_TMP_OCS_MAIN_H_VIEW.APS_TMP_OCS_MAIN_H_VIEW H  
+               INNER JOIN APS_ETL_TMP_TR_TYPE31_OCS_QTY T 
+               ON T.CJ_ID = H.CJ_ID AND T.FOUP_ID = H.FOUP_ID                                             
+               WHERE H.PROCESS_ED_TIME IS NOT NULL AND H.PROCESS_ED_TIME <> '' AND H.STATUS_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '60 day'                             
+               AND H.PROCESS_ST_TIME IS NOT NULL  AND H.PROCESS_ST_TIME <> ''                                                            
+         ),                                                                                                   
+         GROUP_MAIN_DATA AS (                                                                                 
+               SELECT MAX(TOOL_ID) AS TOOL_ID,                                                                
+                      MAX(PLAN_ID) AS PLAN_ID,                                                                
+                      MAX(QTY) AS QTY,                                                                        
+                      MAX(PROCESS_START) AS PROCESS_START,                                                    
+                      MIN(PROCESS_ST_TIME) AS PROCESS_ST_TIME,                                                
+                      MAX(PROCESS_END) AS PROCESS_END                                                         
+               FROM MAIN_DATA                                                                                 
+               GROUP BY CJ_ID                                                                                 
+         )                                                                                                    
+         SELECT T.MODULE_ID,                                                                                  
+                T.TOOLG_ID,                                                                                   
+                M.TOOL_ID,                                                                                    
+                M.PLAN_ID,                                                                                    
+                M.QTY,                                                                                        
+                M.PROCESS_START,                                                                              
+                M.PROCESS_ST_TIME,                                                                            
+                M.PROCESS_END,
+                CASE WHEN T.EQP_CATEGORY = 'Internal Buffer' THEN 'Y' ELSE 'N' END AS BATCH_FLAG                                                                                
+         FROM GROUP_MAIN_DATA M                                                                               
+         INNER JOIN APS_ETL_TMP_TR_TYPE31_TOOL T                                                                    
+         ON T.TOOL_ID = M.TOOL_ID                                                                             
+         WHERE M.PROCESS_START IS NOT NULL AND M.PROCESS_START <> ''                                                                                                                                  
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TMP_TR_TYPE31_OCS_HIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TMP_TR_TYPE31_OCS_HIST")
+
+
+def GetType31FirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_TR_TYPE31 (                                               
+       GUID, MODULE_ID, TOOLG_ID, TOOL_ID, PLAN_ID, QTY, PROCESS_START, PROCESS_END, PARTKEY,BATCH_FLAG                                                                                       
+    )                                                                                                     
+       WITH RESULT_DATA AS (                                                                                                                                                                                                                                                                                
+            SELECT T.MODULE_ID,                                                                                           
+                   T.TOOLG_ID,                                                                                            
+                   T.TOOL_ID,                                                                                             
+                   T.PLAN_ID,                                                                                             
+                   T.QTY,                                                                                                 
+                   CASE WHEN MAX(L.EQP_ID) IS NOT NULL AND MAX(L.EQP_ID) <> '' THEN STRFTIME(MAX(cast(L.CLAIM_TIME as timestamp)), '%Y-%m-%d %H:%M:%S')            
+                                       ELSE STRFTIME(cast(T.PROCESS_ST_TIME as timestamp), '%Y-%m-%d %H:%M:%S') END AS PROCESS_START,                                                     
+                   --TO_CHAR(T.PROCESS_END, 'YYYY-MM-DD HH24:MI:SS') AS PROCESS_END, 
+                   STRFTIME(cast(T.PROCESS_END as timestamp), '%Y-%m-%d %H:%M:%S') AS PROCESS_END,                                       
+                   CASE WHEN MAX(L.EQP_ID) IS NOT NULL AND MAX(L.EQP_ID) <> '' THEN MAX(L.CLAIM_TIME) ELSE T.PROCESS_ST_TIME END AS PARTKEY,
+                   MAX(T.BATCH_FLAG) AS BATCH_FLAG                                                                         
+            FROM APS_ETL_TMP_TR_TYPE31_OCS_HIST T                                                                                    
+            LEFT JOIN APS_ETL_TMP_TR_TYPE31_LOT_HIST L                                                                           
+            ON L.EQP_ID = T.TOOL_ID                                                                                       
+            AND L.CLAIM_TIME > T.PROCESS_START                                                                            
+            AND L.CLAIM_TIME < T.PROCESS_ST_TIME                                                                                    
+            WHERE  1=1 AND T.PROCESS_START IS NOT NULL AND T.PROCESS_START <> ''                                                                   
+            GROUP BY T.MODULE_ID,                                                                                         
+                   T.TOOLG_ID,                                                                                            
+                   T.TOOL_ID,                                                                                             
+                   T.PLAN_ID,                                                                                             
+                   T.QTY,                                                                                                 
+                   T.PROCESS_ST_TIME,                                                                                     
+                   T.PROCESS_END                                                                                          
+         )                                                                                                                
+         SELECT '{uuid}' AS GUID,                                                                                       
+                MODULE_ID,                                                                                                
+                TOOLG_ID,                                                                                                 
+                TOOL_ID,                                                                                                  
+                PLAN_ID,                                                                                                  
+                QTY,                                                                                                      
+                PROCESS_START,                                                                                            
+                PROCESS_END,                                                                                              
+                PARTKEY,
+                BATCH_FLAG                                                                                                   
+         FROM RESULT_DATA                                                                                                                                                                    
+    """.format(uuid=uuid)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TR_TYPE31",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TR_TYPE31")
+
+
+def GetType31OtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_TR_TYPE31 (                                               
+       GUID, MODULE_ID, TOOLG_ID, TOOL_ID, PLAN_ID, QTY, PROCESS_START, PROCESS_END, PARTKEY,BATCH_FLAG                                                                                       
+    )                                                                                                     
+       WITH RESULT_DATA AS (                                                                                                                                                                                                                                                                                
+            SELECT T.MODULE_ID,                                                                                           
+                   T.TOOLG_ID,                                                                                            
+                   T.TOOL_ID,                                                                                             
+                   T.PLAN_ID,                                                                                             
+                   T.QTY,                                                                                                 
+                   CASE WHEN MAX(L.EQP_ID) IS NOT NULL AND MAX(L.EQP_ID) <> '' THEN STRFTIME(MAX(cast(L.CLAIM_TIME as timestamp)), '%Y-%m-%d %H:%M:%S')            
+                                       ELSE STRFTIME(cast(T.PROCESS_ST_TIME as timestamp), '%Y-%m-%d %H:%M:%S') END AS PROCESS_START,                                                     
+                   --TO_CHAR(T.PROCESS_END, 'YYYY-MM-DD HH24:MI:SS') AS PROCESS_END, 
+                   STRFTIME(cast(T.PROCESS_END as timestamp), '%Y-%m-%d %H:%M:%S') AS PROCESS_END,                                       
+                   CASE WHEN MAX(L.EQP_ID) IS NOT NULL AND MAX(L.EQP_ID) <> '' THEN MAX(L.CLAIM_TIME) ELSE T.PROCESS_ST_TIME END AS PARTKEY,
+                   MAX(T.BATCH_FLAG) AS BATCH_FLAG                                                                         
+            FROM APS_ETL_TMP_TR_TYPE31_OCS_HIST T                                                                                    
+            LEFT JOIN APS_ETL_TMP_TR_TYPE31_LOT_HIST L                                                                           
+            ON L.EQP_ID = T.TOOL_ID                                                                                       
+            AND L.CLAIM_TIME > T.PROCESS_START                                                                            
+            AND L.CLAIM_TIME < T.PROCESS_ST_TIME                                                                                    
+            WHERE  1=1 AND T.PROCESS_START IS NOT NULL AND T.PROCESS_START <> ''                                                                    
+            GROUP BY T.MODULE_ID,                                                                                         
+                   T.TOOLG_ID,                                                                                            
+                   T.TOOL_ID,                                                                                             
+                   T.PLAN_ID,                                                                                             
+                   T.QTY,                                                                                                 
+                   T.PROCESS_ST_TIME,                                                                                     
+                   T.PROCESS_END                                                                                          
+         )                                                                                                                
+         SELECT '{uuid}' AS GUID,                                                                                       
+                MODULE_ID,                                                                                                
+                TOOLG_ID,                                                                                                 
+                TOOL_ID,                                                                                                  
+                PLAN_ID,                                                                                                  
+                QTY,                                                                                                      
+                PROCESS_START,                                                                                            
+                PROCESS_END,                                                                                              
+                PARTKEY,
+                BATCH_FLAG                                                                                                   
+         FROM RESULT_DATA T                                                                                         
+         WHERE  1=1                                                                                                 
+         AND NOT EXISTS                                                                                             
+            (                                                                                                          
+                SELECT MODULE_ID FROM LAST_APS_TR_TYPE31.APS_TR_TYPE31 T31                                                                
+                WHERE T31.MODULE_ID = T.MODULE_ID                                                                      
+                AND T31.TOOLG_ID = T.TOOLG_ID                                                                          
+                AND T31.TOOL_ID = T.TOOL_ID                                                                            
+                AND T31.PLAN_ID = T.PLAN_ID                                                                            
+                AND T31.QTY = T.QTY                                                                                    
+                AND T31.PROCESS_START = T.PROCESS_START                                                                
+                AND T31.PROCESS_END = T.PROCESS_END                                                                    
+            )                                                                                                                                                                   
+    """.format(uuid=uuid)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TR_TYPE31",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TR_TYPE31")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_TR_BR.APS_TR_TYPE31_30M"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_TR_TYPE31"
+    used_table_list = ['APS_MID_FHOPEHS_VIEW', 'APS_SYNC_ETL_TOOL', 'APS_TMP_OCS_MAIN_H_VIEW']
+    target_table_sql = """
+        create table {}APS_TR_TYPE31
+        (
+          module_id     VARCHAR(60),
+          toolg_id      VARCHAR(60),
+          tool_id       VARCHAR(60),
+          plan_id       VARCHAR(60),
+          qty           VARCHAR(60),
+          process_start VARCHAR(60),
+          process_end   VARCHAR(60),
+          guid          VARCHAR(60) not null,
+          partkey       VARCHAR(60) not null,
+          BATCH_FLAG    VARCHAR(60)
+        )
+    """.format("") # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_memory.sql('SET threads TO 2')
+            # 加上TMP目录:LQN:2023/08/21
+            duck_db_memory.execute(
+                "SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+        # 创建Temp表
+        create_temp_table(duck_db_memory)
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+        # 先把针对DF的RUN货历史找出来
+        GetDFRunHistSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 把ETL_TOOL拆分出来
+        GetToolDataSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 获取OCS的数量按CTRL_JOB+FOUP
+        GetOcsHistQtySql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 获取OCS的HIST
+        GetOcsHistSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        # 取上一次的APS_TR_TYPE31版本
+        file_name = my_file.get_last_db_file(conn=oracle_conn, table_name="APS_TR_TYPE31")
+        # if 取不到
+        if file_name is None:
+            GetType31FirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        # else 取到的情况下
+        # 手动 Attach APS_TR_TYPE31 AS LAST_APS_TR_TYPE31
+        else:
+            my_duck.attach_table(duck_db_memory=duck_db_memory, table_name="LAST_APS_TR_TYPE31",
+                                 target_db_file=file_name)
+
+            GetType31OtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+            sql = """insert into APS_TR_TYPE31 select * from LAST_APS_TR_TYPE31.APS_TR_TYPE31
+                    WHERE CAST(partkey AS TIMESTAMP) > DATE_TRUNC('second', CURRENT_TIMESTAMP)- INTERVAL '180 day'"""
+            duck_db_memory.execute(sql)
+
+            my_duck.detach_table(duck_db=duck_db_memory, db_name="LAST_APS_TR_TYPE31")
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+                                                                                  target_table,
+                                                                                  target_table_sql.format("file_db."),
+                                                                                  current_time_short)
+        if file_name is not None and "" != file_name and os.path.exists(file_name):
+            shutil.copy2(file_name, target_db_file)
+            if os.path.isdir(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE31")):
+                shutil.rmtree(os.path.join(config.g_mem_sync_result_path, "APS_TR_TYPE31"))
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file, current_time_short)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, 'XETL037')
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        # 导出到目标文件中
+        my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                  in_process_db_file=in_process_db_file,
+                                                                  target_table=target_table,
+                                                                  current_time=current_time_short)
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            # 删除TMP目录:LQN:2023/08/21
+            if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+                os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

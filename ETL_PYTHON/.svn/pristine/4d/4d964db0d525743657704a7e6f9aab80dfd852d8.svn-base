@@ -1,0 +1,591 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons
+
+
+def create_temp_table(duck_db):
+    sql = """
+    create table APS_MID_TYPE221_RUNTIME_P_TS
+    (
+      module_id            VARCHAR(64),
+      toolg_id             VARCHAR(64),
+      tool_id              VARCHAR(64),
+      ch_cnt               VARCHAR(64),
+      lessthan20_flag      VARCHAR(64),
+      scanner_zws_flag     VARCHAR(64),
+      tracker_zws_flag     VARCHAR(64),
+      photo_type           VARCHAR(64),
+      one_wafer_pt_scanner VARCHAR(64),
+      scanner_slope_new    VARCHAR(64),
+      scanner_inter_new    VARCHAR(64),
+      one_wafer_pt_tracker VARCHAR(64),
+      tracker_slope_new    VARCHAR(64),
+      tracker_inter_new    VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+    sql = """
+    create table APS_MID_TYPE221_RUNTIME_P_ETC
+    (
+      module_id            VARCHAR(64),
+      toolg_id             VARCHAR(64),
+      tool_id              VARCHAR(64),
+      ch_cnt               VARCHAR(64),
+      lessthan20_flag      VARCHAR(64),
+      scanner_zws_flag     VARCHAR(64),
+      tracker_zws_flag     VARCHAR(64),
+      photo_type           VARCHAR(64),
+      one_wafer_pt_scanner VARCHAR(64),
+      scanner_slope_new    VARCHAR(64),
+      scanner_inter_new    VARCHAR(64),
+      one_wafer_pt_tracker VARCHAR(64),
+      tracker_slope_new    VARCHAR(64),
+      tracker_inter_new    VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+
+
+def biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # Photo Tracker & Scanner 机群的线性回归
+    sql = """
+     INSERT /*+ append */ INTO  APS_MID_TYPE221_RUNTIME_P_TS
+      WITH TYPE221_LR_FIRST1 AS (                                                                                                                                   
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.QTY, O.TRACKER_PT, O.SCANNER_PT                                                                           
+                   -- , ROUND((REGR_SLOPE(O.TRACKER_PT, O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) * O.QTY +
+                   , ROUND((REGR_SLOPE(CAST(O.TRACKER_PT AS DOUBLE), CAST(O.QTY AS DOUBLE)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) * CAST(O.QTY AS DOUBLE) +
+                   --         REGR_INTERCEPT(O.TRACKER_PT, O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)),6) AS PT_Y_TRACKER
+                            REGR_INTERCEPT(CAST(O.TRACKER_PT AS DOUBLE), CAST(O.QTY AS DOUBLE)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)),6) AS PT_Y_TRACKER
+                   -- , ROUND((REGR_SLOPE(O.SCANNER_PT, O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) * O.QTY +
+                   , ROUND((REGR_SLOPE(CAST(O.SCANNER_PT AS DOUBLE), CAST(O.QTY AS DOUBLE)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) * CAST(O.QTY AS DOUBLE) +
+                   --         REGR_INTERCEPT(O.SCANNER_PT, O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)),6) AS PT_Y_SCANNER
+                            REGR_INTERCEPT(CAST(O.SCANNER_PT AS DOUBLE), CAST(O.QTY AS DOUBLE)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)),6) AS PT_Y_SCANNER
+                   , COUNT(1) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS CNT_OLD                                                                      
+                   , CASE WHEN COUNT(1) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) < 20                                                                  
+                          THEN 'Y'                                                                                                                                  
+                          ELSE 'N'                                                                                                                                  
+                     END AS LESSTHAN20_FLAG                                                                                                                         
+                   , CASE WHEN MAX(O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) = MIN(O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)
+                          THEN 'Y'                                                                                                                                  
+                          ELSE 'N'                                                                                                                                  
+                     END AS SAMEQTY_FLAG_ZWS                                                                                                                        
+                   -- ,ROUND(O.TRACKER_PT / O.QTY, 5) AS ONE_WAFER_PT_TRACKER
+                   ,ROUND(CAST(O.TRACKER_PT AS DOUBLE) / CAST(O.QTY AS DOUBLE), 5) AS ONE_WAFER_PT_TRACKER                                                                                          
+                   -- ,ROUND(O.SCANNER_PT / O.QTY, 5) AS ONE_WAFER_PT_SCANNER
+                   ,ROUND(CAST(O.SCANNER_PT AS DOUBLE) / CAST(O.QTY AS DOUBLE), 5) AS ONE_WAFER_PT_SCANNER                                                                                          
+             FROM (SELECT A.MODULE_ID, A.TOOLG_ID, A.TOOL_ID, A.QTY,                                                                                                
+                          -- ROUND((TO_DATE(A.PROCESS_END, 'YYYY-MM-DD HH24:MI:SS') -                                                                                  
+                          --      TO_DATE(A.PROCESS_START, 'YYYY-MM-DD HH24:MI:SS')) * 24,                                                                            
+                          --      6)
+                          round((extract(epoch from(CAST(A.PROCESS_END AS TIMESTAMP) - CAST(A.PROCESS_START AS TIMESTAMP))))*24, 6)
+                                -                                                                                                                                   
+                          -- ROUND((TO_DATE(A.SCANNER_END, 'YYYY-MM-DD HH24:MI:SS') -                                                                                 
+                          --      TO_DATE(A.SCANNER_START, 'YYYY-MM-DD HH24:MI:SS')) * 24,                                                                            
+                          --      6)
+                          round((extract(epoch from(CAST(A.SCANNER_END AS TIMESTAMP) - CAST(A.SCANNER_START AS TIMESTAMP))))*24, 6)
+                           AS TRACKER_PT,                                                                                                                           
+                           -- ROUND((TO_DATE(A.SCANNER_END, 'YYYY-MM-DD HH24:MI:SS') -                                                                                 
+                           --     TO_DATE(A.SCANNER_START, 'YYYY-MM-DD HH24:MI:SS')) * 24,                                                                            
+                           --     6)
+                           round((extract(epoch from(CAST(A.SCANNER_END AS TIMESTAMP) - CAST(A.SCANNER_START AS TIMESTAMP))))*24, 6)
+                           AS SCANNER_PT                                                                                                                            
+                     FROM APS_TR_TYPE221.APS_TR_TYPE221 A                                                                                                                          
+                     -- WHERE A.PROCESS_START >= TO_CHAR(SYSDATE - 30, 'YYYY-MM-DD HH24:MI:SS')
+                     WHERE A.PROCESS_START >= STRFTIME(DATE_TRUNC('day', CURRENT_DATE) - INTERVAL '30 day', '%Y-%m-%d %H:%M:%S')                                                                        
+                     AND A.MODULE_ID = 'PHOTO'                                                                                                                      
+                     AND A.SCANNER_START IS NOT NULL                                                                                                                
+                     AND A.SCANNER_END IS NOT NULL                                                                                                                  
+                   ) O                                                                                                                                              
+      ),                                                                                                                                                            
+      TYPE221_LR_FIRST_ZWS AS (                                                                                                                                     
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.SAMEQTY_FLAG_ZWS, O.LESSTHAN20_FLAG                                                                       
+                    ,AVG(O.ONE_WAFER_PT_TRACKER) AS ONE_WAFER_PT_TRACKER                                                                                            
+             FROM (                                                                                                                                                 
+                       SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.ONE_WAFER_PT_TRACKER, O.SAMEQTY_FLAG_ZWS, O.LESSTHAN20_FLAG
+                       FROM (                                                                                                                                       
+                               SELECT A.*                                                                                                                           
+                                    ,MEDIAN(RN) OVER(PARTITION BY A.MODULE_ID, A.TOOLG_ID, A.TOOL_ID) MED                                                           
+                               FROM (                                                                                                                               
+                                       SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.SAMEQTY_FLAG_ZWS, O.LESSTHAN20_FLAG                                             
+                                             ,O.ONE_WAFER_PT_TRACKER                                                                                                
+                                             ,ROW_NUMBER() OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID ORDER BY O.ONE_WAFER_PT_TRACKER) RN
+                                       FROM TYPE221_LR_FIRST1 O                                                                                                     
+                      ) A                                                                                                                                           
+                            ) O                                                                                                                                     
+                       WHERE ABS(RN - MED) <= 0.5                                                                                                                   
+                   ) O                                                                                                                                              
+            GROUP BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.SAMEQTY_FLAG_ZWS, O.LESSTHAN20_FLAG                                                                      
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST_LESSTHAN20 AS (                                                                                                                             
+             SELECT Z.MODULE_ID, Z.TOOLG_ID, Z.TOOL_ID, Z.LESSTHAN20_FLAG, Z.SAMEQTY_FLAG_ZWS, 'N' AS PA_PB_0_FLAG_ZWS,                                             
+                    Z.ONE_WAFER_PT_TRACKER, 0 AS TRACKER_SLOPE_NEW, 0 AS TRACKER_INTER_NEW                                                                          
+             FROM TYPE221_LR_FIRST_ZWS Z                                                                                                                            
+             WHERE Z.LESSTHAN20_FLAG = 'Y'                                                                                                                          
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST_SAMEQTY AS (                                                                                                                                
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.LESSTHAN20_FLAG, O.SAMEQTY_FLAG_ZWS , 'N' AS PA_PB_0_FLAG_ZWS,                                            
+                    O.ONE_WAFER_PT_TRACKER,  0 AS TRACKER_SLOPE_NEW, 0 AS TRACKER_INTER_NEW                                                                         
+             FROM TYPE221_LR_FIRST_ZWS O                                                                                                                            
+             WHERE O.SAMEQTY_FLAG_ZWS = 'Y'                                                                                                                         
+             AND NOT EXISTS (SELECT 1                                                                                                                               
+                   FROM TYPE221_LR_FIRST_LESSTHAN20 L20                                                                                                             
+                   WHERE O.MODULE_ID = L20.MODULE_ID                                                                                                                
+                   AND O.TOOLG_ID = L20.TOOLG_ID                                                                                                                    
+                   AND O.TOOL_ID = L20.TOOL_ID)                                                                                                                     
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST2 AS (                                                                                                                                       
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.QTY, O.TRACKER_PT, O.PT_Y_TRACKER, O.CNT_OLD, O.LESSTHAN20_FLAG,
+                    O.SAMEQTY_FLAG_ZWS, Z.ONE_WAFER_PT_TRACKER,                                                                                                     
+                    -- ROUND(ABS((O.PT_Y_TRACKER - O.TRACKER_PT) /
+                    ROUND(ABS((CAST(O.PT_Y_TRACKER AS DOUBLE) - CAST(O.TRACKER_PT AS DOUBLE)) /                                                                                                     
+                    --SQRT((SUM(POWER(O.PT_Y_TRACKER - O.TRACKER_PT,2)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)) / O.CNT_OLD)), 2) AS SE   
+                    SQRT((SUM(POWER(CAST(O.PT_Y_TRACKER AS DOUBLE) - CAST(O.TRACKER_PT AS DOUBLE),2)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)) / CAST(O.CNT_OLD AS DOUBLE))), 2) AS SE
+             FROM TYPE221_LR_FIRST1 O                                                                                                                               
+             INNER JOIN TYPE221_LR_FIRST_ZWS Z ON O.MODULE_ID = Z.MODULE_ID AND O.TOOLG_ID = Z.TOOLG_ID AND O.TOOL_ID = Z.TOOL_ID
+             WHERE NOT EXISTS (                                                                                                                                     
+                SELECT 1 FROM TYPE221_LR_FIRST_LESSTHAN20 L20 WHERE O.MODULE_ID = L20.MODULE_ID AND O.TOOLG_ID = L20.TOOLG_ID AND O.TOOL_ID = L20.TOOL_ID
+             )                                                                                                                                                      
+             AND NOT EXISTS (                                                                                                                                       
+                SELECT 1 FROM TYPE221_LR_FIRST_SAMEQTY SQ WHERE O.MODULE_ID = SQ.MODULE_ID AND O.TOOLG_ID = SQ.TOOLG_ID AND O.TOOL_ID = SQ.TOOL_ID
+             )                                                                                                                                                      
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST3 AS(                                                                                                                                        
+               SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.QTY, O.TRACKER_PT, O.PT_Y_TRACKER,                                                                      
+                      O.CNT_OLD, O.SE, O.ONE_WAFER_PT_TRACKER,                                                                                                      
+                      O.LESSTHAN20_FLAG, O.SAMEQTY_FLAG_ZWS                                                                                                         
+                FROM TYPE221_LR_FIRST2 O                                                                                                                            
+                WHERE O.SE <= 1.96                                                                                                                                  
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND1 AS (                                                                                                                                      
+               SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.QTY, O.TRACKER_PT, O.ONE_WAFER_PT_TRACKER                                                               
+               , CASE WHEN COUNT(1) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) < 20                                                                      
+                      THEN 'Y'                                                                                                                                      
+                      ELSE 'N'                                                                                                                                      
+                 END AS LESSTHAN20_FLAG                                                                                                                             
+               , CASE WHEN MAX(O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) = MIN(O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)
+                      THEN 'Y'                                                                                                                                      
+                      ELSE 'N'                                                                                                                                      
+                 END AS SAMEQTY_FLAG_ZWS                                                                                                                            
+               -- , REGR_SLOPE(O.TRACKER_PT, O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS TRACKER_SLOPE_NEW
+               , REGR_SLOPE(CAST(O.TRACKER_PT AS DOUBLE), CAST(O.QTY AS DOUBLE)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS TRACKER_SLOPE_NEW
+               -- , REGR_INTERCEPT(O.TRACKER_PT, O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS TRACKER_INTER_NEW
+               , REGR_INTERCEPT(CAST(O.TRACKER_PT AS DOUBLE), CAST(O.QTY AS DOUBLE)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS TRACKER_INTER_NEW
+               FROM TYPE221_LR_FIRST3 O                                                                                                                             
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND_LESSTHAN20 AS (                                                                                                                            
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.LESSTHAN20_FLAG, O.SAMEQTY_FLAG_ZWS, 'N' AS PA_PB_0_FLAG_ZWS,                                             
+                    O.ONE_WAFER_PT_TRACKER, 0 AS TRACKER_SLOPE_NEW, 0 AS TRACKER_INTER_NEW                                                                          
+             FROM TYPE221_LR_SECOND1 O                                                                                                                              
+             WHERE O.LESSTHAN20_FLAG = 'Y'                                                                                                                          
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND_SAMEQTY AS (                                                                                                                               
+             SELECT T.MODULE_ID, T.TOOLG_ID, T.TOOL_ID, T.LESSTHAN20_FLAG, T.SAMEQTY_FLAG_ZWS , 'N' AS PA_PB_0_FLAG_ZWS,                                            
+                    T.ONE_WAFER_PT_TRACKER,  0 AS TRACKER_SLOPE_NEW, 0 AS TRACKER_INTER_NEW                                                                         
+             FROM TYPE221_LR_SECOND1 T                                                                                                                              
+             WHERE NOT EXISTS (SELECT 1                                                                                                                             
+                   FROM TYPE221_LR_SECOND_LESSTHAN20 L20                                                                                                            
+                   WHERE T.MODULE_ID = L20.MODULE_ID                                                                                                                
+                   AND T.TOOLG_ID = L20.TOOLG_ID                                                                                                                    
+                   AND T.TOOL_ID = L20.TOOL_ID)                                                                                                                     
+             AND T.SAMEQTY_FLAG_ZWS = 'Y'                                                                                                                           
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND2 AS (                                                                                                                                      
+              SELECT  N.MODULE_ID, N.TOOLG_ID, N.TOOL_ID, N.QTY, N.TRACKER_PT, N.ONE_WAFER_PT_TRACKER                                                               
+                     ,N.LESSTHAN20_FLAG, N.SAMEQTY_FLAG_ZWS                                                                                                         
+                     ,N.TRACKER_SLOPE_NEW, N.TRACKER_INTER_NEW                                                                                                      
+                     ,CASE WHEN N.TRACKER_SLOPE_NEW < 0 OR N.TRACKER_SLOPE_NEW + N.TRACKER_INTER_NEW < 0                                                            
+                           THEN 'Y'                                                                                                                                 
+                           ELSE 'N'                                                                                                                                 
+                      END AS PA_PB_0_FLAG_ZWS                                                                                                                       
+               FROM TYPE221_LR_SECOND1 N                                                                                                                            
+               WHERE NOT EXISTS (                                                                                                                                   
+                 SELECT 1 FROM TYPE221_LR_SECOND_LESSTHAN20 L20 WHERE N.MODULE_ID = L20.MODULE_ID AND N.TOOLG_ID = L20.TOOLG_ID AND N.TOOL_ID = L20.TOOL_ID
+               )                                                                                                                                                    
+               AND NOT EXISTS (                                                                                                                                     
+                 SELECT 1 FROM TYPE221_LR_SECOND_SAMEQTY SQ WHERE N.MODULE_ID = SQ.MODULE_ID AND N.TOOLG_ID = SQ.TOOLG_ID AND N.TOOL_ID = SQ.TOOL_ID
+               )                                                                                                                                                    
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND_PA_PB_0 AS (                                                                                                                               
+               SELECT N.MODULE_ID, N.TOOLG_ID, N.TOOL_ID, N.LESSTHAN20_FLAG, N.SAMEQTY_FLAG_ZWS, N.PA_PB_0_FLAG_ZWS,                                                
+                      N.ONE_WAFER_PT_TRACKER, 0 AS TRACKER_SLOPE_NEW, 0 AS TRACKER_INTER_NEW                                                                        
+               FROM TYPE221_LR_SECOND2 N                                                                                                                            
+               WHERE N.PA_PB_0_FLAG_ZWS = 'Y'                                                                                                                       
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND3 AS (                                                                                                                                      
+            SELECT N.MODULE_ID, N.TOOLG_ID, N.TOOL_ID, N.LESSTHAN20_FLAG,N.PA_PB_0_FLAG_ZWS, N.SAMEQTY_FLAG_ZWS,                                                    
+                   N.ONE_WAFER_PT_TRACKER, N.TRACKER_SLOPE_NEW, N.TRACKER_INTER_NEW                                                                                 
+            FROM  TYPE221_LR_SECOND2 N                                                                                                                              
+            WHERE NOT EXISTS (SELECT 1                                                                                                                              
+                   FROM TYPE221_LR_SECOND_PA_PB_0 PAB                                                                                                               
+                   WHERE N.MODULE_ID = PAB.MODULE_ID                                                                                                                
+                   AND N.TOOLG_ID = PAB.TOOLG_ID                                                                                                                    
+                   AND N.TOOL_ID = PAB.TOOL_ID )                                                                                                                    
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND_RESULT AS (                                                                                                                                
+             SELECT N3.MODULE_ID, N3.TOOLG_ID, N3.TOOL_ID, N3.LESSTHAN20_FLAG,                                                                                      
+                   N3.SAMEQTY_FLAG_ZWS , N3.PA_PB_0_FLAG_ZWS, N3.ONE_WAFER_PT_TRACKER, N3.TRACKER_SLOPE_NEW, N3.TRACKER_INTER_NEW
+             FROM TYPE221_LR_SECOND3 N3                                                                                                                             
+             UNION                                                                                                                                                  
+             SELECT PAB.MODULE_ID, PAB.TOOLG_ID, PAB.TOOL_ID, PAB.LESSTHAN20_FLAG,                                                                                  
+                    PAB.SAMEQTY_FLAG_ZWS , PAB.PA_PB_0_FLAG_ZWS, PAB.ONE_WAFER_PT_TRACKER, PAB.TRACKER_SLOPE_NEW, PAB.TRACKER_INTER_NEW
+             FROM TYPE221_LR_SECOND_PA_PB_0 PAB                                                                                                                     
+             UNION                                                                                                                                                  
+             SELECT OSQ.MODULE_ID, OSQ.TOOLG_ID, OSQ.TOOL_ID, OSQ.LESSTHAN20_FLAG,                                                                                  
+                    OSQ.SAMEQTY_FLAG_ZWS , OSQ.PA_PB_0_FLAG_ZWS, OSQ.ONE_WAFER_PT_TRACKER, OSQ.TRACKER_SLOPE_NEW, OSQ.TRACKER_INTER_NEW
+             FROM TYPE221_LR_FIRST_SAMEQTY OSQ                                                                                                                      
+             UNION                                                                                                                                                  
+             SELECT OL20.MODULE_ID, OL20.TOOLG_ID, OL20.TOOL_ID, OL20.LESSTHAN20_FLAG,                                                                              
+                    OL20.SAMEQTY_FLAG_ZWS , OL20.PA_PB_0_FLAG_ZWS, OL20.ONE_WAFER_PT_TRACKER, OL20.TRACKER_SLOPE_NEW, OL20.TRACKER_INTER_NEW
+             FROM TYPE221_LR_FIRST_LESSTHAN20 OL20                                                                                                                  
+             UNION                                                                                                                                                  
+             SELECT NSQ.MODULE_ID, NSQ.TOOLG_ID, NSQ.TOOL_ID, NSQ.LESSTHAN20_FLAG,                                                                                  
+                    NSQ.SAMEQTY_FLAG_ZWS , NSQ.PA_PB_0_FLAG_ZWS, NSQ.ONE_WAFER_PT_TRACKER, NSQ.TRACKER_SLOPE_NEW, NSQ.TRACKER_INTER_NEW
+             FROM TYPE221_LR_SECOND_SAMEQTY NSQ                                                                                                                     
+             UNION                                                                                                                                                  
+             SELECT NL20.MODULE_ID, NL20.TOOLG_ID, NL20.TOOL_ID, NL20.LESSTHAN20_FLAG,                                                                              
+                    NL20.SAMEQTY_FLAG_ZWS , NL20.PA_PB_0_FLAG_ZWS, NL20.ONE_WAFER_PT_TRACKER, NL20.TRACKER_SLOPE_NEW, NL20.TRACKER_INTER_NEW
+             FROM TYPE221_LR_SECOND_LESSTHAN20 NL20                                                                                                                 
+                                                                                                                                                                    
+             GROUP BY MODULE_ID, TOOLG_ID, TOOL_ID, LESSTHAN20_FLAG, SAMEQTY_FLAG_ZWS,                                                                              
+                      PA_PB_0_FLAG_ZWS, ONE_WAFER_PT_TRACKER, TRACKER_SLOPE_NEW, TRACKER_INTER_NEW                                                                  
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST_ZWS_SCANNER AS (                                                                                                                            
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.SAMEQTY_FLAG_ZWS, O.LESSTHAN20_FLAG                                                                       
+                    -- ,AVG(O.ONE_WAFER_PT_SCANNER) AS ONE_WAFER_PT_SCANNER
+                    ,AVG(CAST(O.ONE_WAFER_PT_SCANNER AS DOUBLE)) AS ONE_WAFER_PT_SCANNER                                                                                            
+             FROM (                                                                                                                                                 
+                       SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.ONE_WAFER_PT_SCANNER, O.SAMEQTY_FLAG_ZWS, O.LESSTHAN20_FLAG
+                       FROM (                                                                                                                                       
+                               SELECT A.*                                                                                                                           
+                                    ,MEDIAN(RN) OVER(PARTITION BY A.MODULE_ID, A.TOOLG_ID, A.TOOL_ID) MED                                                           
+                               FROM (                                                                                                                               
+                                       SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.SAMEQTY_FLAG_ZWS, O.LESSTHAN20_FLAG                                             
+                                             ,O.ONE_WAFER_PT_SCANNER                                                                                                
+                                             ,ROW_NUMBER() OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID ORDER BY O.ONE_WAFER_PT_SCANNER) RN
+                                       FROM TYPE221_LR_FIRST1 O                                                                                                     
+                      ) A                                                                                                                                           
+                            ) O                                                                                                                                     
+                       WHERE ABS(RN - MED) <= 0.5                                                                                                                   
+                   ) O                                                                                                                                              
+            GROUP BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.SAMEQTY_FLAG_ZWS, O.LESSTHAN20_FLAG                                                                      
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST_LESSTHAN20_SCANNER AS (                                                                                                                     
+             SELECT Z.MODULE_ID, Z.TOOLG_ID, Z.TOOL_ID, Z.LESSTHAN20_FLAG, Z.SAMEQTY_FLAG_ZWS, 'N' AS PA_PB_0_FLAG_ZWS,                                             
+                    Z.ONE_WAFER_PT_SCANNER, 0 AS SCANNER_SLOPE_NEW, 0 AS SCANNER_INTER_NEW                                                                          
+             FROM TYPE221_LR_FIRST_ZWS_SCANNER Z                                                                                                                    
+             WHERE Z.LESSTHAN20_FLAG = 'Y'                                                                                                                          
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST_SAMEQTY_SCANNER AS (                                                                                                                        
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.LESSTHAN20_FLAG, O.SAMEQTY_FLAG_ZWS , 'N' AS PA_PB_0_FLAG_ZWS,                                            
+                    O.ONE_WAFER_PT_SCANNER,  0 AS SCANNER_SLOPE_NEW, 0 AS SCANNER_INTER_NEW                                                                         
+             FROM TYPE221_LR_FIRST_ZWS_SCANNER O                                                                                                                    
+             WHERE O.SAMEQTY_FLAG_ZWS = 'Y'                                                                                                                         
+             AND NOT EXISTS (SELECT 1                                                                                                                               
+                     FROM TYPE221_LR_FIRST_LESSTHAN20_SCANNER L20                                                                                                   
+                   WHERE O.MODULE_ID = L20.MODULE_ID                                                                                                                
+                   AND O.TOOLG_ID = L20.TOOLG_ID                                                                                                                    
+                   AND O.TOOL_ID = L20.TOOL_ID)                                                                                                                     
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST2_SCANNER AS (                                                                                                                               
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.QTY, O.SCANNER_PT, O.PT_Y_SCANNER, O.CNT_OLD, O.LESSTHAN20_FLAG,
+                    O.SAMEQTY_FLAG_ZWS, Z.ONE_WAFER_PT_SCANNER,                                                                                                     
+                    -- ROUND(ABS((O.PT_Y_SCANNER - O.SCANNER_PT) /
+                    ROUND(ABS((CAST(O.PT_Y_SCANNER AS DOUBLE) - CAST(O.PT_Y_SCANNER AS DOUBLE)) /                                                                                                     
+                    -- SQRT((SUM(POWER(O.PT_Y_SCANNER - O.SCANNER_PT,2)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)) / O.CNT_OLD)
+                    SQRT((SUM(POWER(CAST(O.PT_Y_SCANNER AS DOUBLE) - CAST(O.SCANNER_PT AS DOUBLE),2)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)) / CAST(O.CNT_OLD AS DOUBLE))
+                    ), 2)                                                                                                                                           
+                    AS SE                                                                                                                                           
+             FROM TYPE221_LR_FIRST1 O                                                                                                                               
+             INNER JOIN TYPE221_LR_FIRST_ZWS_SCANNER Z ON O.MODULE_ID = Z.MODULE_ID AND O.TOOLG_ID = Z.TOOLG_ID AND O.TOOL_ID = Z.TOOL_ID
+             WHERE NOT EXISTS (                                                                                                                                     
+               SELECT 1 FROM TYPE221_LR_FIRST_LESSTHAN20_SCANNER L20 WHERE O.MODULE_ID = L20.MODULE_ID AND O.TOOLG_ID = L20.TOOLG_ID AND O.TOOL_ID = L20.TOOL_ID
+             )                                                                                                                                                      
+             AND NOT EXISTS (                                                                                                                                       
+               SELECT 1 FROM TYPE221_LR_FIRST_SAMEQTY_SCANNER SQ WHERE O.MODULE_ID = SQ.MODULE_ID AND O.TOOLG_ID = SQ.TOOLG_ID AND O.TOOL_ID = SQ.TOOL_ID
+             )                                                                                                                                                      
+       ),                                                                                                                                                           
+       TYPE221_LR_FIRST3_SCANNER AS(                                                                                                                                
+               SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.QTY, O.SCANNER_PT, O.PT_Y_SCANNER,                                                                      
+                      O.CNT_OLD, O.SE, O.ONE_WAFER_PT_SCANNER,                                                                                                      
+                      O.LESSTHAN20_FLAG, O.SAMEQTY_FLAG_ZWS                                                                                                         
+                FROM TYPE221_LR_FIRST2_SCANNER O                                                                                                                    
+                WHERE O.SE <= 1.96                                                                                                                                  
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND1_SCANNER AS (                                                                                                                              
+               SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.QTY, O.SCANNER_PT, O.ONE_WAFER_PT_SCANNER                                                               
+               , CASE WHEN COUNT(1) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) < 20                                                                      
+                      THEN 'Y'                                                                                                                                      
+                      ELSE 'N'                                                                                                                                      
+                 END AS LESSTHAN20_FLAG                                                                                                                             
+               , CASE WHEN MAX(O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) = MIN(O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID)
+                      THEN 'Y'                                                                                                                                      
+                      ELSE 'N'                                                                                                                                      
+                 END AS SAMEQTY_FLAG_ZWS                                                                                                                            
+               -- , REGR_SLOPE(O.SCANNER_PT, O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS SCANNER_SLOPE_NEW
+               , REGR_SLOPE(CAST(O.SCANNER_PT AS DOUBLE), CAST(O.QTY AS DOUBLE)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS SCANNER_SLOPE_NEW
+               -- , REGR_INTERCEPT(O.SCANNER_PT, O.QTY) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS SCANNER_INTER_NEW
+               , REGR_INTERCEPT(CAST(O.SCANNER_PT AS DOUBLE), CAST(O.QTY AS DOUBLE)) OVER(PARTITION BY O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID) AS SCANNER_INTER_NEW
+               FROM TYPE221_LR_FIRST3_SCANNER O                                                                                                                     
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND_LESSTHAN20_SCANNER AS (                                                                                                                    
+             SELECT O.MODULE_ID, O.TOOLG_ID, O.TOOL_ID, O.LESSTHAN20_FLAG, O.SAMEQTY_FLAG_ZWS, 'N' AS PA_PB_0_FLAG_ZWS,                                             
+                    O.ONE_WAFER_PT_SCANNER, 0 AS SCANNER_SLOPE_NEW, 0 AS SCANNER_INTER_NEW                                                                          
+             FROM TYPE221_LR_SECOND1_SCANNER O                                                                                                                      
+             WHERE O.LESSTHAN20_FLAG = 'Y'                                                                                                                          
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND_SAMEQTY_SCANNER AS (                                                                                                                       
+             SELECT T.MODULE_ID, T.TOOLG_ID, T.TOOL_ID, T.LESSTHAN20_FLAG, T.SAMEQTY_FLAG_ZWS , 'N' AS PA_PB_0_FLAG_ZWS,                                            
+                    T.ONE_WAFER_PT_SCANNER,  0 AS SCANNER_SLOPE_NEW, 0 AS SCANNER_INTER_NEW                                                                         
+             FROM TYPE221_LR_SECOND1_SCANNER T                                                                                                                      
+             WHERE NOT EXISTS (SELECT 1                                                                                                                             
+                   FROM TYPE221_LR_SECOND_LESSTHAN20_SCANNER L20                                                                                                    
+                   WHERE T.MODULE_ID = L20.MODULE_ID                                                                                                                
+                   AND T.TOOLG_ID = L20.TOOLG_ID                                                                                                                    
+                   AND T.TOOL_ID = L20.TOOL_ID)                                                                                                                     
+             AND T.SAMEQTY_FLAG_ZWS = 'Y'                                                                                                                           
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND2_SCANNER AS (                                                                                                                              
+              SELECT  N.MODULE_ID, N.TOOLG_ID, N.TOOL_ID, N.QTY, N.SCANNER_PT, N.ONE_WAFER_PT_SCANNER                                                               
+                     ,N.LESSTHAN20_FLAG, N.SAMEQTY_FLAG_ZWS                                                                                                         
+                     ,N.SCANNER_SLOPE_NEW, N.SCANNER_INTER_NEW                                                                                                      
+                     ,CASE WHEN N.SCANNER_SLOPE_NEW < 0 OR N.SCANNER_SLOPE_NEW + N.SCANNER_INTER_NEW < 0                                                            
+                           THEN 'Y'                                                                                                                                 
+                           ELSE 'N'                                                                                                                                 
+                      END AS PA_PB_0_FLAG_ZWS                                                                                                                       
+               FROM TYPE221_LR_SECOND1_SCANNER N                                                                                                                    
+               WHERE NOT EXISTS (                                                                                                                                   
+                SELECT 1 FROM TYPE221_LR_SECOND_LESSTHAN20_SCANNER L20 WHERE N.MODULE_ID = L20.MODULE_ID AND N.TOOLG_ID = L20.TOOLG_ID AND N.TOOL_ID = L20.TOOL_ID
+               )                                                                                                                                                    
+               AND NOT EXISTS (                                                                                                                                     
+                SELECT 1 FROM TYPE221_LR_SECOND_SAMEQTY_SCANNER SQ WHERE N.MODULE_ID = SQ.MODULE_ID AND N.TOOLG_ID = SQ.TOOLG_ID AND N.TOOL_ID = SQ.TOOL_ID
+               )                                                                                                                                                    
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND_PA_PB_0_SCANNER AS (                                                                                                                       
+               SELECT N.MODULE_ID, N.TOOLG_ID, N.TOOL_ID, N.LESSTHAN20_FLAG, N.SAMEQTY_FLAG_ZWS, N.PA_PB_0_FLAG_ZWS,                                                
+                      N.ONE_WAFER_PT_SCANNER, 0 AS SCANNER_SLOPE_NEW, 0 AS SCANNER_INTER_NEW                                                                        
+               FROM TYPE221_LR_SECOND2_SCANNER N                                                                                                                    
+               WHERE N.PA_PB_0_FLAG_ZWS = 'Y'                                                                                                                       
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND3_SCANNER AS (                                                                                                                              
+            SELECT N.MODULE_ID, N.TOOLG_ID, N.TOOL_ID, N.LESSTHAN20_FLAG,N.PA_PB_0_FLAG_ZWS, N.SAMEQTY_FLAG_ZWS,                                                    
+                   N.ONE_WAFER_PT_SCANNER, N.SCANNER_SLOPE_NEW, N.SCANNER_INTER_NEW                                                                                 
+            FROM  TYPE221_LR_SECOND2_SCANNER N                                                                                                                      
+            WHERE NOT EXISTS (SELECT 1                                                                                                                              
+                   FROM TYPE221_LR_SECOND_PA_PB_0_SCANNER PAB                                                                                                       
+                   WHERE N.MODULE_ID = PAB.MODULE_ID                                                                                                                
+                   AND N.TOOLG_ID = PAB.TOOLG_ID                                                                                                                    
+                   AND N.TOOL_ID = PAB.TOOL_ID)                                                                                                                     
+       ),                                                                                                                                                           
+       TYPE221_LR_SECOND_RESULT_SCANNER AS (                                                                                                                        
+             SELECT N3.MODULE_ID, N3.TOOLG_ID, N3.TOOL_ID, N3.LESSTHAN20_FLAG,                                                                                      
+                   N3.SAMEQTY_FLAG_ZWS , N3.PA_PB_0_FLAG_ZWS, N3.ONE_WAFER_PT_SCANNER, N3.SCANNER_SLOPE_NEW, N3.SCANNER_INTER_NEW
+             FROM TYPE221_LR_SECOND3_SCANNER N3                                                                                                                     
+             UNION                                                                                                                                                  
+             SELECT PAB.MODULE_ID, PAB.TOOLG_ID, PAB.TOOL_ID, PAB.LESSTHAN20_FLAG,                                                                                  
+                    PAB.SAMEQTY_FLAG_ZWS , PAB.PA_PB_0_FLAG_ZWS, PAB.ONE_WAFER_PT_SCANNER, PAB.SCANNER_SLOPE_NEW, PAB.SCANNER_INTER_NEW
+             FROM TYPE221_LR_SECOND_PA_PB_0_SCANNER PAB                                                                                                             
+             UNION                                                                                                                                                  
+             SELECT OSQ.MODULE_ID, OSQ.TOOLG_ID, OSQ.TOOL_ID, OSQ.LESSTHAN20_FLAG,                                                                                  
+                    OSQ.SAMEQTY_FLAG_ZWS , OSQ.PA_PB_0_FLAG_ZWS, OSQ.ONE_WAFER_PT_SCANNER, OSQ.SCANNER_SLOPE_NEW, OSQ.SCANNER_INTER_NEW
+             FROM TYPE221_LR_FIRST_SAMEQTY_SCANNER OSQ                                                                                                              
+             UNION                                                                                                                                                  
+             SELECT OL20.MODULE_ID, OL20.TOOLG_ID, OL20.TOOL_ID, OL20.LESSTHAN20_FLAG,                                                                              
+                    OL20.SAMEQTY_FLAG_ZWS , OL20.PA_PB_0_FLAG_ZWS, OL20.ONE_WAFER_PT_SCANNER, OL20.SCANNER_SLOPE_NEW, OL20.SCANNER_INTER_NEW
+             FROM TYPE221_LR_FIRST_LESSTHAN20_SCANNER OL20                                                                                                          
+             UNION                                                                                                                                                  
+             SELECT NSQ.MODULE_ID, NSQ.TOOLG_ID, NSQ.TOOL_ID, NSQ.LESSTHAN20_FLAG,                                                                                  
+                    NSQ.SAMEQTY_FLAG_ZWS , NSQ.PA_PB_0_FLAG_ZWS, NSQ.ONE_WAFER_PT_SCANNER, NSQ.SCANNER_SLOPE_NEW, NSQ.SCANNER_INTER_NEW
+             FROM TYPE221_LR_SECOND_SAMEQTY_SCANNER NSQ                                                                                                             
+             UNION                                                                                                                                                  
+             SELECT NL20.MODULE_ID, NL20.TOOLG_ID, NL20.TOOL_ID, NL20.LESSTHAN20_FLAG,                                                                              
+                    NL20.SAMEQTY_FLAG_ZWS , NL20.PA_PB_0_FLAG_ZWS, NL20.ONE_WAFER_PT_SCANNER, NL20.SCANNER_SLOPE_NEW, NL20.SCANNER_INTER_NEW
+             FROM TYPE221_LR_SECOND_LESSTHAN20_SCANNER NL20                                                                                                         
+                                                                                                                                                                    
+             GROUP BY MODULE_ID, TOOLG_ID, TOOL_ID, LESSTHAN20_FLAG, SAMEQTY_FLAG_ZWS,                                                                              
+                      PA_PB_0_FLAG_ZWS, ONE_WAFER_PT_SCANNER, SCANNER_SLOPE_NEW, SCANNER_INTER_NEW                                                                  
+       )                                                                                                                                                            
+       SELECT S.MODULE_ID, S.TOOLG_ID, S.TOOL_ID, 1, S.LESSTHAN20_FLAG,                                                                                                
+              CASE WHEN S.SAMEQTY_FLAG_ZWS = 'Y' OR S.PA_PB_0_FLAG_ZWS = 'Y' THEN 'Y'                                                                               
+                   ELSE 'N'                                                                                                                                         
+              END AS SCANNER_ZWS_FLAG,                                                                                                                              
+              CASE WHEN T.SAMEQTY_FLAG_ZWS = 'Y' OR T.PA_PB_0_FLAG_ZWS = 'Y' THEN 'Y'                                                                               
+                   ELSE 'N'                                                                                                                                         
+              END AS TRACKER_ZWS_FLAG,                                                                                                                              
+              'TS' AS PHOTO_TYPE,                                                                                                                                   
+              S.ONE_WAFER_PT_SCANNER, S.SCANNER_SLOPE_NEW, S.SCANNER_INTER_NEW,                                                                                     
+              T.ONE_WAFER_PT_TRACKER, T.TRACKER_SLOPE_NEW, T.TRACKER_INTER_NEW                                                                                      
+       FROM TYPE221_LR_SECOND_RESULT_SCANNER S                                                                                                                      
+       INNER JOIN TYPE221_LR_SECOND_RESULT T ON S.MODULE_ID = T.MODULE_ID AND S.TOOLG_ID = T.TOOLG_ID AND S.TOOL_ID = T.TOOL_ID
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_TYPE221_RUNTIME_P_TS",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_MID_TYPE221_RUNTIME_P_TS")
+
+    # Photo 其他机群不需要算线性回归(PT, NPT 均为 0)
+    sql = """
+     INSERT /*+ append */ INTO  APS_MID_TYPE221_RUNTIME_P_ETC                              
+     SELECT A.MODULE_ID, A.TOOLG_ID, A.TOOL_ID, '1'                                 
+          , '' AS LESSTHAN20_FLAG                                                 
+          , '' AS SCANNER_ZWS_FLAG                                                
+          , '' AS TRACKER_ZWS_FLAG                                                
+          , 'ETC' AS PHOTO_TYPE                                                   
+          , '0' AS ONE_WAFER_PT_SANNER                                              
+          , '0' AS SCANNER_SLOPE_NEW                                                
+          , '0' AS SCANNER_INTER_NEW                                                
+          , '0' AS ONE_WAFER_PT_TRACKER                                             
+          , '0' AS TRACKER_SLOPE_NEW                                                
+          , '0' AS TRACKER_INTER_NEW                                                
+     FROM APS_TR_TYPE221.APS_TR_TYPE221 A                                                        
+     -- WHERE A.PROCESS_START >= TO_CHAR(SYSDATE - 30, 'YYYY-MM-DD HH24:MI:SS')
+     WHERE A.PROCESS_START >= DATE_TRUNC('day', CURRENT_DATE) - INTERVAL '30 day'      
+     AND A.MODULE_ID = 'PHOTO'                                                    
+     AND NOT EXISTS (SELECT 1 FROM APS_MID_TYPE221_RUNTIME_P_TS TS                     
+                         WHERE A.MODULE_ID = TS.MODULE_ID                         
+                         AND A.TOOLG_ID = TS.TOOLG_ID                                     
+                         AND A.TOOL_ID = TS.TOOL_ID                               
+                       )                                                          
+     GROUP BY A.MODULE_ID, A.TOOLG_ID, A.TOOL_ID                                  
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_TYPE221_RUNTIME_P_ETC",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_MID_TYPE221_RUNTIME_P_ETC")
+
+    # Tracker和Scanner的线性回归结果和 Photo 其他机群的线性回归结果merge
+    sql = """
+     INSERT /*+ append */ INTO  APS_MID_TYPE221_RUNTIME_P_ALL                             
+     SELECT '{uuid}' AS PARENTID,                                               
+            TSR.MODULE_ID, TSR.TOOLG_ID, TSR.TOOL_ID, TSR.CH_CNT, TSR.LESSTHAN20_FLAG,      
+            TSR.SCANNER_ZWS_FLAG , TSR.TRACKER_ZWS_FLAG, TSR.PHOTO_TYPE,                                                                                                         
+            TSR.ONE_WAFER_PT_SCANNER, TSR.SCANNER_SLOPE_NEW, TSR.SCANNER_INTER_NEW,                                                                                              
+            TSR.ONE_WAFER_PT_TRACKER, TSR.TRACKER_SLOPE_NEW, TSR.TRACKER_INTER_NEW,                                                                                              
+            '{current_time}' AS UPDATE_TIME,                                   
+            '' AS PARTCODE                               
+     FROM APS_MID_TYPE221_RUNTIME_P_TS TSR                                          
+     UNION                                                                                                                                                                       
+     SELECT '{uuid}' AS PARENTID,                                               
+            ER.MODULE_ID, ER.TOOLG_ID, ER.TOOL_ID, ER.CH_CNT, ER.LESSTHAN20_FLAG,                     
+            ER.SCANNER_ZWS_FLAG , 'N' AS TRACKER_ZWS_FLAG, ER.PHOTO_TYPE,                                                                                                        
+            ER.ONE_WAFER_PT_SCANNER, ER.SCANNER_SLOPE_NEW, ER.SCANNER_INTER_NEW,                                                                                                 
+            '0' AS ONE_WAFER_PT_TRACKER, '0' AS TRACKER_SLOPE_NEW, '0' AS TRACKER_INTER_NEW,                                                                                           
+            '{current_time}' AS UPDATE_TIME,                                   
+            '' AS PARTCODE                               
+     FROM APS_MID_TYPE221_RUNTIME_P_ETC ER                                          
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_TYPE221_RUNTIME_P_ALL",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_MID_TYPE221_RUNTIME_P_ALL")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_MID_TYPE_RUNTIME_1D_APS_MID_TYPE221_RUNTIME_P_ALL"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_MID_TYPE221_RUNTIME_P_ALL"
+    used_table_list = ['APS_TR_TYPE221']
+    target_table_sql = """
+    create table {}APS_MID_TYPE221_RUNTIME_P_ALL
+    (
+      parentid             VARCHAR(64),
+      module_id            VARCHAR(64),
+      toolg_id             VARCHAR(64),
+      tool_id              VARCHAR(64),
+      ch_cnt               VARCHAR(64),
+      lessthan20_flag      VARCHAR(64),
+      scanner_zws_flag     VARCHAR(64),
+      tracker_zws_flag     VARCHAR(64),
+      photo_type           VARCHAR(64),
+      one_wafer_pt_scanner VARCHAR(64),
+      scanner_slope_new    VARCHAR(64),
+      scanner_inter_new    VARCHAR(64),
+      one_wafer_pt_tracker VARCHAR(64),
+      tracker_slope_new    VARCHAR(64),
+      tracker_inter_new    VARCHAR(64),
+      update_time          VARCHAR(64),
+      partcode             VARCHAR(32)
+    )
+    """.format("") # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_memory.sql('SET threads TO 2')
+            # 加上TMP目录:LQN:2023/08/21
+            duck_db_memory.execute(
+                "SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+        # 创建Temp表
+        create_temp_table(duck_db_memory)
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+
+        biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+                                                                                  target_table,
+                                                                                  target_table_sql.format("file_db."),
+                                                                                  current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, cons_error_code.APS_TR_TYPE_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            # 删除TMP目录:LQN:2023/08/21
+            if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+                os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

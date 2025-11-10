@@ -1,0 +1,1743 @@
+from xinxiang import config
+
+
+def create_temp_table(duck_db):
+    table_type = ""
+    if not config.g_debug_mode:
+        table_type = 'TEMP'
+    '''
+    这里在内存中创建使用到的临时表
+    '''
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_LAST_FLOW
+    (
+      parentid          VARCHAR(60),
+      prod_id           VARCHAR(60),
+      plan_no           VARCHAR(60),
+      plan_id           VARCHAR(60),
+      step_id           VARCHAR(60),
+      layer             VARCHAR(60),
+      stage             VARCHAR(60),
+      toolg_id          VARCHAR(60),
+      recipe            VARCHAR(60),
+      reticle_group     VARCHAR(60),
+      step_type         VARCHAR(1),
+      toolg_type        VARCHAR(1),
+      process_time      VARCHAR(60),
+      cycle_time        VARCHAR(60),
+      update_time       VARCHAR(60),
+      ope_no            VARCHAR(60),
+      capability        VARCHAR(600),
+      sgs_flag          VARCHAR(60),
+      prodg_id          VARCHAR(60),
+      prodg_tech        VARCHAR(60),
+      partcode          VARCHAR(60),
+      sgs_group         VARCHAR(60),
+      multi_target_flag VARCHAR(2),
+      multi_group       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP
+    (
+      lot_id             VARCHAR(60),
+      prodg_id           VARCHAR(60),
+      prodg_tech         VARCHAR(60),
+      prodspec_id        VARCHAR(60),
+      plan_id            VARCHAR(60),
+      target_plan_id     VARCHAR(60),
+      ope_no             VARCHAR(60),
+      ope_seq            VARCHAR(60),
+      target_ope_no      VARCHAR(60),
+      target_ope_seq     VARCHAR(60),
+      target_toolg_id    VARCHAR(60),
+      lot_type           VARCHAR(60),
+      foup_id            VARCHAR(60),
+      wafer_qty          VARCHAR(60),
+      priority           VARCHAR(60),
+      lot_status         VARCHAR(60),
+      arrival            VARCHAR(60),
+      layer              VARCHAR(60),
+      stage              VARCHAR(60),
+      eqp_id             VARCHAR(60),
+      trackin_time       VARCHAR(60),
+      process_start_time VARCHAR(60),
+      tech_id            VARCHAR(60),
+      customer_id        VARCHAR(60),
+      parent_lot_id      VARCHAR(60),
+      critical_ratio     VARCHAR(60),
+      flow_recipe        VARCHAR(60),
+      shr_flag           VARCHAR(60),
+      recipe_id          VARCHAR(60),
+      reticle_id         VARCHAR(60),
+      location_id        VARCHAR(60),
+      job_prepare        VARCHAR(60),
+      fab_phase          VARCHAR(60),
+      white_flag         VARCHAR(2),
+      batch_id           VARCHAR(200),
+      frombatch_time     VARCHAR(64),
+      frombatch_tool     VARCHAR(64),
+      trans_state        VARCHAR(64),
+      foup_station_id    VARCHAR(64),
+      multi_target_flag  VARCHAR(2),
+      multi_group        VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_V
+    (
+      lot_id                  VARCHAR(60),
+      prodspec_id             VARCHAR(60),
+      mainpd_id               VARCHAR(60),
+      ope_no                  VARCHAR(60),
+      lot_type                VARCHAR(60),
+      lot_finished_state      VARCHAR(60),
+      cassete_id              VARCHAR(60),
+      wafer_qty               VARCHAR(60),
+      priority_class          VARCHAR(60),
+      lot_proc_state          VARCHAR(60),
+      last_ope_comp_time      VARCHAR(60),
+      eqp_id                  VARCHAR(60),
+      ope_no_start_time       VARCHAR(60),
+      last_process_start_time VARCHAR(60),
+      tech_id                 VARCHAR(60),
+      customer_id             VARCHAR(60),
+      parent_lot_id           VARCHAR(60),
+      white_flag              VARCHAR(2),
+      batch_id                VARCHAR(200),
+      trans_state             VARCHAR(64),
+      process_start_time      VARCHAR(60),
+      wip_claim_time          VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_V2
+    (
+      lot_id                  VARCHAR(60),
+      prodspec_id             VARCHAR(60),
+      mainpd_id               VARCHAR(60),
+      ope_no                  VARCHAR(60),
+      lot_type                VARCHAR(60),
+      lot_finished_state      VARCHAR(60),
+      cassete_id              VARCHAR(60),
+      wafer_qty               VARCHAR(60),
+      priority_class          VARCHAR(60),
+      lot_proc_state          VARCHAR(60),
+      last_ope_comp_time      VARCHAR(60),
+      eqp_id                  VARCHAR(60),
+      ope_no_start_time       VARCHAR(60),
+      last_process_start_time VARCHAR(60),
+      tech_id                 VARCHAR(60),
+      customer_id             VARCHAR(60),
+      parent_lot_id           VARCHAR(60),
+      white_flag              VARCHAR(2),
+      batch_id                VARCHAR(200),
+      lot_inv_state           VARCHAR(64),
+      trans_state             VARCHAR(64),
+      process_start_time      VARCHAR(60),
+      wip_claim_time          VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_OPER_START_HS
+    (
+      lot_id       VARCHAR(60),
+      ope_no       VARCHAR(60),
+      recipe_id    VARCHAR(60),
+      claim_time   VARCHAR(60),
+      ctrl_job     VARCHAR(60),
+      eqp_id       VARCHAR(60),
+      ope_category VARCHAR(60),
+      prodspec_id  VARCHAR(60),
+      mainpd_id    VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_OPER_RESERVE_HS
+    (
+      lot_id       VARCHAR(60),
+      ope_no       VARCHAR(60),
+      recipe_id    VARCHAR(60),
+      claim_time   VARCHAR(60),
+      ctrl_job     VARCHAR(60),
+      eqp_id       VARCHAR(60),
+      ope_category VARCHAR(60),
+      recipe_id_c  VARCHAR(60),
+      prodspec_id  VARCHAR(60),
+      mainpd_id    VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_OPER_BATCHFORMING_HS
+    (
+      lot_id        VARCHAR(60),
+      ope_no        VARCHAR(60),
+      claim_time    VARCHAR(60),
+      ctrl_job      VARCHAR(60),
+      eqp_id        VARCHAR(60),
+      ope_category  VARCHAR(60),
+      prodspec_id   VARCHAR(60),
+      mainpd_id     VARCHAR(60),
+      claim_user_id VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_OPER_BATCHFORMING_C_HS
+    (
+      lot_id       VARCHAR(60),
+      ope_no       VARCHAR(60),
+      claim_time   VARCHAR(60),
+      ctrl_job     VARCHAR(60),
+      eqp_id       VARCHAR(60),
+      ope_category VARCHAR(60),
+      prodspec_id  VARCHAR(60),
+      mainpd_id    VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_OPER_PROCESS_START_HS
+    (
+      lot_id       VARCHAR(60),
+      ope_no       VARCHAR(60),
+      recipe_id    VARCHAR(60),
+      claim_time   VARCHAR(60),
+      ctrl_job     VARCHAR(60),
+      eqp_id       VARCHAR(60),
+      ope_category VARCHAR(60),
+      prodspec_id  VARCHAR(60),
+      mainpd_id    VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_OPEHS_RETICLE
+    (
+      lot_id       VARCHAR(60),
+      mainpd_id    VARCHAR(60),
+      ope_no       VARCHAR(60),
+      reticle_id   VARCHAR(60),
+      claim_time   VARCHAR(60),
+      ope_category VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PROCESS_MONITOR
+    (
+      lot_id VARCHAR(60),
+      cr     VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_SHR_PRI
+    (
+      lot_id      VARCHAR(60),
+      lot_purpose VARCHAR(60),
+      pri         VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_LOT_FIRE
+    (
+      line           VARCHAR(60),
+      module         VARCHAR(60),
+      lot_id         VARCHAR(60),
+      end_ope_no     VARCHAR(60),
+      shl_firenumber VARCHAR(60),
+      update_time    VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_LOT_PURPOSE
+    (
+      lot_id          VARCHAR(60),
+      lot_purpose     VARCHAR(60),
+      prodg1          VARCHAR(60),
+      accelarate_flag VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_CUT_LINE
+    (
+      prodg1         VARCHAR(60),
+      cutline_ope_no VARCHAR(60),
+      lot_id         VARCHAR(60),
+      wafer_qty      VARCHAR(60),
+      product_status VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_SELECT_LOT
+    (
+      lot_id   VARCHAR(60),
+      from_op  VARCHAR(60),
+      from_seq VARCHAR(60),
+      to_op    VARCHAR(60),
+      to_seq   VARCHAR(60),
+      rank     VARCHAR(60),
+      prodg_id VARCHAR(60),
+      employee VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_LOT_LOCATION
+    (
+      lot_id          VARCHAR(60),
+      foup_eqp_id     VARCHAR(60),
+      foup_station_id VARCHAR(60),
+      fab_phase       VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_DYB_RETURN_LOT
+    (
+      lot_id                  VARCHAR(60),
+      prodspec_id             VARCHAR(60),
+      current_ope_no          VARCHAR(60),
+      openo                   VARCHAR(60),
+      dyb_mainpd_id           VARCHAR(60),
+      return_mainpd_id        VARCHAR(60),
+      return_ope_no           VARCHAR(60),
+      lot_type                VARCHAR(60),
+      cassete_id              VARCHAR(60),
+      wafer_qty               VARCHAR(60),
+      priority_class          VARCHAR(60),
+      lot_proc_state          VARCHAR(60),
+      last_ope_comp_time      VARCHAR(60),
+      eqp_id                  VARCHAR(60),
+      ope_no_start_time       VARCHAR(60),
+      last_process_start_time VARCHAR(60),
+      tech_id                 VARCHAR(60),
+      customer_id             VARCHAR(60),
+      parent_lot_id           VARCHAR(60),
+      white_flag              VARCHAR(2),
+      batch_id                VARCHAR(200),
+      trans_state             VARCHAR(64),
+      process_start_time      VARCHAR(60),
+      wip_claim_time          VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_DYB_LOT
+    (
+      lot_id                  VARCHAR(60),
+      prodspec_id             VARCHAR(60),
+      current_ope_no          VARCHAR(60),
+      openo                   VARCHAR(60),
+      dyb_mainpd_id           VARCHAR(60),
+      return_mainpd_id        VARCHAR(60),
+      return_ope_no           VARCHAR(60),
+      lot_type                VARCHAR(60),
+      cassete_id              VARCHAR(60),
+      wafer_qty               VARCHAR(60),
+      priority_class          VARCHAR(60),
+      lot_proc_state          VARCHAR(60),
+      last_ope_comp_time      VARCHAR(60),
+      eqp_id                  VARCHAR(60),
+      ope_no_start_time       VARCHAR(60),
+      last_process_start_time VARCHAR(60),
+      tech_id                 VARCHAR(60),
+      customer_id             VARCHAR(60),
+      parent_lot_id           VARCHAR(60),
+      pos_pdid                VARCHAR(60),
+      step_id                 VARCHAR(60),
+      eqp_g                   VARCHAR(60),
+      prodg_id                VARCHAR(60),
+      prodg_tech              VARCHAR(60),
+      recipe                  VARCHAR(60),
+      toolg_type              VARCHAR(60),
+      white_flag              VARCHAR(2),
+      batch_id                VARCHAR(200),
+      trans_state             VARCHAR(64),
+      process_start_time      VARCHAR(60),
+      wip_claim_time          VARCHAR(60),
+      multi_target_flag       VARCHAR(2),
+      multi_group             VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PF_PO_N1
+    (
+      mainpd_id         VARCHAR(64),
+      pos_pdid          VARCHAR(64),
+      ope_seq           VARCHAR(64),
+      ope_no            VARCHAR(64),
+      batch_target_flag VARCHAR(2),
+      batch_name        VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_RECIPE_RETICLE
+    (
+      toolid          VARCHAR(60),
+      recipe_id       VARCHAR(60),
+      reticle_id      VARCHAR(60),
+      modify_time     VARCHAR(60),
+      modify_user     VARCHAR(60),
+      update_time     VARCHAR(60),
+      convert_tool_id VARCHAR(60),
+      recipe_id_c     VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PO_N1_BATCH_NAME
+    (
+      mainpd_id  VARCHAR(64),
+      ope_no     VARCHAR(64),
+      batch_name VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_DYB_FLOW_LOT_V1
+    (
+      lot_id                  VARCHAR(60),
+      prodspec_id             VARCHAR(60),
+      current_ope_no          VARCHAR(60),
+      dyb_mainpd_id           VARCHAR(60),
+      pos_pdid                VARCHAR(64),
+      ope_no                  VARCHAR(64),
+      step_id                 VARCHAR(60),
+      return_mainpd_id        VARCHAR(60),
+      return_ope_no           VARCHAR(60),
+      lot_type                VARCHAR(60),
+      cassete_id              VARCHAR(60),
+      wafer_qty               VARCHAR(60),
+      priority_class          VARCHAR(60),
+      lot_proc_state          VARCHAR(60),
+      last_ope_comp_time      VARCHAR(60),
+      eqp_id                  VARCHAR(60),
+      ope_no_start_time       VARCHAR(60),
+      last_process_start_time VARCHAR(60),
+      tech_id                 VARCHAR(60),
+      customer_id             VARCHAR(60),
+      parent_lot_id           VARCHAR(60),
+      recipe                  VARCHAR(60),
+      sub_ope_no              VARCHAR(60),
+      eqp_g                   VARCHAR(64),
+      eqp_category            VARCHAR(64),
+      white_flag              VARCHAR(2),
+      batch_id                VARCHAR(200),
+      trans_state             VARCHAR(64),
+      process_start_time      VARCHAR(60),
+      wip_claim_time          VARCHAR(60),
+      multi_target_flag       VARCHAR(2),
+      multi_group             VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_LASTFLOW_V1
+    (
+      prod_id           VARCHAR(60),
+      plan_id           VARCHAR(60),
+      plan_no           VARCHAR(60),
+      ope_no            VARCHAR(60),
+      step_id           VARCHAR(60),
+      recipe            VARCHAR(60),
+      toolg_id          VARCHAR(60),
+      prodg_id          VARCHAR(60),
+      prodg_tech        VARCHAR(60),
+      step_type         VARCHAR(60),
+      toolg_type        VARCHAR(60),
+      multi_target_flag VARCHAR(2),
+      multi_group       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_V5
+    (
+      lot_id            VARCHAR(60),
+      prodg_id          VARCHAR(60),
+      prodg_tech        VARCHAR(60),
+      prodspec_id       VARCHAR(60),
+      mainpd_id         VARCHAR(60),
+      target_plan_id    VARCHAR(60),
+      ope_no            VARCHAR(60),
+      step_id           VARCHAR(60),
+      target_ope_no     VARCHAR(60),
+      target_step_id    VARCHAR(60),
+      target_toolg_id   VARCHAR(60),
+      lot_type          VARCHAR(60),
+      cassete_id        VARCHAR(60),
+      wafer_qty         VARCHAR(60),
+      priority_class    VARCHAR(60),
+      lot_proc_state    VARCHAR(60),
+      arrival           VARCHAR(19),
+      st_layer          VARCHAR(240),
+      st_stage          VARCHAR(240),
+      eqp_id            VARCHAR(60),
+      trackin_time      VARCHAR(19),
+      process_start     VARCHAR(19),
+      tech_id           VARCHAR(60),
+      customer_id       VARCHAR(60),
+      parent_lot_id     VARCHAR(60),
+      cr                VARCHAR(60),
+      recipe            VARCHAR(60),
+      white_flag        VARCHAR(2),
+      batch_id          VARCHAR(200),
+      trans_state       VARCHAR(64),
+      wip_claim_time    VARCHAR(19),
+      multi_target_flag VARCHAR(2),
+      multi_group       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_FORMING_RESULT
+    (
+      lot_id        VARCHAR(64),
+      mainpd_id     VARCHAR(64),
+      batch_name    VARCHAR(64),
+      eqp_id        VARCHAR(64),
+      claim_time    VARCHAR(64),
+      claim_user_id VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_LOCATION_INFO
+    (
+      tool_id     VARCHAR(60),
+      location_id VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+        create {table_type} table APS_TMP_ETL_WIP_LOACTION_MANUAL
+        (
+          tool_id     VARCHAR(60),
+          location_id VARCHAR(60)
+        )
+        """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_UMT_CONTROL_LOT
+    (
+      tech        VARCHAR(60),
+      prodg1      VARCHAR(60),
+      product_id  VARCHAR(60),
+      ope_no      VARCHAR(60),
+      lot_id      VARCHAR(60),
+      update_time VARCHAR(60),
+      update_user VARCHAR(60),
+      module      VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_CTL_JOB
+    (
+      lot_id      VARCHAR(64),
+      ope_no      VARCHAR(64),
+      mainpd_id   VARCHAR(64),
+      prodspec_id VARCHAR(64),
+      ctrl_job    VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_HC
+    (
+      lot_id           VARCHAR(60),
+      prodspec_id      VARCHAR(60),
+      plan_id          VARCHAR(60),
+      ope_no           VARCHAR(60),
+      hold_code        VARCHAR(4000),
+      hold_type        VARCHAR(60),
+      hold_reason_code VARCHAR(60),
+      lot_hold_status  VARCHAR(60),
+      hold_time        VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_MERGE_HC
+    (
+      lot_id           VARCHAR(60),
+      ope_no           VARCHAR(60),
+      prodspec_id      VARCHAR(60),
+      hold_time        VARCHAR(60),
+      hold_reason_code VARCHAR(60),
+      hold_type        VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_HANDLE_WIP
+    (
+      parentid          VARCHAR(60) not null,
+      lot_id            VARCHAR(60) not null,
+      step_id           VARCHAR(60),
+      ope_no            VARCHAR(60),
+      target_step_id    VARCHAR(60) not null,
+      target_ope_no     VARCHAR(60),
+      target_toolg_id   VARCHAR(60),
+      prodg_id          VARCHAR(60),
+      prodg_tech        VARCHAR(60),
+      prod_id           VARCHAR(60),
+      plan_id           VARCHAR(60),
+      target_plan_id    VARCHAR(60) not null,
+      lot_type          VARCHAR(20),
+      foup_id           VARCHAR(60),
+      qty               VARCHAR(60),
+      pty               VARCHAR(60),
+      shr_flag          VARCHAR(60),
+      lot_status        VARCHAR(60),
+      arrival           VARCHAR(60),
+      layer             VARCHAR(60),
+      stage             VARCHAR(60),
+      tool_id           VARCHAR(60),
+      reticle_id        VARCHAR(60),
+      recipe            VARCHAR(60),
+      ppid              VARCHAR(60),
+      track_in          VARCHAR(60),
+      process_start     VARCHAR(60),
+      tech_id           VARCHAR(60),
+      customer          VARCHAR(60),
+      location          VARCHAR(20),
+      parent_lot        VARCHAR(60),
+      flow_recipe       VARCHAR(60),
+      critical_ratio    VARCHAR(60),
+      hold_code         VARCHAR(4000),
+      pre_tool_id       VARCHAR(60),
+      create_time       VARCHAR(60),
+      job_prepare       VARCHAR(60),
+      fab_phase         VARCHAR(60),
+      target_prod_id    VARCHAR(60) default 'N/A' not null,
+      from_step_id      VARCHAR(60),
+      to_step_id        VARCHAR(60),
+      white_flag        VARCHAR(2),
+      batch_id          VARCHAR(200),
+      frombatch_time    VARCHAR(64),
+      frombatch_tool    VARCHAR(64),
+      trans_state       VARCHAR(64),
+      foup_station_id   VARCHAR(64),
+      multi_group       VARCHAR(64),
+      multi_target_flag VARCHAR(2),
+      remain_qtime      VARCHAR(64),
+      qtime_step_id_to  VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_HANDLE_WIP
+    (
+      parentid          VARCHAR(60) not null,
+      lot_id            VARCHAR(60) not null,
+      step_id           VARCHAR(60),
+      ope_no            VARCHAR(60),
+      target_step_id    VARCHAR(60) not null,
+      target_ope_no     VARCHAR(60),
+      target_toolg_id   VARCHAR(60),
+      prodg_id          VARCHAR(60),
+      prodg_tech        VARCHAR(60),
+      prod_id           VARCHAR(60),
+      plan_id           VARCHAR(60),
+      target_plan_id    VARCHAR(60) not null,
+      lot_type          VARCHAR(20),
+      foup_id           VARCHAR(60),
+      qty               VARCHAR(60),
+      pty               VARCHAR(60),
+      shr_flag          VARCHAR(60),
+      lot_status        VARCHAR(60),
+      arrival           VARCHAR(60),
+      layer             VARCHAR(60),
+      stage             VARCHAR(60),
+      tool_id           VARCHAR(60),
+      reticle_id        VARCHAR(60),
+      recipe            VARCHAR(60),
+      ppid              VARCHAR(60),
+      track_in          VARCHAR(60),
+      process_start     VARCHAR(60),
+      tech_id           VARCHAR(60),
+      customer          VARCHAR(60),
+      location          VARCHAR(20),
+      parent_lot        VARCHAR(60),
+      flow_recipe       VARCHAR(60),
+      critical_ratio    VARCHAR(60),
+      hold_code         VARCHAR(4000),
+      pre_tool_id       VARCHAR(60),
+      create_time       VARCHAR(60),
+      job_prepare       VARCHAR(60),
+      fab_phase         VARCHAR(60),
+      white_flag        VARCHAR(2),
+      batch_id          VARCHAR(200),
+      frombatch_time    VARCHAR(64),
+      frombatch_tool    VARCHAR(64),
+      trans_state       VARCHAR(64),
+      foup_station_id   VARCHAR(64),
+      multi_target_flag VARCHAR(2),
+      multi_group       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_V3
+    (
+      lot_id             VARCHAR(60),
+      ope_seq            VARCHAR(60),
+      ope_no             VARCHAR(60),
+      prodspec_id        VARCHAR(60),
+      plan_id            VARCHAR(60),
+      lot_type           VARCHAR(60),
+      foup_id            VARCHAR(60),
+      wafer_qty          VARCHAR(60),
+      priority           VARCHAR(60),
+      shr_flag           VARCHAR(60),
+      lot_status         VARCHAR(60),
+      arrival            VARCHAR(60),
+      layer              VARCHAR(60),
+      stage              VARCHAR(60),
+      eqp_id             VARCHAR(60),
+      reticle_id         VARCHAR(60),
+      flow_recipe        VARCHAR(60),
+      recipe_id          VARCHAR(60),
+      trackin_time       VARCHAR(60),
+      process_start_time VARCHAR(60),
+      tech_id            VARCHAR(60),
+      customer_id        VARCHAR(60),
+      location_id        VARCHAR(60),
+      parent_lot_id      VARCHAR(60),
+      critical_ratio     VARCHAR(60),
+      job_prepare        VARCHAR(60),
+      fab_phase          VARCHAR(60),
+      hold_code          VARCHAR(4000),
+      white_flag         VARCHAR(2),
+      batch_id           VARCHAR(200),
+      frombatch_time     VARCHAR(64),
+      frombatch_tool     VARCHAR(64),
+      trans_state        VARCHAR(64),
+      foup_station_id    VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_V4
+    (
+      lot_id             VARCHAR(60),
+      step_id            VARCHAR(60),
+      wip_ope_no         VARCHAR(60),
+      target_step_id     VARCHAR(60),
+      target_ope_no      VARCHAR(60),
+      target_toolg_id    VARCHAR(60),
+      prodg_id           VARCHAR(60),
+      prodg_tech         VARCHAR(60),
+      prodspec_id        VARCHAR(60),
+      plan_id            VARCHAR(60),
+      target_plan_id     VARCHAR(60),
+      lot_type           VARCHAR(60),
+      foup_id            VARCHAR(60),
+      wafer_qty          VARCHAR(60),
+      priority           VARCHAR(60),
+      shr_flag           VARCHAR(60),
+      lot_status         VARCHAR(60),
+      arrival            VARCHAR(60),
+      layer              VARCHAR(60),
+      stage              VARCHAR(60),
+      eqp_id             VARCHAR(60),
+      reticle_id         VARCHAR(60),
+      recipe             VARCHAR(60),
+      ppid               VARCHAR(60),
+      trackin_time       VARCHAR(60),
+      process_start_time VARCHAR(60),
+      tech_id            VARCHAR(60),
+      customer_id        VARCHAR(60),
+      location_id        VARCHAR(60),
+      parent_lot_id      VARCHAR(60),
+      flow_recipe        VARCHAR(60),
+      critical_ratio     VARCHAR(60),
+      hold_code          VARCHAR(4000),
+      job_prepare        VARCHAR(60),
+      fab_phase          VARCHAR(60),
+      white_flag         VARCHAR(2),
+      batch_id           VARCHAR(200),
+      frombatch_time     VARCHAR(64),
+      frombatch_tool     VARCHAR(64),
+      trans_state        VARCHAR(64),
+      foup_station_id    VARCHAR(64),
+      rn                 VARCHAR(60),
+      multi_target_flag  VARCHAR(2),
+      multi_group        VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PREEQP
+    (
+      lot_id         VARCHAR(60),
+      prod_id        VARCHAR(60),
+      plan_id        VARCHAR(60),
+      ope_no         VARCHAR(60),
+      target_plan_id VARCHAR(60),
+      target_ope_no  VARCHAR(60),
+      pre_eqp        VARCHAR(60),
+      ope_no_1       VARCHAR(60),
+      ope_no_2       VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PRE_EQP1
+    (
+      lot_id         VARCHAR(60),
+      prod_id        VARCHAR(60),
+      plan_id        VARCHAR(60),
+      ope_no         VARCHAR(60),
+      target_plan_id VARCHAR(60),
+      target_ope_no  VARCHAR(60),
+      ope_no_1       VARCHAR(60),
+      pre_eqp        VARCHAR(60),
+      eqp_id_1       VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PRE_EQP2
+    (
+      lot_id         VARCHAR(60),
+      prod_id        VARCHAR(60),
+      plan_id        VARCHAR(60),
+      ope_no         VARCHAR(60),
+      target_plan_id VARCHAR(60),
+      target_ope_no  VARCHAR(60),
+      ope_no_2       VARCHAR(60),
+      pre_eqp        VARCHAR(60),
+      eqp_id_1       VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_SPLIT_LOT
+    (
+      prod_id        VARCHAR(60),
+      plan_id        VARCHAR(60),
+      ope_no         VARCHAR(60),
+      target_plan_id VARCHAR(60),
+      target_ope_no  VARCHAR(60),
+      current_lot    VARCHAR(60),
+      seq            VARCHAR(60),
+      child_lot      VARCHAR(60),
+      parent_lot     VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_APC_PA_V1
+    (
+      prodspec_id VARCHAR(30) not null,
+      pr_op_no    VARCHAR(10) not null,
+      op_no_1     VARCHAR(10) not null,
+      op_no_2     VARCHAR(10) not null
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PREEQP_V1
+    (
+      current_lot    VARCHAR(60),
+      prod_id        VARCHAR(60),
+      plan_id        VARCHAR(60),
+      ope_no         VARCHAR(60),
+      target_plan_id VARCHAR(60),
+      target_ope_no  VARCHAR(60),
+      op_no_1        VARCHAR(10),
+      pre_eqp_1_his  VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PREEQP_V2
+    (
+      current_lot    VARCHAR(60),
+      prod_id        VARCHAR(60),
+      plan_id        VARCHAR(60),
+      ope_no         VARCHAR(60),
+      target_plan_id VARCHAR(60),
+      target_ope_no  VARCHAR(60),
+      op_no_2        VARCHAR(10),
+      pre_eqp_2_his  VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PARENT_TOOL_FLAG
+    (
+      parentid         VARCHAR(60),
+      lot_id           VARCHAR(60),
+      prod_id          VARCHAR(60),
+      plan_id          VARCHAR(60),
+      step_id          VARCHAR(60),
+      ope_no           VARCHAR(60),
+      target_step_id   VARCHAR(60),
+      target_ope_no    VARCHAR(60),
+      target_plan_id   VARCHAR(60),
+      parent_tool_flag VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PARENT_TOOL_FLAG_PART1
+    (
+      parentid         VARCHAR(60),
+      lot_id           VARCHAR(60),
+      prod_id          VARCHAR(60),
+      plan_id          VARCHAR(60),
+      step_id          VARCHAR(60),
+      ope_no           VARCHAR(60),
+      target_step_id   VARCHAR(60),
+      target_ope_no    VARCHAR(60),
+      target_plan_id   VARCHAR(60),
+      parent_tool_flag VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PARENT_TOOL_FLAG_PART2
+    (
+      parentid         VARCHAR(60),
+      lot_id           VARCHAR(60),
+      prod_id          VARCHAR(60),
+      plan_id          VARCHAR(60),
+      step_id          VARCHAR(60),
+      ope_no           VARCHAR(60),
+      target_step_id   VARCHAR(60),
+      target_ope_no    VARCHAR(60),
+      target_plan_id   VARCHAR(60),
+      parent_tool_flag VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_PARENT_TOOL_FLAG_PART3
+    (
+      from_ope_no VARCHAR(64),
+      from_lot    VARCHAR(64),
+      to_lot      VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table TMP_FLOW_ORDER_CHANGE
+    (
+      cnt           VARCHAR(64),
+      convert_type  VARCHAR(32),
+      reaction_flag VARCHAR(64),
+      object_cat    VARCHAR(32),
+      object_type   VARCHAR(64),
+      object_name   VARCHAR(32),
+      object_id     VARCHAR(64),
+      ope_no        VARCHAR(32),
+      mainpd_id     VARCHAR(32),
+      prodspec_id   VARCHAR(64),
+      new_mainpd_id VARCHAR(32),
+      new_ope_no    VARCHAR(16),
+      start_time    VARCHAR(64),
+      end_time      VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table TMP_APS_HANDLE_WIP
+    (
+      parentid                VARCHAR(60) not null,
+      lot_id                  VARCHAR(60) not null,
+      step_id                 VARCHAR(60),
+      ope_no                  VARCHAR(60),
+      target_step_id          VARCHAR(60) not null,
+      target_ope_no           VARCHAR(60),
+      target_toolg_id         VARCHAR(60),
+      prodg_id                VARCHAR(60),
+      prodg_tech              VARCHAR(60),
+      prod_id                 VARCHAR(60),
+      plan_id                 VARCHAR(60),
+      target_plan_id          VARCHAR(60) not null,
+      lot_type                VARCHAR(20),
+      foup_id                 VARCHAR(60),
+      qty                     VARCHAR(60),
+      pty                     VARCHAR(60),
+      shr_flag                VARCHAR(60),
+      lot_status              VARCHAR(60),
+      arrival                 VARCHAR(60),
+      layer                   VARCHAR(60),
+      stage                   VARCHAR(60),
+      tool_id                 VARCHAR(60),
+      reticle_id              VARCHAR(60),
+      recipe                  VARCHAR(60),
+      ppid                    VARCHAR(60),
+      track_in                VARCHAR(60),
+      process_start           VARCHAR(60),
+      tech_id                 VARCHAR(60),
+      customer                VARCHAR(60),
+      location                VARCHAR(20),
+      parent_lot              VARCHAR(60),
+      flow_recipe             VARCHAR(60),
+      critical_ratio          VARCHAR(60),
+      hold_code               VARCHAR(4000),
+      pre_tool_id             VARCHAR(60),
+      create_time             VARCHAR(60),
+      job_prepare             VARCHAR(60),
+      fab_phase               VARCHAR(60),
+      target_prod_id          VARCHAR(60),
+      from_step_id            VARCHAR(60),
+      to_step_id              VARCHAR(60),
+      original_target_step_id VARCHAR(60),
+      white_flag              VARCHAR(2),
+      batch_id                VARCHAR(200),
+      multi_target_flag       VARCHAR(2),
+      multi_group             VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table TMP_APS_HANDLE_WIP_V
+    (
+      parentid          VARCHAR(60) not null,
+      lot_id            VARCHAR(60) not null,
+      step_id           VARCHAR(60),
+      ope_no            VARCHAR(60),
+      target_step_id    VARCHAR(60) not null,
+      target_ope_no     VARCHAR(60),
+      target_toolg_id   VARCHAR(60),
+      prodg_id          VARCHAR(60),
+      prodg_tech        VARCHAR(60),
+      prod_id           VARCHAR(60),
+      plan_id           VARCHAR(60),
+      target_plan_id    VARCHAR(60) not null,
+      lot_type          VARCHAR(20),
+      foup_id           VARCHAR(60),
+      qty               VARCHAR(60),
+      pty               VARCHAR(60),
+      shr_flag          VARCHAR(60),
+      lot_status        VARCHAR(60),
+      arrival           VARCHAR(60),
+      layer             VARCHAR(60),
+      stage             VARCHAR(60),
+      tool_id           VARCHAR(60),
+      reticle_id        VARCHAR(60),
+      recipe            VARCHAR(60),
+      ppid              VARCHAR(60),
+      track_in          VARCHAR(60),
+      process_start     VARCHAR(60),
+      tech_id           VARCHAR(60),
+      customer          VARCHAR(60),
+      location          VARCHAR(20),
+      parent_lot        VARCHAR(60),
+      flow_recipe       VARCHAR(60),
+      critical_ratio    VARCHAR(60),
+      hold_code         VARCHAR(4000),
+      pre_tool_id       VARCHAR(60),
+      create_time       VARCHAR(60),
+      job_prepare       VARCHAR(60),
+      fab_phase         VARCHAR(60),
+      target_prod_id    VARCHAR(60),
+      from_step_id      VARCHAR(60),
+      to_step_id        VARCHAR(60),
+      white_flag        VARCHAR(2),
+      batch_id          VARCHAR(200),
+      frombatch_time    VARCHAR(64),
+      frombatch_tool    VARCHAR(64),
+      trans_state       VARCHAR(64),
+      foup_station_id   VARCHAR(64),
+      multi_target_flag VARCHAR(2),
+      multi_group       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_HANDLE_WIP_REPEAT
+    (
+      parentid          VARCHAR(60) not null,
+      lot_id            VARCHAR(60) not null,
+      step_id           VARCHAR(60),
+      ope_no            VARCHAR(60),
+      target_step_id    VARCHAR(60) not null,
+      target_ope_no     VARCHAR(60),
+      target_toolg_id   VARCHAR(60),
+      prodg_id          VARCHAR(60),
+      prodg_tech        VARCHAR(60),
+      prod_id           VARCHAR(60),
+      plan_id           VARCHAR(60),
+      target_plan_id    VARCHAR(60) not null,
+      lot_type          VARCHAR(20),
+      foup_id           VARCHAR(60),
+      qty               VARCHAR(60),
+      pty               VARCHAR(60),
+      shr_flag          VARCHAR(60),
+      lot_status        VARCHAR(60),
+      arrival           VARCHAR(60),
+      layer             VARCHAR(60),
+      stage             VARCHAR(60),
+      tool_id           VARCHAR(60),
+      reticle_id        VARCHAR(60),
+      recipe            VARCHAR(60),
+      ppid              VARCHAR(60),
+      track_in          VARCHAR(60),
+      process_start     VARCHAR(60),
+      tech_id           VARCHAR(60),
+      customer          VARCHAR(60),
+      location          VARCHAR(20),
+      parent_lot        VARCHAR(60),
+      flow_recipe       VARCHAR(60),
+      critical_ratio    VARCHAR(60),
+      hold_code         VARCHAR(4000),
+      pre_tool_id       VARCHAR(60),
+      create_time       VARCHAR(60),
+      job_prepare       VARCHAR(60),
+      fab_phase         VARCHAR(60),
+      target_prod_id    VARCHAR(60) default 'N/A' not null,
+      from_step_id      VARCHAR(60),
+      to_step_id        VARCHAR(60),
+      white_flag        VARCHAR(2),
+      batch_id          VARCHAR(200),
+      frombatch_time    VARCHAR(64),
+      frombatch_tool    VARCHAR(64),
+      trans_state       VARCHAR(64),
+      foup_station_id   VARCHAR(64),
+      multi_target_flag VARCHAR(2),
+      multi_group       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_HANDLE_WIP_LOG
+    (
+      parentid          VARCHAR(60) not null,
+      lot_id            VARCHAR(60) not null,
+      step_id           VARCHAR(60),
+      ope_no            VARCHAR(60),
+      target_step_id    VARCHAR(60) not null,
+      target_ope_no     VARCHAR(60),
+      target_toolg_id   VARCHAR(60),
+      prodg_id          VARCHAR(60),
+      prodg_tech        VARCHAR(60),
+      prod_id           VARCHAR(60),
+      plan_id           VARCHAR(60),
+      target_plan_id    VARCHAR(60) not null,
+      lot_type          VARCHAR(20),
+      foup_id           VARCHAR(60),
+      qty               VARCHAR(60),
+      pty               VARCHAR(60),
+      shr_flag          VARCHAR(60),
+      lot_status        VARCHAR(60),
+      arrival           VARCHAR(60),
+      layer             VARCHAR(60),
+      stage             VARCHAR(60),
+      tool_id           VARCHAR(60),
+      reticle_id        VARCHAR(60),
+      recipe            VARCHAR(60),
+      ppid              VARCHAR(60),
+      track_in          VARCHAR(60),
+      process_start     VARCHAR(60),
+      tech_id           VARCHAR(60),
+      customer          VARCHAR(60),
+      location          VARCHAR(20),
+      parent_lot        VARCHAR(60),
+      flow_recipe       VARCHAR(60),
+      critical_ratio    VARCHAR(60),
+      hold_code         VARCHAR(4000),
+      pre_tool_id       VARCHAR(60),
+      create_time       VARCHAR(60),
+      job_prepare       VARCHAR(60),
+      fab_phase         VARCHAR(60),
+      target_prod_id    VARCHAR(60) default 'N/A' not null,
+      from_step_id      VARCHAR(60),
+      to_step_id        VARCHAR(60),
+      white_flag        VARCHAR(2),
+      batch_id          VARCHAR(200),
+      frombatch_time    VARCHAR(64),
+      frombatch_tool    VARCHAR(64),
+      trans_state       VARCHAR(64),
+      foup_station_id   VARCHAR(64),
+      multi_target_flag VARCHAR(2),
+      multi_group       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_QTIME_FLOW
+    (
+      prodspec_id  VARCHAR(60),
+      flow_key     VARCHAR(60),
+      from_ope_no  VARCHAR(60),
+      from_ope_seq VARCHAR(60),
+      to_ope_no    VARCHAR(60),
+      to_ope_seq   VARCHAR(60),
+      oper_no      VARCHAR(60),
+      oper_seq     VARCHAR(60),
+      qtime_limit  VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_ASSIGN_ABTCH
+    (
+      lot_id          VARCHAR(64),
+      ope_no          VARCHAR(64),
+      assign_multi_id VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_QTIME_RESULT1
+    (
+      lot_id          VARCHAR(64),
+      step_id         VARCHAR(64),
+      ope_no          VARCHAR(64),
+      target_step_id  VARCHAR(64),
+      target_ope_no   VARCHAR(64),
+      target_plan_id  VARCHAR(64),
+      prod_id         VARCHAR(64),
+      plan_id         VARCHAR(64),
+      target_toolg_id VARCHAR(64),
+      from_ope_no     VARCHAR(64),
+      from_ope_seq    VARCHAR(64),
+      to_ope_no       VARCHAR(64),
+      to_ope_seq      VARCHAR(64),
+      oper_no         VARCHAR(64),
+      oper_seq        VARCHAR(64),
+      qtime_limit     VARCHAR(64),
+      prodspec_id     VARCHAR(64),
+      flow_key        VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_QTIME_RESULT2
+    (
+      lot_id          VARCHAR(64),
+      step_id         VARCHAR(64),
+      ope_no          VARCHAR(64),
+      target_step_id  VARCHAR(64),
+      target_ope_no   VARCHAR(64),
+      target_plan_id  VARCHAR(64),
+      prod_id         VARCHAR(64),
+      plan_id         VARCHAR(64),
+      target_toolg_id VARCHAR(64),
+      from_ope_no     VARCHAR(64),
+      from_ope_seq    VARCHAR(64),
+      to_ope_no       VARCHAR(64),
+      to_ope_seq      VARCHAR(64),
+      oper_no         VARCHAR(64),
+      oper_seq        VARCHAR(64),
+      qtime_limit     VARCHAR(64),
+      trigger_time    VARCHAR(64),
+      prodspec_id     VARCHAR(64),
+      flow_key        VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_QTIME_RESULT3
+    (
+      lot_id           VARCHAR(64),
+      step_id          VARCHAR(64),
+      cur_ope_no       VARCHAR(64),
+      target_step_id   VARCHAR(64),
+      target_ope_no    VARCHAR(64),
+      target_plan_id   VARCHAR(64),
+      prod_id          VARCHAR(64),
+      plan_id          VARCHAR(64),
+      target_toolg_id  VARCHAR(64),
+      from_ope_no      VARCHAR(64),
+      from_ope_seq     VARCHAR(64),
+      to_ope_no        VARCHAR(64),
+      to_ope_seq       VARCHAR(64),
+      oper_no_q_flow   VARCHAR(64),
+      oper_seq         VARCHAR(64),
+      target_oper_ct   VARCHAR(64),
+      qtime_limit      VARCHAR(64),
+      max_from_ope_seq VARCHAR(64),
+      min_qtime_limit  VARCHAR(64),
+      trigger_time     VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+    create {table_type} table APS_TMP_ETL_WIP_CONSTRAINT_V1
+    (
+      prodspec_id  VARCHAR(30),
+      flow_key     VARCHAR(30),
+      from_ope_no  VARCHAR(20),
+      from_ope_seq VARCHAR(60),
+      to_ope_no    VARCHAR(20),
+      to_ope_seq   VARCHAR(60),
+      qtime_limit  VARCHAR(60)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+       create {table_type} table APS_TMP_ETL_WIP_MORE_RETICLE
+       (
+            prod_id VARCHAR(64),
+            ope_no  VARCHAR(64),
+            rtcl_id VARCHAR(128)
+       )
+       """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+       create {table_type} table APS_TMP_ETL_WIP_PREFER_TOOL
+       (
+            tech       VARCHAR(64),
+            product_id VARCHAR(64),
+            ope_no     VARCHAR(64)
+       )
+       """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+       create {table_type} table APS_TMP_WIP_RET_FLOW
+       (
+            retn_mainpd_id VARCHAR(64),
+            retn_ope_no    VARCHAR(64),
+            target_op_no   VARCHAR(64),
+            remain_qtime   VARCHAR(64),
+            lot_id         VARCHAR(64),
+            ope_no         VARCHAR(64),
+            prodspec_id    VARCHAR(64),
+            mainpd_id      VARCHAR(64)
+       )
+       """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+       create {table_type} table APS_TMP_WIP_RET_FLOW_STEP
+       (
+            toolg_id       VARCHAR(64),
+            retn_mainpd_id VARCHAR(64),
+            retn_ope_no    VARCHAR(64),
+            retn_step_id   VARCHAR(64),
+            target_op_no   VARCHAR(64),
+            remain_qtime   VARCHAR(64),
+            target_step_id VARCHAR(64),
+            lot_id         VARCHAR(64),
+            ope_no         VARCHAR(64),
+            step_id        VARCHAR(64),
+            prodspec_id    VARCHAR(64),
+            mainpd_id      VARCHAR(64)
+       )
+       """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+           create {table_type} table APS_TMP_WIP_RET_FROM_STEP
+           (
+                toolg_id       VARCHAR(64),
+                retn_mainpd_id VARCHAR(64),
+                retn_ope_no    VARCHAR(64),
+                retn_step_id   VARCHAR(64),
+                target_op_no   VARCHAR(64),
+                remain_qtime   VARCHAR(64),
+                target_step_id VARCHAR(64),
+                lot_id         VARCHAR(64),
+                ope_no         VARCHAR(64),
+                step_id        VARCHAR(64),
+                prodspec_id    VARCHAR(64),
+                mainpd_id      VARCHAR(64),
+                flow_step_id   VARCHAR(64)
+           )
+           """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+       create {table_type} table APS_TMP_WIP_RET_FLOW_RESULT
+       (
+            toolg_id       VARCHAR(64),
+            retn_mainpd_id VARCHAR(64),
+            retn_ope_no    VARCHAR(64),
+            retn_step_id   VARCHAR(64),
+            target_op_no   VARCHAR(64),
+            remain_qtime   VARCHAR(64),
+            target_step_id VARCHAR(64),
+            lot_id         VARCHAR(64),
+            ope_no         VARCHAR(64),
+            step_id        VARCHAR(64),
+            prodspec_id    VARCHAR(64),
+            mainpd_id      VARCHAR(64),
+            dz             VARCHAR(64),
+            flow_step_id   VARCHAR(64)
+       )
+       """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+          create {table_type} table APS_ETL_WIP_HANDLE_RET_FLOW
+          (
+                parentid          VARCHAR(64),
+                lot_id            VARCHAR(64),
+                step_id           VARCHAR(64),
+                ope_no            VARCHAR(64),
+                target_step_id    VARCHAR(64),
+                target_ope_no     VARCHAR(64),
+                target_toolg_id   VARCHAR(64),
+                prodg_id          VARCHAR(64),
+                prodg_tech        VARCHAR(64),
+                prod_id           VARCHAR(64),
+                plan_id           VARCHAR(64),
+                target_plan_id    VARCHAR(64),
+                lot_type          VARCHAR(32),
+                foup_id           VARCHAR(64),
+                qty               VARCHAR(64),
+                pty               VARCHAR(64),
+                shr_flag          VARCHAR(64),
+                lot_status        VARCHAR(64),
+                arrival           VARCHAR(64),
+                layer             VARCHAR(64),
+                stage             VARCHAR(64),
+                tool_id           VARCHAR(64),
+                reticle_id        VARCHAR(64),
+                recipe            VARCHAR(64),
+                ppid              VARCHAR(64),
+                track_in          VARCHAR(64),
+                process_start     VARCHAR(64),
+                tech_id           VARCHAR(64),
+                customer          VARCHAR(64),
+                location          VARCHAR(32),
+                parent_lot        VARCHAR(64),
+                flow_recipe       VARCHAR(64),
+                critical_ratio    VARCHAR(64),
+                hold_code         VARCHAR(4000),
+                pre_tool_id       VARCHAR(64),
+                create_time       VARCHAR(64),
+                job_prepare       VARCHAR(64),
+                fab_phase         VARCHAR(64),
+                target_prod_id    VARCHAR(64),
+                from_step_id      VARCHAR(64),
+                to_step_id        VARCHAR(64),
+                white_flag        VARCHAR(2),
+                batch_id          VARCHAR(200),
+                frombatch_time    VARCHAR(64),
+                frombatch_tool    VARCHAR(64),
+                trans_state       VARCHAR(64),
+                foup_station_id   VARCHAR(64),
+                multi_group       VARCHAR(64),
+                multi_target_flag VARCHAR(2),
+                remain_qtime      VARCHAR(64),
+                qtime_step_id_to  VARCHAR(64)
+          )
+          """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+        create {table_type} table APS_TMP_ETL_WIP_FUTURE_HOLD_MS
+         (
+            lot_id      VARCHAR(64),
+            ope_no      VARCHAR(64),
+            prodspec_id VARCHAR(64),
+            mainpd_id   VARCHAR(64),
+            wip_ope_no  VARCHAR(64),
+            hold_type   VARCHAR(64)
+         )
+         """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+        create {table_type} table APS_TMP_ETL_WIP_FUTURE_HOLD_MR
+        (
+            lot_id         VARCHAR(64),
+            target_step_id VARCHAR(64),
+            lot_status     VARCHAR(64)
+        )
+        """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+          create {table_type} table APS_TMP_ETL_WIP_RESULT
+          (
+            parentid          VARCHAR(64),
+            lot_id            VARCHAR(64),
+            step_id           VARCHAR(64),
+            ope_no            VARCHAR(64),
+            target_step_id    VARCHAR(64),
+            target_ope_no     VARCHAR(64),
+            target_toolg_id   VARCHAR(64),
+            prodg_id          VARCHAR(64),
+            prodg_tech        VARCHAR(64),
+            prod_id           VARCHAR(64),
+            plan_id           VARCHAR(64),
+            target_plan_id    VARCHAR(64),
+            lot_type          VARCHAR(64),
+            foup_id           VARCHAR(64),
+            qty               VARCHAR(64),
+            pty               VARCHAR(64),
+            shr_flag          VARCHAR(64),
+            lot_status        VARCHAR(64),
+            remain_qtime      VARCHAR(64),
+            qtime_step_id_to  VARCHAR(64),
+            arrival           VARCHAR(64),
+            layer             VARCHAR(64),
+            stage             VARCHAR(64),
+            tool_id           VARCHAR(64),
+            reticle_id        VARCHAR(128),
+            recipe            VARCHAR(64),
+            ppid              VARCHAR(64),
+            job_prepare       VARCHAR(64),
+            track_in          VARCHAR(64),
+            process_start     VARCHAR(64),
+            tech_id           VARCHAR(64),
+            customer          VARCHAR(64),
+            location          VARCHAR(64),
+            factory           VARCHAR(64),
+            parent_lot        VARCHAR(64),
+            critical_ratio    VARCHAR(64),
+            hold_code         VARCHAR(512),
+            pre_tool_id       VARCHAR(64),
+            parent_tool_flag  VARCHAR(2),
+            update_time       VARCHAR(64),
+            partcode          VARCHAR(60),
+            target_prod_id    VARCHAR(64),
+            from_step_id      VARCHAR(64),
+            to_step_id        VARCHAR(64),
+            white_flag        VARCHAR(2),
+            batch_id          VARCHAR(256),
+            assign_batch_id   VARCHAR(256),
+            assign_multi_id   VARCHAR(64),
+            frombatch_time    VARCHAR(64),
+            assign_tool_id    VARCHAR(64),
+            trans_state       VARCHAR(64),
+            foup_station_id   VARCHAR(64),
+            inhibit_pass_flag VARCHAR(64),
+            preohb_tool_id    VARCHAR(64)
+          )
+          """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+          create {table_type} table APS_TMP_ETL_WIP_PRE_OHB
+          (
+            eqp_id VARCHAR(64),
+            stk_id VARCHAR(64)
+          )
+          """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_TMP_ETL_WIP_CONSTRAINT_V2
+      (
+        prodspec_id  VARCHAR(30),
+        flow_key     VARCHAR(30),
+        from_ope_no  VARCHAR(20),
+        from_ope_seq VARCHAR(60),
+        to_ope_no    VARCHAR(20),
+        to_ope_seq   VARCHAR(60),
+        qtime_limit  VARCHAR(60)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_TMP_ETL_WIP_FUTRUE_HOLD
+      (
+          parentid           VARCHAR(64),
+          lot_id            VARCHAR(64),
+          step_id           VARCHAR(64),
+          ope_no            VARCHAR(64),
+          target_step_id    VARCHAR(64),
+          target_ope_no     VARCHAR(64),
+          target_toolg_id   VARCHAR(64),
+          prodg_id          VARCHAR(64),
+          prodg_tech        VARCHAR(64),
+          prod_id           VARCHAR(64),
+          plan_id           VARCHAR(64),
+          target_plan_id    VARCHAR(64),
+          lot_type          VARCHAR(32),
+          foup_id           VARCHAR(64),
+          qty               VARCHAR(64),
+          pty               VARCHAR(64),
+          shr_flag          VARCHAR(64),
+          lot_status        VARCHAR(64),
+          remain_qtime      VARCHAR(64),
+          qtime_step_id_to  VARCHAR(64),
+          arrival           VARCHAR(64),
+          layer             VARCHAR(64),
+          stage             VARCHAR(64),
+          tool_id           VARCHAR(64),
+          reticle_id        VARCHAR(64),
+          recipe            VARCHAR(64),
+          ppid              VARCHAR(64),
+          job_prepare       VARCHAR(64),
+          track_in          VARCHAR(64),
+          process_start     VARCHAR(64),
+          tech_id           VARCHAR(64),
+          customer          VARCHAR(64),
+          location          VARCHAR(20),
+          factory           VARCHAR(20),
+          parent_lot        VARCHAR(64),
+          critical_ratio    VARCHAR(64),
+          hold_code         VARCHAR(4000),
+          pre_tool_id       VARCHAR(64),
+          parent_tool_flag  VARCHAR(2),
+          update_time       VARCHAR(64),
+          partcode          VARCHAR(64),
+          target_prod_id    VARCHAR(64),
+          from_step_id      VARCHAR(64),
+          to_step_id        VARCHAR(64),
+          white_flag        VARCHAR(2),
+          batch_id          VARCHAR(200),
+          assign_batch_id   VARCHAR(64),
+          assign_multi_id   VARCHAR(64),
+          frombatch_time    VARCHAR(64),
+          assign_tool_id    VARCHAR(64),
+          trans_state       VARCHAR(64),
+          foup_station_id   VARCHAR(64),
+          inhibit_pass_flag VARCHAR(64),
+          preohb_tool_id    VARCHAR(64)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_TMP_ETL_WIP_ANNOTATION_DATA
+      (
+          lot_id          VARCHAR(64),
+          mainpd_id       VARCHAR(64),
+          ope_no          VARCHAR(64),
+          annotation_flag VARCHAR(1),
+          prodspec_id     VARCHAR(64)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_TMP_ETL_WIP_ANNOTATION_FLOW
+      (
+          lot_id          VARCHAR(64),
+          mainpd_id       VARCHAR(64),
+          ope_no          VARCHAR(64),
+          annotation_flag VARCHAR(1),
+          prodspec_id     VARCHAR(64),
+          step_id         VARCHAR(64)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_TMP_ETL_WIP_ANNOTATION_MAX_STEP
+      (
+          target_plan_id VARCHAR(64),
+          prod_id        VARCHAR(64),
+          lot_id         VARCHAR(64),
+          max_step_id    VARCHAR(64),
+          min_step_id    VARCHAR(64)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_TMP_ETL_WIP_ANNOTATION_RESULT
+      (
+          lot_id        VARCHAR(64),
+          prod_id       VARCHAR(64),
+          plan_id       VARCHAR(64),
+          step_id       VARCHAR(64),
+          entry_step_id VARCHAR(64),
+          retn_step_id  VARCHAR(64),
+          main_plan_id  VARCHAR(64),
+          ope_no        VARCHAR(64),
+          toolg_id      VARCHAR(64)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_TMP_ETL_WIP_ANNOTATION_QTIME
+      (
+          lot_id        VARCHAR(64),
+          prod_id       VARCHAR(64),
+          plan_id       VARCHAR(64),
+          step_id       VARCHAR(64),
+          entry_step_id VARCHAR(64),
+          retn_step_id  VARCHAR(64),
+          main_plan_id  VARCHAR(64),
+          remain_qtime  VARCHAR(64),
+          ope_no        VARCHAR(64),
+          toolg_id      VARCHAR(64)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_TMP_ETL_WIP_ANNOTATION_ALL
+      (
+          parentid          VARCHAR(64),
+          lot_id            VARCHAR(64),
+          step_id           VARCHAR(64),
+          ope_no            VARCHAR(64),
+          target_step_id    VARCHAR(64),
+          target_ope_no     VARCHAR(64),
+          target_toolg_id   VARCHAR(64),
+          prodg_id          VARCHAR(64),
+          prodg_tech        VARCHAR(64),
+          prod_id           VARCHAR(64),
+          plan_id           VARCHAR(64),
+          target_plan_id    VARCHAR(64),
+          lot_type          VARCHAR(32),
+          foup_id           VARCHAR(64),
+          qty               VARCHAR(64),
+          pty               VARCHAR(64),
+          shr_flag          VARCHAR(64),
+          lot_status        VARCHAR(64),
+          remain_qtime      VARCHAR(64),
+          qtime_step_id_to  VARCHAR(64),
+          arrival           VARCHAR(64),
+          layer             VARCHAR(64),
+          stage             VARCHAR(64),
+          tool_id           VARCHAR(64),
+          reticle_id        VARCHAR(64),
+          recipe            VARCHAR(64),
+          ppid              VARCHAR(64),
+          job_prepare       VARCHAR(64),
+          track_in          VARCHAR(64),
+          process_start     VARCHAR(64),
+          tech_id           VARCHAR(64),
+          customer          VARCHAR(64),
+          location          VARCHAR(20),
+          factory           VARCHAR(20),
+          parent_lot        VARCHAR(64),
+          critical_ratio    VARCHAR(64),
+          hold_code         VARCHAR(4000),
+          pre_tool_id       VARCHAR(64),
+          parent_tool_flag  VARCHAR(2),
+          update_time       VARCHAR(64),
+          partcode          VARCHAR(64),
+          target_prod_id    VARCHAR(64),
+          from_step_id      VARCHAR(64),
+          to_step_id        VARCHAR(64),
+          white_flag        VARCHAR(2),
+          batch_id          VARCHAR(200),
+          assign_batch_id   VARCHAR(64),
+          assign_multi_id   VARCHAR(64),
+          frombatch_time    VARCHAR(64),
+          assign_tool_id    VARCHAR(64),
+          trans_state       VARCHAR(64),
+          foup_station_id   VARCHAR(64),
+          inhibit_pass_flag VARCHAR(64),
+          preohb_tool_id    VARCHAR(64),
+          switch_flag       VARCHAR(1),
+          entry_step_id     VARCHAR(64),
+          retn_step_id      VARCHAR(64),
+          main_plan_id      VARCHAR(64)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+

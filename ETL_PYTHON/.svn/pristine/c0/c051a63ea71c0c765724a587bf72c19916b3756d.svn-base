@@ -1,0 +1,505 @@
+import gc
+import logging
+import os
+import shutil
+import socket
+import time
+import traceback
+from datetime import datetime
+from xinxiang.util import  my_runner
+import duckdb
+import pandas as pd
+import numpy as np
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, my_postgres, my_file
+from xinxiang import config
+from xinxiang.util import my_cmder
+
+
+def HandlingVerControlOracle(conn, Uuid, TableName, Partcode):
+    timeStr = my_date.date_time_second_short_str()
+    sql = """
+                        INSERT INTO aps_etl_ver_control
+                        ( ID, MODULE_ID, TOOLG_ID, TABLE_NAME, UPDATE_TIME, UPDATE_USER, PARTCODE )
+                        VALUES('{}', '' , '', '{}', '{}', '{}', '{}') 
+                        """.format(
+        Uuid,
+        TableName,
+        timeStr,
+        "CIM",
+        Partcode
+    )
+    dbcursor = conn.cursor()
+    dbcursor.execute(sql)
+
+def HandlingVerControl(conn, Uuid, TableName, FileName, StartTime):
+    # 测试模式的时候，向本地数据库记录
+    if config.g_debug_mode:
+        conn = my_oracle.oracle_get_connection_local()
+
+    dbcursor = None
+    try:
+        timeStr = my_date.date_time_second_short_str()
+        host_name = socket.gethostname()
+        sql = """
+                INSERT INTO aps_etl_ver_control_duck
+                ( ID, MODULE_ID, TOOLG_ID, TABLE_NAME, UPDATE_TIME, UPDATE_USER, FILE_NAME, START_TIME, SERVER_NAME )
+                VALUES('{}', '' , '', '{}', '{}', '{}', '{}', '{}', '{}') 
+                """.format(
+            Uuid,
+            TableName,
+            timeStr,
+            "CIMP",
+            FileName,
+            StartTime,
+            host_name
+        )
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        conn.commit()
+        if dbcursor:
+            dbcursor.close()
+
+    if config.g_debug_mode:
+        conn.close()
+
+
+def GetNextPartCodeData(conn, TableName):
+    next = None
+    curr_partcode = my_oracle.GetLastPartCodeData(conn, TableName)
+    if curr_partcode == '':
+        next = '2000'
+    elif curr_partcode == '2000':
+        next = '4000'
+    elif curr_partcode == '4000':
+        next = '6000'
+    elif curr_partcode == '6000':
+        next = '2000'
+    return next
+
+def override_GetNextPartCodeData(conn, TableName):
+    next = None
+    curr_partcode = my_oracle.override_GetLastPartCodeData(conn, TableName)
+    if curr_partcode == '':
+        next = '2000'
+    elif curr_partcode == '2000':
+        next = '4000'
+    elif curr_partcode == '4000':
+        next = '6000'
+    elif curr_partcode == '6000':
+        next = '2000'
+    return next
+
+def GetPartName(partcode):
+    if partcode == '2000':
+        return "PART01"
+    elif partcode == '4000':
+        return "PART02"
+    elif partcode == '6000':
+        return "PART03"
+    return None
+
+def _execute(table_name):
+    try:
+        _execute2(table_name)
+    except Exception as e:
+        logging.error("回写失败，文件被打开,休眠120秒后再执行")
+        time.sleep(120)
+        try:
+            _execute2(table_name)
+        except Exception as ee:
+            logging.error("回写失败，文件被打开,休眠120秒后再执行")
+            time.sleep(120)
+            _execute2(table_name)
+
+def _execute2(table_name):
+    oracle_conn = my_oracle.oracle_get_connection()
+    if config.g_debug_mode:
+        oracle_conn = my_oracle.oracle_get_connection_local()
+    csv_file_name = None
+    dbcursor = None
+    parentid = None
+    try:
+        traget_file_name = my_file.get_last_db_file(oracle_conn, table_name)
+        duck_db = duckdb.connect(database=':memory:')
+        sql = "ATTACH '{file_name}' AS {table_name} (READ_ONLY) ".format(file_name=traget_file_name,
+                                                                         table_name=table_name)
+        duck_db.sql(sql)
+
+        folder = os.path.join(config.g_mem_etl_output_path, 'temp')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        uuid = my_oracle.UUID()
+        csv_file_name = os.path.join(folder, table_name + '_' + uuid + '.csv')
+        current_time_short = my_date.date_time_second_short_str()
+
+        part_code = GetNextPartCodeData(oracle_conn, TableName=table_name)
+        print(csv_file_name, '>', part_code)
+
+        part_name = GetPartName(part_code)
+
+        if part_name:
+            # delete_sql = """ALTER TABLE {table_name} TRUNCATE PARTITION ({part_name}) UPDATE INDEXES""".format(
+            #     table_name=table_name, part_name=part_name)
+            # delete_sql = """TRUNCATE table {table_name} where partcode='{partcode}' """.format(table_name=table_name, partcode=part_code)
+            # print(delete_sql)
+            delete_sql = """delete from {table_name} where partcode='{part_code}'""".format(table_name=table_name, part_code=part_code)
+            logging.info(delete_sql)
+            dbcursor = oracle_conn.cursor()
+            dbcursor.execute(delete_sql)
+
+            date_type_sql = f"select column_name, data_type from all_tab_columns where upper(table_name) = '{table_name}'"
+            column_types = pd.read_sql_query(date_type_sql, oracle_conn)
+
+            total_size = my_duck.get_row_count_in_duckdb(duck_db, tableName=table_name + "." + table_name)
+            print(f"{table_name} >>> 读取{total_size}行 >>> partcode >>> {part_code}")
+            batch_size = 100000
+
+            for offset in range(0, total_size, batch_size):
+                query_sql = """select * from {table_name}.{table_name} limit {batch_size} offset {offset}""".format(
+                    table_name=table_name, batch_size=batch_size, offset=offset)
+                df = pd.read_sql_query(query_sql, duck_db)
+                df.columns = df.columns.str.lower()
+                # df['parentid'] = uuid
+
+                parentid = df.loc[0, 'parentid']
+                print(parentid)
+                df['sync_time'] = current_time_short
+                df['partcode'] = part_code
+
+                column_types['COLUMN_NAME'] = column_types['COLUMN_NAME'].str.lower()
+                column_types['DATA_TYPE'] = column_types['DATA_TYPE'].str.lower()
+
+                df = df.replace(pd.NaT, np.nan)
+
+                for col in df.columns:
+                    aaa = column_types[column_types['COLUMN_NAME'].str.contains(col)]
+                    if aaa.shape[0] > 0:
+                        if column_types[column_types['COLUMN_NAME'] == col]['DATA_TYPE'].values[0] == 'date':
+                            try:
+                                df[col] = pd.to_datetime(df[col])
+                                df[col] = df[col].dt.strftime('%Y-%m-%d %H:%M')
+                            except Exception as e:
+                                try:
+                                    df[col].fillna("", inplace=True)
+                                except Exception as eee:
+                                    try:
+                                        print("---------------------------!!!!!")
+                                        df[col].fillna('1970-01-01 00:00:00', inplace=True)
+                                        df[col] = pd.to_datetime(df[col], format='mixed')
+                                        df[col] = df[col].dt.strftime('%Y-%m-%d %H:%M')
+                                    except Exception as fff:
+                                        df[col].fillna("'null'", inplace=True)
+                        if column_types[column_types['COLUMN_NAME'] == col]['DATA_TYPE'].values[0] == 'number':
+                            df[col].fillna(0, inplace=True)
+                            df[col] = pd.to_numeric(df[col])
+                        if column_types[column_types['COLUMN_NAME'] == col]['DATA_TYPE'].values[0].startswith('varchar'):
+                            df[col].fillna('', inplace=True)
+
+                    else:
+                        # Duckdb有，Oracle中不存在这列的时候
+                        del df[col]
+
+                # df.to_sql(table_name, oracle_conn, if_exists='replace', index=False)
+                insert_sql = f"""insert into {table_name} ({', '.join(df.columns)}) values( {', '.join([':' + str(i + 1) for i in range(len(df.columns))])} )"""
+                print(df.shape)
+                data_list = [tuple(row) for row in df.to_numpy()]
+                print("111::::", len(data_list[0]))
+                print(insert_sql)
+                try:
+                    dbcursor.executemany(insert_sql, data_list)
+                except Exception as ee:
+                    print("====================================================")
+                    print(ee)
+                    print(data_list[0])
+
+                start_row = offset + 1
+                end_row = min(offset + batch_size, total_size)
+                print(f"........读取{start_row}到{end_row}行")
+                df = None
+
+        HandlingVerControlOracle(conn=oracle_conn, Uuid=parentid, TableName=table_name, Partcode=part_code)
+
+        duck_db.close()
+        logging.info("""Write back success:{table_name}""".format(table_name=table_name))
+    except Exception as e:
+        logging.error(e)
+        print(e)
+        raise e
+    finally:
+        if dbcursor:
+            dbcursor.close()
+        if oracle_conn:
+            oracle_conn.commit()
+            oracle_conn.close()
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+
+# 针对etl duck db数据回写oracle数据库，取消从pandas中获取数据回写oracle数据库
+# data：2023-11-29
+def duck_db_to_oracle(table_name,csv_delimiter):
+    oracle_conn = my_oracle.oracle_get_connection()
+    owner = config.g_oracle_user.upper()
+    if config.g_debug_mode:
+        oracle_conn = my_oracle.oracle_get_connection_local()
+        owner = config.local_oracle_user.upper()
+    csv_file_name = ''
+    dbcursor = None
+    duck_cursor =None
+    parentid = None
+    import_result = None
+    duck_db = None
+    current_time_short = my_date.date_time_second_short_str()
+    try:
+        dbcursor = oracle_conn.cursor()
+        if not my_runner.judge_main_server(oracle_conn):
+            if oracle_conn:
+                logging.info("当前服务器不是主服务器,系统取消oracle回写功能")
+            return
+
+        # 从oracle数据库获取对应etl job的duckdb文件绝对路径
+        # 2023-12-04 將my_file模板的get_last_db_file方法替換成my_oracle.get_last_create_file方法配合ha框架
+        target_file_name = my_oracle.get_last_create_file(oracle_conn, table_name)
+        duck_db = duckdb.connect(database=':memory:')
+        # attach duckdb文件到内存中
+        sql = "ATTACH '{file_name}' AS {table_name} (READ_ONLY) ".format(file_name=target_file_name,
+                                                                         table_name=table_name)
+        duck_db.sql(sql)
+
+        # 获取duckdb的parentid值
+        sql = "SELECT PARENTID FROM {TABLE_NAME} LIMIT 1".format(TABLE_NAME=table_name + "." + table_name)
+        duck_cursor = duck_db.cursor()
+        duck_cursor.execute(sql)
+        result = duck_cursor.fetchone()
+        if result is not None:
+            parentid = result[0]
+        else:
+            raise Exception(f"duckdb中表名:{table_name}为空，duckdb回写oracle数据库失败！")
+        ver_sql = f"""
+        select * from aps_etl_ver_control tt where tt.id = '{parentid}' and tt.table_name = '{table_name}' 
+        """
+        dbcursor.execute(ver_sql)
+        result  = dbcursor.fetchone()
+        if result is not None:
+            raise Exception(f"{parentid}在表名{table_name}已存在,不可重复添加")
+        # 创建temp文件夹
+        folder = os.path.join(config.g_mem_etl_output_path, 'temp')
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        # 创建csv文件
+        uuid = my_oracle.UUID()
+        csv_file_name = os.path.join(folder, table_name + '_' + uuid + '.csv')
+
+        # 获取table最新分区的版本号
+        part_code = override_GetNextPartCodeData(oracle_conn, TableName=table_name)
+        print(csv_file_name, '>', part_code)
+
+        # 获取table最新分区名称
+        part_name = GetPartName(part_code)
+
+        if part_name:
+            # date_type_sql1 = f"select column_name, data_type from all_tab_columns where upper(table_name) = '{table_name}'"
+            # 查询oracle数据库对应table的列名信息，并拼接成查询sql的列名格式
+            data_type_sql = f"""
+            SELECT LISTAGG(COLUMN_NAME, ',') WITHIN GROUP(ORDER BY COLUMN_ID) AS SQL_COLUMN
+              FROM DBA_TAB_COLUMNS T
+             WHERE UPPER(TABLE_NAME) = '{table_name}'
+               AND OWNER = '{owner}'
+            """
+
+
+            # 取消pandas 获取oracle表列名信息
+            # column_types = pd.read_sql_query(date_type_sql, oracle_conn)
+
+            dbcursor.execute(data_type_sql)
+            result = dbcursor.fetchone()
+            select_columns = None
+            if result is not None:
+                select_columns = result[0]
+            else:
+                raise Exception(f"oracle数据库不存在表名{table_name},duckdb回写oracle数据库失败！")
+
+
+            data_columns_sql = select_columns.replace("PARTCODE", "'"+part_code +"' as PARTCODE")
+            if table_name=="APS_ETL_RLS":
+                data_columns_sql = data_columns_sql.replace("RETICLE_ID", "case when reticle_id =' ' then 'N/A' ELSE reticle_id end RETICLE_ID")
+                data_columns_sql = data_columns_sql.replace("TOOL_ID","case when TOOL_ID =' ' then 'N/A' ELSE TOOL_ID end TOOL_ID")
+                data_columns_sql = data_columns_sql.replace("RECIPE,","case when RECIPE =' ' then 'N/A' ELSE RECIPE end RECIPE,")
+                data_columns_sql = data_columns_sql.replace("PPID", "case when PPID =' ' then 'N/A' ELSE PPID end PPID")
+                data_columns_sql = data_columns_sql.replace("LOT_ID","case when LOT_ID =' ' then 'N/A' ELSE LOT_ID end LOT_ID")
+                data_columns_sql = data_columns_sql.replace("TARGET_STEP_ID","case when TARGET_STEP_ID =' ' then 'N/A' ELSE TARGET_STEP_ID end TARGET_STEP_ID")
+                data_columns_sql = data_columns_sql.replace("TARGET_PLAN_ID","case when TARGET_PLAN_ID =' ' then 'N/A' ELSE TARGET_PLAN_ID end TARGET_PLAN_ID")
+            duck_common_sql = 'select {columns} from {table_name}'.format(columns = data_columns_sql,table_name = table_name + "." + table_name)
+
+
+
+            # 将duckdb中指定的表导出到excel文件中
+            duck_export_csv_sql = """
+                            copy ({select_sql_in_duck}) to '{csv_file_name}' (HEADER, DELIMITER '{csv_delimiter}', NULL '')
+                            """.format(select_sql_in_duck=duck_common_sql,
+                                       csv_file_name=csv_file_name,
+                                       csv_delimiter=csv_delimiter)
+
+            duck_db.sql(duck_export_csv_sql)
+
+            # 删除oracle表最旧分区
+            # delete_sql = """TRUNCATE table {table_name} where partcode='{partcode}' """.format(table_name=table_name, partcode=part_code)
+            # delete_sql = """delete from {table_name} where partcode='{part_code}'""".format(table_name=table_name, part_code=part_code)
+            delete_sql = """ALTER TABLE {table_name} TRUNCATE PARTITION ({part_name}) UPDATE INDEXES""".format(
+                table_name=table_name, part_name=part_name)
+            print(delete_sql)
+
+            logging.info(delete_sql)
+            # dbcursor = oracle_conn.cursor()
+            dbcursor.execute(delete_sql)
+
+            # 使用sqlldr将csv文件导入到oracle数据库中
+            import_result = my_cmder.create_sqlldr_ctlfile(table_name,csv_delimiter,select_columns,csv_file_name,'')
+
+            # total_size = my_duck.get_row_count_in_duckdb(duck_db, tableName=table_name + "." + table_name)
+            # print(f"{table_name} >>> 读取{total_size}行 >>> partcode >>> {part_code}")
+            # batch_size = 100000
+
+
+        # 在oracle数据库中回写版本信息
+        if import_result == 0 or import_result == 2:
+            HandlingVerControlOracle(conn=oracle_conn, Uuid=parentid, TableName=table_name, Partcode=part_code)
+            HandlingVerControl(conn=oracle_conn, Uuid=parentid, TableName='write_back_to_oracle_'+ table_name,FileName=target_file_name,StartTime=current_time_short)
+        logging.info("""Write back success:{table_name}""".format(table_name=table_name))
+    except Exception as e:
+        logging.error("""Table_Name: {table_name};   {e}""".format(table_name=table_name,e=e))
+        print("""Table_Name: {table_name};  {e}""".format(table_name=table_name,e=e))
+        raise e
+    finally:
+        if duck_cursor:
+            duck_cursor.close()
+        if dbcursor:
+            dbcursor.close()
+        if oracle_conn:
+            oracle_conn.commit()
+            oracle_conn.close()
+        if duck_db:
+            print(duck_db)
+            duck_db.close()
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+# ======================================
+# Phase 1
+def execute_flow():
+    table_name = 'APS_ETL_FLOW'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='^~>')
+
+
+
+def execute_wip():
+    table_name = 'APS_ETL_WIP'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+# ======================================
+# Phase 2
+def execute_tool_down():
+    table_name = 'APS_ETL_TOOL_DOWN'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_qtime_spec():
+    table_name = 'APS_ETL_QTIME_SPEC'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_qtime_hold():
+    table_name = 'APS_ETL_QTIME_HOLD'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_wafer_start():
+    table_name = 'APS_ETL_WAFER_START'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_vc_record():
+    table_name = 'APS_ETL_VC_RECORD'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_transport():
+    table_name = 'APS_ETL_TRANSPORT'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_etl_tool():
+    table_name = 'APS_ETL_TOOL'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_size_control():
+    table_name = 'APS_ETL_SIZE_CONTROL'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_season_rule():
+    table_name = 'APS_ETL_SEASON_RULE'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_sampling_lot():
+    table_name = 'APS_ETL_SAMPLING_LOT'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_ppid_info():
+    table_name = 'APS_ETL_PPID_INFO'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_hold_rls():
+    table_name = 'APS_ETL_HOLD_RLS'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+# ======================================
+# Phase 3
+def execute_rls():
+    start_time = time.time()
+    table_name = 'APS_ETL_RLS'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='^~>')
+    exec_time = time.time() - start_time
+    msg = """
+               导出Oracle完成，用时 {exec_time} 秒.
+            """.format(table_name_in_duckdb=table_name, exec_time=exec_time)
+    print(msg)
+
+def execute_pri_wip():
+    table_name = 'APS_ETL_PRI_WIP'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_monitor():
+    table_name = 'APS_ETL_MONITOR'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_sgs_rls():
+    table_name = 'APS_ETL_SGS_RLS'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_pirun():
+    table_name = 'APS_ETL_PIRUN'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_sgs_rule():
+    table_name = 'APS_ETL_SGS_RULE'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_mask_info():
+    table_name = 'APS_ETL_MASK_INFO'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_demand():
+    table_name = 'APS_ETL_DEMAND'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+def execute_pri_wip():
+    table_name = 'APS_ETL_PRI_WIP'
+    duck_db_to_oracle(table_name=table_name, csv_delimiter='@@')
+
+
+if __name__ == '__main__':
+    execute_flow()
+
+

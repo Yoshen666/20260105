@@ -1,0 +1,177 @@
+from xinxiang.jobs_etl import aps_etl_sgs_rls_60m, aps_mid_rls_30m, \
+    aps_etl_rls_5m, aps_etl_recipe_eqp_all_10m, aps_tr_type3_5m, \
+    aps_tr_type32_30m, aps_tr_type31_30m, sql_to_table_APS_ETL_RTDQTTIME_WMTWID, \
+    sql_to_table_APS_ETL_RTDQTTIME_UN_WMTWID, sql_to_table_APS_ETL_PH_RTDQTIME, sql_to_table_APS_ETL_RTDQTTIME, \
+    aps_tr_type22_30m, \
+    aps_tr_type221_30m, aps_tr_type21_30m, aps_tr_type12_30m, aps_tr_type11_30m, \
+    aps_tr_charge_time_10m, aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN, \
+    aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN, aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN, aps_tmp_type11_median_1d_APS_MID_TYPE31_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_MID_TYPE32_MEDIAN, \
+    aps_tmp_type11_median_1d_APS_MID_OCS_MEASURE_CT, aps_tmp_charge_time_10m, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_P_ALL, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_P_ALL, aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_P_ALL, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_ALL, \
+    aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_ALL, aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_ALL, \
+    aps_etl_wip_5m, aps_etl_wafer_start_60m, \
+    aps_etl_vc_record_10m, aps_etl_transport_720m, aps_etl_tool_down_10m, aps_etl_tool_2m, aps_etl_special_cons_10m, \
+    aps_etl_size_control_60m, \
+    aps_etl_season_rule_10m, aps_etl_sampling_lot_5m, aps_etl_qtime_spec_720m, aps_etl_qtime_hold_5m, \
+    aps_etl_ppid_info_720m, aps_etl_pirun_10m, \
+    aps_etl_monitor_10m, aps_etl_mask_info_5m, aps_etl_mask_history_60m, aps_etl_lothistory_60m, \
+    aps_etl_lot_op_hist_10m, aps_etl_hold_rls_10m, \
+    aps_etl_flow_720m, aps_etl_demand_60m, aps_etl_apc_webservice_20m, aps_tmp_type21_median_1d_APS_MID_PURGE11, \
+    aps_tmp_type21_median_1d_APS_MID_PURGE12, \
+    aps_etl_rtd_data_loss_5m, aps_etl_sgs_rule_720m, aps_tmp_lothistory_5m_APS_MID_PH_LOTHISTORY, \
+    aps_tmp_type11_median_1d_APS_MID_TYPE3_MEDIAN, aps_tmp_type11_median_1d_APS_MID_TYPE33_MEDIAN, \
+    aps_tmp_ocs_mian_h_10m_APS_TMP_OCS_MAIN_H, aps_tmp_ocs_mian_h_10m_APS_MID_OCS_JOB_GROUP_PO_STATE_H
+
+from xinxiang.util import my_cron
+
+def set_etl_cron(schedule):
+    # schedule.add_job(aps_etl_sgs_rls_60m.execute,  my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(aps_mid_rls_30m.execute,  my_cron.CronTriger6.cron_triger("0 2/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(aps_etl_rls_5m.execute,  my_cron.CronTriger6.cron_triger("0 5/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(sql_to_table_APS_ETL_RTDQTTIME_WMTWID.execute,  my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(sql_to_table_APS_ETL_RTDQTTIME_UN_WMTWID.execute,  my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(sql_to_table_APS_ETL_PH_RTDQTIME.execute,  my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(sql_to_table_APS_ETL_RTDQTTIME.execute,  my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(aps_etl_recipe_eqp_all_10m.execute,  my_cron.CronTriger6.cron_triger("10 3/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(aps_tr_type3_5m.execute,  my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(aps_tr_type33_5m.execute,  my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(aps_tr_type32_30m.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(aps_tr_type31_30m.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)  # 每小时的第15分钟执行
+    # schedule.add_job(aps_tr_type22_30m.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)  # 周期从10点开始,每天执行一次
+    # schedule.add_job(aps_tr_type221_30m.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)  # 周期从10点开始,每天执行一次
+    # schedule.add_job(aps_tr_type21_30m.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)  # 周期从10点开始,每天执行一次
+    schedule.add_job(aps_tr_type12_30m.execute,  my_cron.CronTriger6.cron_triger("0 0 9/24 * * ?"), misfire_grace_time=60)  # 周期从9点开始,每天执行一次
+    schedule.add_job(aps_tr_type11_30m.execute,  my_cron.CronTriger6.cron_triger("0 0 9/24 * * ?"), misfire_grace_time=60)  # 周期从9点开始,每天执行一次
+    # schedule.add_job(aps_tr_rspilot_runing_10m.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_tr_rcp_inhibit_10m.execute,  my_cron.CronTriger6.cron_triger("0 0/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每5分钟执行一次
+    # schedule.add_job(aps_tr_charge_time_10m.execute,  my_cron.CronTriger6.cron_triger("0 8/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从8分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_tr_apc_pb_10m.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_tr_apc_pa_10m.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_tmp_type21_median_1d_APS_MID_PURGE11.execute, my_cron.CronTriger6.cron_triger("0 1/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从10点12开始,每天执行一次
+    # schedule.add_job(aps_tmp_type21_median_1d_APS_MID_PURGE12.execute, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从10点12开始,每天执行一次
+    # schedule.add_job(aps_tmp_type21_median_1d_APS_TMP_TYPE21_MEDIAN.execute,  my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从10点12开始,每天执行一次
+    # schedule.add_job(aps_tmp_type21_median_1d_APS_TMP_TYPE22_MEDIAN.execute, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+    #                  misfire_grace_time=60)
+    #                    # 周期从10点12开始,每天执行一次
+    # schedule.add_job(aps_tmp_type21_median_1d_APS_TMP_TYPE221_MEDIAN.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)
+    #                   # 周期从10点12开始,每天执行一次
+    schedule.add_job(aps_tmp_type11_median_1d_APS_TMP_TYPE11_MEDIAN.execute, my_cron.CronTriger6.cron_triger("0 0 10/24 * * ?"),
+                     misfire_grace_time=60)
+    #                    # 周期从10点开始,每天执行一次
+    schedule.add_job(aps_tmp_type11_median_1d_APS_TMP_TYPE12_MEDIAN.execute, my_cron.CronTriger6.cron_triger("0 0 10/24 * * ?"),
+                     misfire_grace_time=60)
+    #                    # 周期从10点开始,每天执行一次
+    # schedule.add_job(aps_tmp_type11_median_1d_APS_MID_TYPE31_MEDIAN.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)
+    #                    # 周期从10点开始,每天执行一次
+    # schedule.add_job(aps_tmp_type11_median_1d_APS_MID_TYPE32_MEDIAN.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)
+    #                   # 周期从10点开始,每天执行一次
+    # schedule.add_job(aps_tmp_type11_median_1d_APS_MID_OCS_MEASURE_CT.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)
+    #                   # 周期从10点开始,每天执行一次
+    # schedule.add_job(aps_tmp_type11_median_1d_APS_MID_TYPE3_MEDIAN.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)
+    # # 周期从10点开始,每天执行一次
+    # schedule.add_job(aps_tmp_type11_median_1d_APS_MID_TYPE33_MEDIAN.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)
+    # # 周期从10点开始,每天执行一次
+    # schedule.add_job(aps_tmp_charge_time_10m.execute, my_cron.CronTriger6.cron_triger("0 9/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从9分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_P_ALL.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)
+    #                # 周期从10点18开始,每天执行一次
+    # schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_P_ALL.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)
+    #                  # 周期从10点18开始,每天执行一次
+    # schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_P_ALL.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)
+    #                   # 周期从10点18开始,每天执行一次
+    # schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE21_RUNTIME_ALL.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)
+    #                 # 周期从10点18开始,每天执行一次
+    # schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE22_RUNTIME_ALL.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)
+    #                   # 周期从10点18开始,每天执行一次
+    # schedule.add_job(aps_mid_type_runtime_1d_APS_MID_TYPE221_RUNTIME_ALL.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"), misfire_grace_time=60)
+    #                    # 周期从10点18开始,每天执行一次
+    schedule.add_job(aps_etl_wip_5m.execute, my_cron.CronTriger6.cron_triger("0 0/5 * * * ?"),
+                     misfire_grace_time=60)  # 周期从10点18开始,每天执行一次
+    # schedule.add_job(aps_tmp_ocs_mian_h_10m_APS_TMP_OCS_MAIN_H.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)
+    schedule.add_job(aps_tmp_ocs_mian_h_10m_APS_MID_OCS_JOB_GROUP_PO_STATE_H.execute, my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+                     misfire_grace_time=60)
+
+
+    # schedule.add_job(aps_etl_wafer_start_60m.execute,  "cron",  minute=55, misfire_grace_time=60)  # 周期从55分钟开始,每60分钟执行一次
+    #
+    # schedule.add_job(aps_etl_vc_record_10m.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_etl_transport_720m.execute,  my_cron.CronTriger6.cron_triger("0 0 0/12 * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0小时开始,每12小时执行一次
+    # schedule.add_job(aps_etl_tool_down_10m.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_etl_tool_2m.execute,  my_cron.CronTriger6.cron_triger("0 0/2 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每2分钟执行一次
+    # schedule.add_job(aps_etl_special_cons_10m.execute,  my_cron.CronTriger6.cron_triger("10 2/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从2分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_etl_size_control_60m.execute,  my_cron.CronTriger6.cron_triger("0 0 0/1 * * ?"),
+    #                  misfire_grace_time=60)  # 周期从00分钟开始,每60分钟执行一次
+    # schedule.add_job(aps_etl_season_rule_10m.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_etl_sampling_lot_5m.execute,  my_cron.CronTriger6.cron_triger("0 9/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每5分钟执行一次
+    # schedule.add_job(aps_etl_qtime_spec_720m.execute,  my_cron.CronTriger6.cron_triger("0 0 0/12 * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0小时开始,每12小时执行一次
+    # schedule.add_job(aps_etl_qtime_hold_5m.execute,  my_cron.CronTriger6.cron_triger("0 0/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每5分钟执行一次
+    # schedule.add_job(aps_etl_ppid_info_720m.execute,  my_cron.CronTriger6.cron_triger("0 0 1/12 * * ?"),
+    #                  misfire_grace_time=60)  # 周期从1小时开始,每12小时执行一次
+    # schedule.add_job(aps_etl_pirun_10m.execute,  my_cron.CronTriger6.cron_triger("0 8/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_etl_monitor_10m.execute,  my_cron.CronTriger6.cron_triger("0 9/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_etl_mask_info_5m.execute,  my_cron.CronTriger6.cron_triger("0 4/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每5分钟执行一次
+    # schedule.add_job(aps_etl_rtd_data_loss_5m.execute,my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每5分钟执行一次
+    # schedule.add_job(aps_etl_mask_history_60m.execute,  my_cron.CronTriger6.cron_triger("0 5/5 * * * ?"), misfire_grace_time=60) # 周期从40分钟开始,每60分钟执行一次
+    # schedule.add_job(aps_etl_sgs_rule_720m.execute, my_cron.CronTriger6.cron_triger("0 0 1/12 * * ?"),
+    #                  misfire_grace_time=60)  # 周期从1小时开始,每12小时执行一次
+    # schedule.add_job(aps_etl_lothistory_60m.execute,  my_cron.CronTriger6.cron_triger("0 9/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_tmp_lothistory_5m_APS_MID_PH_LOTHISTORY.execute, my_cron.CronTriger6.cron_triger("0 4/5 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每5分钟执行一次
+    # schedule.add_job(aps_etl_lot_op_hist_10m.execute,  "cron",  minute=55, misfire_grace_time=60)  # 周期从55分钟开始,每1小时执行一次
+    # schedule.add_job(aps_etl_hold_rls_10m.execute,  my_cron.CronTriger6.cron_triger("0 0/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    #
+    schedule.add_job(aps_etl_flow_720m.execute,  my_cron.CronTriger6.cron_triger("0 0 0/1 * * ?"),
+                     misfire_grace_time=60)  # 周期从0小时开始,每1小时执行一次
+    # schedule.add_job(aps_etl_demand_60m.execute,  my_cron.CronTriger6.cron_triger("0 9/10 * * * ?"),
+    #                  misfire_grace_time=60)  # 周期从0分钟开始,每10分钟执行一次
+    # # schedule.add_job(aps_userflag_all_20m.execute,  my_cron.CronTriger6.cron_triger("30 8/10 * * * ?"),
+    # #                  misfire_grace_time=60)  # 周期从3分钟开始,每10分钟执行一次
+    # schedule.add_job(aps_etl_apc_webservice_20m.execute,  my_cron.CronTriger6.cron_triger("0 4/5 * * * ?"), misfire_grace_time=60)  # 周期从57分钟开始,每60分钟执行一次
+
+    # schedule.add_job(aps_tr_csfrinhibit_5m.execute, my_cron.CronTriger6.cron_triger("0 4/5 * * * ?"),misfire_grace_time=60)  # 周期从1分钟开始,每60分钟执行一次
+

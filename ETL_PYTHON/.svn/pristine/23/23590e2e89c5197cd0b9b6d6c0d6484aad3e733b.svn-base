@@ -1,0 +1,22 @@
+schtasks /create /tn xinxiang_aps_etl_pri_wip /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_pri_wip.vbs /sc minute /mo 10 /st 00:09 /f
+schtasks /create /tn xinxiang_aps_etl_lothistory /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_lothistory.vbs /sc minute /mo 5 /st 00:01 /f
+schtasks /create /tn xinxiang_aps_etl_lot_op_hist /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_lot_op_hist.vbs /sc minute /mo 60 /st 00:55 /f
+schtasks /create /tn xinxiang_aps_etl_mask_history /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_mask_history.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_etl_sgs_rls /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_sgs_rls.vbs /sc minute /mo 60 /st 00:50 /f
+schtasks /create /tn xinxiang_aps_etl_pirun /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_pirun.vbs /sc minute /mo 10 /st 00:08 /f
+schtasks /create /tn xinxiang_aps_etl_sgs_rule /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_sgs_rule.vbs /sc hourly /mo 12 /st 01:00 /f
+schtasks /create /tn xinxiang_aps_etl_mask_info /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_mask_info.vbs /sc minute /mo 5 /st 00:04 /f
+schtasks /create /tn xinxiang_aps_etl_demand /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_demand.vbs /sc minute /mo 10 /st 00:09 /f
+schtasks /create /tn xinxiang_aps_etl_special_cons /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_special_cons.vbs /sc minute /mo 10 /st 00:09 /f
+
+
+schtasks /delete /tn "xinxiang_aps_etl_pri_wip"
+schtasks /delete /tn "xinxiang_aps_etl_lothistory"
+schtasks /delete /tn "xinxiang_aps_etl_lot_op_hist"
+schtasks /delete /tn "xinxiang_aps_etl_mask_history"
+schtasks /delete /tn "xinxiang_aps_etl_sgs_rls"
+schtasks /delete /tn "xinxiang_aps_etl_pirun"
+schtasks /delete /tn "xinxiang_aps_etl_sgs_rule"
+schtasks /delete /tn "xinxiang_aps_etl_mask_info"
+schtasks /delete /tn "xinxiang_aps_etl_demand"
+schtasks /delete /tn "xinxiang_aps_etl_special_cons"

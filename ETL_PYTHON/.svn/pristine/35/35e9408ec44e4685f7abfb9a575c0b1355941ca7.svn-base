@@ -1,0 +1,454 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_file
+
+
+def create_temp_table(duck_db):
+    pass
+
+
+def GetTypeFirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_MID_FHOPEHS (                              
+     PARENTID,LOT_ID,LOT_TYPE,SUB_LOT_TYPE,CAST_ID,CAST_CATEGORY,MAINPD_ID,OPE_NO,PD_ID,  
+        OPE_PASS_COUNT, PD_NAME, HOLD_STATE,CLAIM_TIME,CLAIM_SHOP_DATE,CLAIM_USER_ID,   
+        MOVE_TYPE,OPE_CATEGORY,PROD_TYPE,TEST_TYPE,MFG_LAYER,EXT_PRIORITY,PRIORITY_CLASS, 
+        PREV_PRODSPEC_ID,PRODSPEC_ID,PRODGRP_ID,TECH_ID,CUSTOMER_ID,CUSTPROD_ID,ORDER_NO,
+        STAGE_ID,STAGEGRP_ID,PHOTO_LAYER,LOCATION_ID,AREA_ID,EQP_ID,EQP_NAME,OPE_MODE, 
+        LC_RECIPE_ID,RECIPE_ID, PH_RECIPE_ID,RETICLE_COUNT,FIXTURE_COUNT,RPARM_COUNT, 
+        INIT_HOLD_FLAG, LAST_HLDREL_FLAG,HOLD_TIME, HOLD_SHOP_DATE,HOLD_USER_ID,HOLD_TYPE,
+        HOLD_REASON_CODE,HOLD_REASON_DESC,REASON_CODE,REASON_DESCRIPTION,BANK_ID,PREV_BANK_ID, 
+        PREV_MAINPD_ID,PREV_OPE_NO,PREV_PD_ID, PREV_PD_NAME,PREV_PASS_COUNT,PREV_STAGE_ID,PREV_STAGEGRP_ID,
+        PREV_PHOTO_LAYER,FLOWBATCH_ID,CTRL_JOB,REWORK_COUNT, ORG_WAFER_QTY,CUR_WAFER_QTY,PROD_WAFER_QTY, 
+        CNTL_WAFER_QTY, CLAIM_PROD_QTY,CLAIM_CNTL_QTY,TOTAL_GOOD_UNIT, TOTAL_FAIL_UNIT, LOT_OWNER_ID,
+        PLAN_END_TIME, WFRHS_TIME, CRITERIA_FLAG, CLAIM_MEMO,STORE_TIME, ORIG_LOT_ID,GET_FROM, 
+        FAB_ID, EVENT_CREATE_TIME, HOLD_OPE_NO,HOLD_REASON_OPE_NO,ORIGINAL_FAB_ID,DESTINATION_FAB_ID,
+        RELATED_LOT_ID,BOND_GRP_ID,EQPMONJOB_ID,PD_TYPE, PREV_PD_TYPE,UPDATE_TIME,PARTKEY                                                                      
+    )                                                                                    
+     SELECT  gen_random_uuid() AS GUID,       
+            H.LOT_ID,                  
+            H.LOT_TYPE,                
+            H.SUB_LOT_TYPE,            
+            H.CAST_ID,                 
+            H.CAST_CATEGORY,           
+            H.MAINPD_ID,               
+            H.OPE_NO,                  
+            H.PD_ID,                   
+            H.OPE_PASS_COUNT,          
+            H.PD_NAME,                 
+            H.HOLD_STATE,              
+            H.CLAIM_TIME,              
+            H.CLAIM_SHOP_DATE,         
+            H.CLAIM_USER_ID,           
+            H.MOVE_TYPE,               
+            H.OPE_CATEGORY,            
+            H.PROD_TYPE,               
+            H.TEST_TYPE,               
+            H.MFG_LAYER,               
+            H.EXT_PRIORITY,            
+            H.PRIORITY_CLASS,          
+            H.PREV_PRODSPEC_ID,        
+            H.PRODSPEC_ID,             
+            H.PRODGRP_ID,              
+            H.TECH_ID,                 
+            H.CUSTOMER_ID,             
+            H.CUSTPROD_ID,             
+            H.ORDER_NO,                
+            H.STAGE_ID,                
+            H.STAGEGRP_ID,             
+            H.PHOTO_LAYER,             
+            H.LOCATION_ID,             
+            H.AREA_ID,                 
+            H.EQP_ID,                  
+            H.EQP_NAME,                
+            H.OPE_MODE,                
+            H.LC_RECIPE_ID,            
+            H.RECIPE_ID,               
+            H.PH_RECIPE_ID,            
+            H.RETICLE_COUNT,           
+            H.FIXTURE_COUNT,           
+            H.RPARM_COUNT,             
+            H.INIT_HOLD_FLAG,          
+            H.LAST_HLDREL_FLAG,        
+            H.HOLD_TIME,               
+            H.HOLD_SHOP_DATE,          
+            H.HOLD_USER_ID,            
+            H.HOLD_TYPE,               
+            H.HOLD_REASON_CODE,        
+            H.HOLD_REASON_DESC,        
+            H.REASON_CODE,             
+            H.REASON_DESCRIPTION,      
+            H.BANK_ID,                 
+            H.PREV_BANK_ID,            
+            H.PREV_MAINPD_ID,          
+            H.PREV_OPE_NO,             
+            H.PREV_PD_ID,              
+            H.PREV_PD_NAME,            
+            H.PREV_PASS_COUNT,         
+            H.PREV_STAGE_ID,           
+            H.PREV_STAGEGRP_ID,        
+            H.PREV_PHOTO_LAYER,        
+            H.FLOWBATCH_ID,            
+            H.CTRL_JOB,                
+            H.REWORK_COUNT,            
+            H.ORG_WAFER_QTY,           
+            H.CUR_WAFER_QTY,           
+            H.PROD_WAFER_QTY,          
+            H.CNTL_WAFER_QTY,          
+            H.CLAIM_PROD_QTY,          
+            H.CLAIM_CNTL_QTY,          
+            H.TOTAL_GOOD_UNIT,         
+            H.TOTAL_FAIL_UNIT,         
+            H.LOT_OWNER_ID,            
+            H.PLAN_END_TIME,           
+            H.WFRHS_TIME,              
+            H.CRITERIA_FLAG,           
+            H.CLAIM_MEMO,              
+            H.STORE_TIME,              
+            H.ORIG_LOT_ID,             
+            H.GET_FROM,                
+            H.FAB_ID,                  
+            H.EVENT_CREATE_TIME,       
+            H.HOLD_OPE_NO,             
+            H.HOLD_REASON_OPE_NO,      
+            H.ORIGINAL_FAB_ID,         
+            H.DESTINATION_FAB_ID,      
+            H.RELATED_LOT_ID,          
+            H.BOND_GRP_ID,             
+            H.EQPMONJOB_ID,            
+            H.PD_TYPE,                 
+            H.PREV_PD_TYPE,             
+            '{current_time}',       
+            H.CLAIM_TIME AS PARTKEY    
+     FROM APS_MID_FHOPEHS_VIEW.APS_MID_FHOPEHS_VIEW H                  
+     WHERE H.CLAIM_TIME >  DATE_TRUNC('day', CURRENT_DATE) - INTERVAL '10 day'  
+    """.format(current_time=current_time)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_FHOPEHS",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_MID_FHOPEHS")
+
+
+def GetTypeOtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name, last_db_file):
+    last_db_file = my_file.get_last_db_file(oracle_conn, "APS_MID_FHOPEHS")
+    my_duck.attach_table(duck_db_memory, 'LAST_APS_MID_FHOPEHS', last_db_file)
+    insert_sql = """
+    INSERT  /*+ append */  INTO APS_MID_FHOPEHS (                              
+     PARENTID,LOT_ID,LOT_TYPE,SUB_LOT_TYPE,CAST_ID,CAST_CATEGORY,MAINPD_ID,OPE_NO,PD_ID,  
+        OPE_PASS_COUNT, PD_NAME, HOLD_STATE,CLAIM_TIME,CLAIM_SHOP_DATE,CLAIM_USER_ID,   
+        MOVE_TYPE,OPE_CATEGORY,PROD_TYPE,TEST_TYPE,MFG_LAYER,EXT_PRIORITY,PRIORITY_CLASS, 
+        PREV_PRODSPEC_ID,PRODSPEC_ID,PRODGRP_ID,TECH_ID,CUSTOMER_ID,CUSTPROD_ID,ORDER_NO,
+        STAGE_ID,STAGEGRP_ID,PHOTO_LAYER,LOCATION_ID,AREA_ID,EQP_ID,EQP_NAME,OPE_MODE, 
+        LC_RECIPE_ID,RECIPE_ID, PH_RECIPE_ID,RETICLE_COUNT,FIXTURE_COUNT,RPARM_COUNT, 
+        INIT_HOLD_FLAG, LAST_HLDREL_FLAG,HOLD_TIME, HOLD_SHOP_DATE,HOLD_USER_ID,HOLD_TYPE,
+        HOLD_REASON_CODE,HOLD_REASON_DESC,REASON_CODE,REASON_DESCRIPTION,BANK_ID,PREV_BANK_ID, 
+        PREV_MAINPD_ID,PREV_OPE_NO,PREV_PD_ID, PREV_PD_NAME,PREV_PASS_COUNT,PREV_STAGE_ID,PREV_STAGEGRP_ID,
+        PREV_PHOTO_LAYER,FLOWBATCH_ID,CTRL_JOB,REWORK_COUNT, ORG_WAFER_QTY,CUR_WAFER_QTY,PROD_WAFER_QTY, 
+        CNTL_WAFER_QTY, CLAIM_PROD_QTY,CLAIM_CNTL_QTY,TOTAL_GOOD_UNIT, TOTAL_FAIL_UNIT, LOT_OWNER_ID,
+        PLAN_END_TIME, WFRHS_TIME, CRITERIA_FLAG, CLAIM_MEMO,STORE_TIME, ORIG_LOT_ID,GET_FROM, 
+        FAB_ID, EVENT_CREATE_TIME, HOLD_OPE_NO,HOLD_REASON_OPE_NO,ORIGINAL_FAB_ID,DESTINATION_FAB_ID,
+        RELATED_LOT_ID,BOND_GRP_ID,EQPMONJOB_ID,PD_TYPE, PREV_PD_TYPE,UPDATE_TIME,PARTKEY                                                                      
+    )                                                                            
+     SELECT  gen_random_uuid() AS GUID,       
+            H.LOT_ID,                  
+            H.LOT_TYPE,                
+            H.SUB_LOT_TYPE,            
+            H.CAST_ID,                 
+            H.CAST_CATEGORY,           
+            H.MAINPD_ID,               
+            H.OPE_NO,                  
+            H.PD_ID,                   
+            H.OPE_PASS_COUNT,          
+            H.PD_NAME,                 
+            H.HOLD_STATE,              
+            H.CLAIM_TIME,              
+            H.CLAIM_SHOP_DATE,         
+            H.CLAIM_USER_ID,           
+            H.MOVE_TYPE,               
+            H.OPE_CATEGORY,            
+            H.PROD_TYPE,               
+            H.TEST_TYPE,               
+            H.MFG_LAYER,               
+            H.EXT_PRIORITY,            
+            H.PRIORITY_CLASS,          
+            H.PREV_PRODSPEC_ID,        
+            H.PRODSPEC_ID,             
+            H.PRODGRP_ID,              
+            H.TECH_ID,                 
+            H.CUSTOMER_ID,             
+            H.CUSTPROD_ID,             
+            H.ORDER_NO,                
+            H.STAGE_ID,                
+            H.STAGEGRP_ID,             
+            H.PHOTO_LAYER,             
+            H.LOCATION_ID,             
+            H.AREA_ID,                 
+            H.EQP_ID,                  
+            H.EQP_NAME,                
+            H.OPE_MODE,                
+            H.LC_RECIPE_ID,            
+            H.RECIPE_ID,               
+            H.PH_RECIPE_ID,            
+            H.RETICLE_COUNT,           
+            H.FIXTURE_COUNT,           
+            H.RPARM_COUNT,             
+            H.INIT_HOLD_FLAG,          
+            H.LAST_HLDREL_FLAG,        
+            H.HOLD_TIME,               
+            H.HOLD_SHOP_DATE,          
+            H.HOLD_USER_ID,            
+            H.HOLD_TYPE,               
+            H.HOLD_REASON_CODE,        
+            H.HOLD_REASON_DESC,        
+            H.REASON_CODE,             
+            H.REASON_DESCRIPTION,      
+            H.BANK_ID,                 
+            H.PREV_BANK_ID,            
+            H.PREV_MAINPD_ID,          
+            H.PREV_OPE_NO,             
+            H.PREV_PD_ID,              
+            H.PREV_PD_NAME,            
+            H.PREV_PASS_COUNT,         
+            H.PREV_STAGE_ID,           
+            H.PREV_STAGEGRP_ID,        
+            H.PREV_PHOTO_LAYER,        
+            H.FLOWBATCH_ID,            
+            H.CTRL_JOB,                
+            H.REWORK_COUNT,            
+            H.ORG_WAFER_QTY,           
+            H.CUR_WAFER_QTY,           
+            H.PROD_WAFER_QTY,          
+            H.CNTL_WAFER_QTY,          
+            H.CLAIM_PROD_QTY,          
+            H.CLAIM_CNTL_QTY,          
+            H.TOTAL_GOOD_UNIT,         
+            H.TOTAL_FAIL_UNIT,         
+            H.LOT_OWNER_ID,            
+            H.PLAN_END_TIME,           
+            H.WFRHS_TIME,              
+            H.CRITERIA_FLAG,           
+            H.CLAIM_MEMO,              
+            H.STORE_TIME,              
+            H.ORIG_LOT_ID,             
+            H.GET_FROM,                
+            H.FAB_ID,                  
+            H.EVENT_CREATE_TIME,       
+            H.HOLD_OPE_NO,             
+            H.HOLD_REASON_OPE_NO,      
+            H.ORIGINAL_FAB_ID,         
+            H.DESTINATION_FAB_ID,      
+            H.RELATED_LOT_ID,          
+            H.BOND_GRP_ID,             
+            H.EQPMONJOB_ID,            
+            H.PD_TYPE,                 
+            H.PREV_PD_TYPE,             
+            '{current_time}',       
+            H.CLAIM_TIME AS PARTKEY    
+     FROM APS_MID_FHOPEHS_VIEW.APS_MID_FHOPEHS_VIEW H                  
+     WHERE H.CLAIM_TIME >date_add(CURRENT_TIMESTAMP, INTERVAL '-1 hour') 
+     AND NOT EXISTS (                                                                                      
+                SELECT 1 FROM LAST_APS_MID_FHOPEHS.APS_MID_FHOPEHS HL                                                        
+                WHERE HL.PARTKEY >  DATE_TRUNC('day', CURRENT_DATE) - INTERVAL '1 day'                                               
+                AND HL.LOT_ID = H.LOT_ID                                                         
+                AND HL.CLAIM_TIME = H.CLAIM_TIME                                                 
+                AND COALESCE(HL.OPE_NO,'*') = COALESCE(H.OPE_NO,'*') 
+                AND COALESCE(HL.OPE_CATEGORY,'*') = COALESCE(H.OPE_CATEGORY,'*')                    
+                AND COALESCE(HL.HOLD_REASON_CODE,'*') = COALESCE(H.HOLD_REASON_CODE,'*')                  
+                AND COALESCE(HL.HOLD_TIME,'1901-01-01 00:00:00') = COALESCE(H.HOLD_TIME,'1901-01-01 00:00:00')       
+                AND COALESCE(HL.MOVE_TYPE,'*') = COALESCE(H.MOVE_TYPE,'*') 
+                AND COALESCE(HL.HOLD_USER_ID,'*')  = COALESCE(H.HOLD_USER_ID,'*')  
+                AND COALESCE(HL.INIT_HOLD_FLAG,-1) = COALESCE(H.INIT_HOLD_FLAG,-1) 
+                AND COALESCE(HL.CUR_WAFER_QTY,-1) = COALESCE(H.CUR_WAFER_QTY,-1))                                                                                             
+    """.format(current_time=current_time)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_FHOPEHS",
+                     sql=insert_sql,
+                     current_time=current_time,
+                     update_table="APS_MID_FHOPEHS")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_TMP_LOTHISTORY_5M_APS_MID_FHOPEHS"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_MID_FHOPEHS"
+    used_table_list = ['APS_MID_FHOPEHS_VIEW']
+    target_table_sql = """
+        CREATE TABLE {}APS_MID_FHOPEHS 
+        (	
+            PARENTID 								VARCHAR(64) NOT NULL , 
+            LOT_ID 									VARCHAR(64) NOT NULL , 
+            LOT_TYPE 								VARCHAR(64), 
+            SUB_LOT_TYPE 							VARCHAR(20), 
+            CAST_ID 								VARCHAR(64), 
+            CAST_CATEGORY 							VARCHAR(64), 
+            MAINPD_ID 								VARCHAR(64), 
+            OPE_NO 									VARCHAR(64), 
+            PD_ID 									VARCHAR(64), 
+            OPE_PASS_COUNT 							VARCHAR(64), 
+            PD_NAME 								VARCHAR(64), 
+            HOLD_STATE 								VARCHAR(20), 
+            CLAIM_TIME 								VARCHAR(64) NOT NULL , 
+            CLAIM_SHOP_DATE 						VARCHAR(64), 
+            CLAIM_USER_ID 							VARCHAR(64), 
+            MOVE_TYPE 								VARCHAR(20), 
+            OPE_CATEGORY 							VARCHAR(20) NOT NULL , 
+            PROD_TYPE 								VARCHAR(8), 
+            TEST_TYPE 								VARCHAR(64), 
+            MFG_LAYER 								VARCHAR(1), 
+            EXT_PRIORITY 							VARCHAR(64), 
+            PRIORITY_CLASS 							VARCHAR(64), 
+            PREV_PRODSPEC_ID 						VARCHAR(64), 
+            PRODSPEC_ID 							VARCHAR(64), 
+            PRODGRP_ID 								VARCHAR(64), 
+            TECH_ID 								VARCHAR(64), 
+            CUSTOMER_ID 							VARCHAR(64), 
+            CUSTPROD_ID 							VARCHAR(64), 
+            ORDER_NO 								VARCHAR(64), 
+            STAGE_ID 								VARCHAR(64), 
+            STAGEGRP_ID 							VARCHAR(64), 
+            PHOTO_LAYER 							VARCHAR(64), 
+            LOCATION_ID 							VARCHAR(64), 
+            AREA_ID 								VARCHAR(64), 
+            EQP_ID 									VARCHAR(64), 
+            EQP_NAME 								VARCHAR(96), 
+            OPE_MODE 								VARCHAR(64), 
+            LC_RECIPE_ID 							VARCHAR(64), 
+            RECIPE_ID 								VARCHAR(64), 
+            PH_RECIPE_ID 							VARCHAR(64), 
+            RETICLE_COUNT 							VARCHAR(64), 
+            FIXTURE_COUNT 							VARCHAR(64), 
+            RPARM_COUNT 							VARCHAR(64), 
+            INIT_HOLD_FLAG 							VARCHAR(64), 
+            LAST_HLDREL_FLAG 						VARCHAR(64), 
+            HOLD_TIME 								VARCHAR(64), 
+            HOLD_SHOP_DATE 							VARCHAR(64), 
+            HOLD_USER_ID 							VARCHAR(64), 
+            HOLD_TYPE 								VARCHAR(20), 
+            HOLD_REASON_CODE 						VARCHAR(64), 
+            HOLD_REASON_DESC 						VARCHAR(128), 
+            REASON_CODE 							VARCHAR(64), 
+            REASON_DESCRIPTION 						VARCHAR(128), 
+            BANK_ID 								VARCHAR(64), 
+            PREV_BANK_ID 							VARCHAR(64), 
+            PREV_MAINPD_ID 							VARCHAR(64), 
+            PREV_OPE_NO 							VARCHAR(64), 
+            PREV_PD_ID 								VARCHAR(64), 
+            PREV_PD_NAME 							VARCHAR(64), 
+            PREV_PASS_COUNT 						VARCHAR(64), 
+            PREV_STAGE_ID 							VARCHAR(64), 
+            PREV_STAGEGRP_ID 						VARCHAR(64), 
+            PREV_PHOTO_LAYER 						VARCHAR(64), 
+            FLOWBATCH_ID 							VARCHAR(64), 
+            CTRL_JOB 								VARCHAR(64), 
+            REWORK_COUNT 							VARCHAR(64), 
+            ORG_WAFER_QTY 							VARCHAR(64), 
+            CUR_WAFER_QTY 							VARCHAR(64), 
+            PROD_WAFER_QTY 							VARCHAR(64), 
+            CNTL_WAFER_QTY 							VARCHAR(64), 
+            CLAIM_PROD_QTY 							VARCHAR(64), 
+            CLAIM_CNTL_QTY 							VARCHAR(64), 
+            TOTAL_GOOD_UNIT 						VARCHAR(64), 
+            TOTAL_FAIL_UNIT 						VARCHAR(64), 
+            LOT_OWNER_ID 							VARCHAR(64), 
+            PLAN_END_TIME 							VARCHAR(64), 
+            WFRHS_TIME 								VARCHAR(64), 
+            CRITERIA_FLAG 							VARCHAR(64), 
+            CLAIM_MEMO 								VARCHAR(4000), 
+            STORE_TIME 								VARCHAR(64) NOT NULL , 
+            ORIG_LOT_ID 							VARCHAR(64), 
+            GET_FROM 								VARCHAR(30), 
+            FAB_ID 									VARCHAR(3), 
+            EVENT_CREATE_TIME 						VARCHAR(64), 
+            HOLD_OPE_NO 							VARCHAR(64), 
+            HOLD_REASON_OPE_NO 						VARCHAR(64), 
+            ORIGINAL_FAB_ID 						VARCHAR(32), 
+            DESTINATION_FAB_ID 						VARCHAR(32), 
+            RELATED_LOT_ID 							VARCHAR(64), 
+            BOND_GRP_ID 							VARCHAR(64), 
+            EQPMONJOB_ID 							VARCHAR(64), 
+            PD_TYPE 								VARCHAR(20), 
+            PREV_PD_TYPE 							VARCHAR(20), 
+            UPDATE_TIME 							VARCHAR(64), 
+            PARTKEY 								VARCHAR(64)
+        )
+    """.format("") # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_memory.sql('SET threads TO 2')
+            # 加上TMP目录:LQN:2023/08/21
+            duck_db_memory.execute(
+                "SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+        # 创建Temp表
+        create_temp_table(duck_db_memory)
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+
+        last_db_file = my_file.get_last_db_file(oracle_conn, "APS_MID_FHOPEHS")
+        if last_db_file is None:
+            GetTypeFirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        else:
+            GetTypeOtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name, last_db_file)
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+                                                                                  target_table,
+                                                                                  target_table_sql.format("file_db."),
+                                                                                  current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, cons_error_code.APS_TR_TYPE_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            # 删除TMP目录:LQN:2023/08/21
+            if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+                os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

@@ -1,0 +1,880 @@
+import logging
+import os
+import socket
+import time
+import traceback
+import uuid
+from datetime import datetime
+
+import cx_Oracle
+
+from xinxiang import config
+from xinxiang.util import my_date, cons, my_runner
+from xinxiang.util import Params
+
+
+def ExecuteViewToTable(conn, tableName=""):
+
+    row_in_oracle = get_row_count_in_oracle(conn, tableName)
+    if row_in_oracle == 0:
+        time.sleep(10)
+
+    # 第一次等待10s，如果还没有的话直接报错,但必须在v_setting_view_nullskip外
+    skipRowNum = GetCommonSkipViewExistTableData(conn, tableName)
+    row_in_oracle = get_row_count_in_oracle(conn, tableName)
+
+    if skipRowNum == 0 and row_in_oracle == 0:
+        SaveAlarmLogDataForSync(conn,
+                                ETLProcName="Sync " + tableName,
+                                Exception="Sync " + tableName + "查询数据0行",
+                                file_name="Sync Error",
+                                alarm_code="XETL0001")
+        return False
+    # 如果是V_ETL_TOOL需要校验数据量，如果数据量小于4000则直接报错
+    if "V_ETL_TOOL" == tableName:
+        row_in_oracle = get_row_count_in_oracle(conn, tableName)
+        if row_in_oracle < 4000:
+            SaveAlarmLogDataForSync(conn,
+                                    ETLProcName="Sync " + tableName,
+                                    Exception="查询数据异常，少于4000行。实际抓到的数据量：" + str(row_in_oracle),
+                                    file_name="Sync Error",
+                                    alarm_code="Sync View")
+            return False
+
+    return True
+
+
+def GetCommonSkipViewExistTableData(conn, tableName=""):
+    try:
+        sqlQuery = " SELECT 1 AS R_NUM FROM V_SETTING_VIEW_NULLSKIP N WHERE N.VIEW_NAME = '{tableName}' ".format(tableName=tableName)
+        print(sqlQuery)
+        dbcursor = conn.cursor()
+        dbcursor.execute(sqlQuery)
+        result = dbcursor.fetchone()
+        if result:
+            return result[0]
+        return 0
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(traceback.format_exc())
+
+
+def get_row_count_in_oracle(conn, tableName=""):
+    try:
+        partcode = GetLastPartCodeData(conn, tableName)
+        sql = """
+            select count(1) as rrr_COUNT from {tableName}
+            where 1 = 1
+            and partcode = '{partcode}'
+            """.format(tableName=tableName, partcode=partcode)
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+        result = dbcursor.fetchone()
+        return result[0]
+    except Exception as e:
+        sql = """
+                    select count(1) as rrr_COUNT from {tableName}
+                    where 1 = 1
+                    """.format(tableName=tableName)
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+        result = dbcursor.fetchone()
+        return result[0]
+
+
+def create_sql_from_oracle_to_duck(conn, source_table_name, target_table_name):
+    if target_table_name in config.g_all_varchar_table:
+        return create_sql_from_oracle_to_duck2(conn, source_table_name, target_table_name)
+
+    dbcursor = conn.cursor()
+    create_sql = " CREATE TABLE {table_name} ( ".format(table_name=target_table_name)
+
+    sql = """
+               SELECT Distinct A.COLUMN_NAME, 
+                               A.DATA_TYPE, 
+                               A.DATA_LENGTH, 
+                               A.INTERNAL_COLUMN_ID 
+               FROM DBA_TAB_COLS A 
+               WHERE A.TABLE_NAME = upper('{table_name}')
+               AND   A.OWNER = upper('{owner}')
+               ORDER BY A.INTERNAL_COLUMN_ID
+            """.format(table_name=source_table_name, owner=config.g_oracle_owner)
+    dbcursor.execute(sql)
+
+    meta = dbcursor.fetchall()
+
+    for col in meta:
+        column_name = col[0]
+        column_type = col[1]
+        column_length = col[2]
+        if "VARCHAR2" == column_type:
+            create_sql = create_sql + " {column_name} VARCHAR({column_length}), ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=column_length
+            )
+        elif "NUMBER" == column_type:
+            create_sql = create_sql + " {column_name} VARCHAR(200), ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=column_length
+            )
+            # create_sql = create_sql + " {column_name} DECIMAL, ".format(
+            #     column_name=column_name,
+            #     column_type=column_type,
+            #     column_length=column_length
+            # )
+        elif "DATE" == column_type:
+            create_sql = create_sql + " {column_name} TIMESTAMP, ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=column_length
+            )
+        elif "FLOAT" == column_type:
+            # create_sql = create_sql + " {column_name} DOUBLE PRECISION, ".format(
+            #     column_name=column_name,
+            #     column_type=column_type,
+            #     column_length=column_length
+            # )
+            create_sql = create_sql + " {column_name} VARCHAR(200), ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=column_length
+            )
+        elif "CHAR" == column_type:
+            create_sql = create_sql + " {column_name} VARCHAR({column_length}), ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=column_length
+            )
+        elif "TIMESTAMP(6)" == column_type or "TIMESTAMP(3)" == column_type :
+            create_sql = create_sql + " {column_name} TIMESTAMP, ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=column_length
+            )
+        else:
+            create_sql = create_sql + " {column_name} VARCHAR({column_length}), ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=column_length
+            )
+
+
+    create_sql = create_sql + ")"
+    pos = create_sql.rfind(",")
+    if pos != -1:
+        create_sql = create_sql[:pos] + create_sql[pos + 1:]
+
+    dbcursor.close()
+    if config.g_debug_mode:
+        print(create_sql)
+    return create_sql
+
+
+def create_sql_from_oracle_to_duck2(conn, source_table_name, target_table_name):
+    """
+    所有数据类型都是varchar类型，实在没办法的时候使用
+    :param conn:
+    :param source_table_name:
+    :param target_table_name:
+    :return:
+    """
+    dbcursor = conn.cursor()
+    create_sql = " CREATE TABLE {table_name} ( ".format(table_name=target_table_name)
+
+    sql = """
+               SELECT Distinct A.COLUMN_NAME, 
+                               A.DATA_TYPE, 
+                               A.DATA_LENGTH, 
+                               A.INTERNAL_COLUMN_ID 
+               FROM DBA_TAB_COLS A 
+               WHERE A.TABLE_NAME = '{table_name}'
+               AND   A.OWNER = upper('{owner}')
+               ORDER BY A.INTERNAL_COLUMN_ID
+            """.format(table_name=source_table_name, owner=config.g_oracle_owner)
+    dbcursor.execute(sql)
+
+    meta = dbcursor.fetchall()
+    for col in meta:
+        column_name = col[0]
+        column_type = col[1]
+        column_length = col[2]
+        if column_length is not None and column_length > 0:
+            create_sql = create_sql + " {column_name} VARCHAR({column_length}), ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=column_length
+            )
+        else:
+            create_sql = create_sql + " {column_name} VARCHAR({column_length}), ".format(
+                column_name=column_name,
+                column_type=column_type,
+                column_length=200
+            )
+    create_sql = create_sql + ")"
+    pos = create_sql.rfind(",")
+    if pos != -1:
+        create_sql = create_sql[:pos] + create_sql[pos + 1:]
+
+    dbcursor.close()
+    if config.g_debug_mode:
+        print(create_sql)
+    return create_sql
+
+
+def oracle_get_connection():
+    '''得到oracle的连接
+    g_debug_mode = False的时候生效
+    '''
+    # conn = jaydebeapi.connect(config.g_driver_driver, config.g_oracle_url,
+    #                               [config.g_oracle_user, config.g_oracle_password], config.g_driver_jarFile)
+    conn = cx_Oracle.connect(config.g_oracle_user, config.g_oracle_password, config.g_oracle_dsn, encoding="UTF-8")
+    return conn
+
+
+def oracle_get_connection_local():
+    '''得到测试oracle的连接
+    g_debug_mode = True的时候生效
+    '''
+    # conn = jaydebeapi.connect(config.g_driver_driver, config.g_oracle_url,
+    #                               [config.g_oracle_user, config.g_oracle_password], config.g_driver_jarFile)
+    conn = cx_Oracle.connect(config.local_oracle_user, config.local_oracle_password, config.local_oracle_dsn, encoding="UTF-8")
+    return conn
+
+
+def UUID():
+    s = str(uuid.uuid4())
+    # s1 = s.replace("-", "")
+    return s
+
+
+def SaveEtlMethodLog(oracleConn, etlJob, methodName, startTime, endTime, etlJobTime):
+    '''
+    create table APS_ETL_METHOD_LOG_DUCK
+    (
+      guid        VARCHAR2(64) not null,
+      table_name  VARCHAR2(512),
+      method_name VARCHAR2(512),
+      start_time  TIMESTAMP(6),
+      end_time    TIMESTAMP(6),
+      total_count NUMBER,
+      partkey     DATE not null,
+      server_name varchar2(200) --服务器名称
+    );
+    -- Create/Recreate primary, unique and foreign key constraints
+    alter table APS_ETL_METHOD_LOG_DUCK
+    add constraint APS_ETL_METHOD_LOG_DUCK_PRIMARY primary key (GUID, PARTKEY)
+    using index
+      tablespace USERS
+      pctfree 10
+      initrans 2
+      maxtrans 255
+      storage
+      (
+        initial 64K
+        next 1M
+        minextents 1
+        maxextents unlimited
+      );
+      grant select on APS_ETL_METHOD_LOG_DUCK to JHSCHE;
+
+    '''
+    if config.g_debug_mode:
+        conn = oracle_get_connection_local()
+
+    total = endTime - startTime
+    host_name = socket.gethostname()
+    sql = """ 
+        INSERT INTO APS_ETL_METHOD_LOG_DUCK (GUID ,TABLE_NAME ,METHOD_NAME ,START_TIME,END_TIME ,TOTAL_COUNT,PARTKEY,server_name)
+        VALUES (SYS_GUID() ,'{etlJob}', '{methodName}', TIMESTAMP '{startTime}', TIMESTAMP '{endTime}', {total},  TIMESTAMP '{etlJobTime}','{host_name}') 
+        """.format(etlJob=etlJob,
+                   methodName=methodName,
+                   startTime=datetime.fromtimestamp(startTime).strftime('%Y-%m-%d %H:%M:%S.%f'),
+                   endTime=datetime.fromtimestamp(endTime).strftime('%Y-%m-%d %H:%M:%S.%f'),
+                   total=total,
+                   etlJobTime=etlJobTime,
+                   host_name=host_name)
+    dbcursor = None
+    try:
+        dbcursor = oracleConn.cursor()
+        dbcursor.execute(sql)
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        oracleConn.commit()
+        if dbcursor:
+            dbcursor.close()
+
+    if config.g_debug_mode:
+        conn.close()
+
+
+def HandlingVerControl(conn, Uuid, TableName, FileName, StartTime):
+    '''
+    -- Create table
+create table APS_ETL_VER_CONTROL_DUCK
+(
+  id          VARCHAR2(60) not null,
+  module_id   VARCHAR2(60),
+  toolg_id    VARCHAR2(60),
+  table_name  VARCHAR2(60) not null,
+  update_time VARCHAR2(60),
+  update_user VARCHAR2(60),
+  file_name   VARCHAR2(500),
+  server_name varchar2(200) --服务器名称
+)
+tablespace USERS
+  pctfree 10
+  initrans 1
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+-- Add comments to the columns
+comment on column APS_ETL_VER_CONTROL_DUCK.id
+  is '版本号';
+comment on column APS_ETL_VER_CONTROL_DUCK.module_id
+  is '区域';
+comment on column APS_ETL_VER_CONTROL_DUCK.toolg_id
+  is '机群名称';
+comment on column APS_ETL_VER_CONTROL_DUCK.table_name
+  is 'Table名称';
+comment on column APS_ETL_VER_CONTROL_DUCK.update_time
+  is '资料更新时间';
+comment on column APS_ETL_VER_CONTROL_DUCK.update_user
+  is '资料更新者';
+-- Create/Recreate primary, unique and foreign key constraints
+alter table APS_ETL_VER_CONTROL_DUCK
+  add constraint APS_ETL_VER_CONTROL_DUCK_ID primary key (ID, TABLE_NAME)
+  using index
+  tablespace USERS
+  pctfree 10
+  initrans 2
+  maxtrans 255
+  storage
+  (
+    initial 64K
+    next 1M
+    minextents 1
+    maxextents unlimited
+  );
+   grant select on APS_ETL_VER_CONTROL_DUCK to JHSCHE;
+
+   -- UOSCHE.APS_ETL_SYNC_CONTROL_DUCK definition
+
+CREATE TABLE "UOSCHE"."APS_ETL_SYNC_CONTROL_DUCK"
+   (	"ID" VARCHAR2(60) NOT NULL ENABLE,
+	"MODULE_ID" VARCHAR2(60),
+	"TOOLG_ID" VARCHAR2(60),
+	"TABLE_NAME" VARCHAR2(60) NOT NULL ENABLE,
+	"UPDATE_TIME" VARCHAR2(60),
+	"UPDATE_USER" VARCHAR2(60),
+	"FILE_NAME" VARCHAR2(500),
+	"SERVER_NAME" varchar2(200)                    --服务器名称
+	 CONSTRAINT "APS_ETL_SYNC_CONTROL_DUCK_ID" PRIMARY KEY ("ID", "TABLE_NAME")
+  USING INDEX PCTFREE 10 INITRANS 2 MAXTRANS 255
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS"  ENABLE
+   ) SEGMENT CREATION IMMEDIATE
+  PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS" ;
+
+CREATE UNIQUE INDEX "UOSCHE"."APS_ETL_SYNC_CONTROL_DUCK_ID" ON "UOSCHE"."APS_ETL_SYNC_CONTROL_DUCK" ("ID", "TABLE_NAME")
+  PCTFREE 10 INITRANS 2 MAXTRANS 255
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "USERS" ;
+
+-- Add/modify columns
+alter table APS_ETL_VER_CONTROL_DUCK add start_time VARCHAR2(60);
+-- Add comments to the columns
+comment on column APS_ETL_VER_CONTROL_DUCK.start_time
+  is '资料整理开始时间';
+-- Add/modify columns
+alter table APS_ETL_SYNC_CONTROL_DUCK add start_time VARCHAR2(60);
+-- Add comments to the columns
+comment on column APS_ETL_SYNC_CONTROL_DUCK.start_time
+  is '资料整理开始时间';
+
+    '''
+    # 测试模式的时候，向本地数据库记录
+    if config.g_debug_mode:
+        conn = oracle_get_connection_local()
+
+    dbcursor = None
+    host_name = socket.gethostname()
+    try:
+        timeStr = my_date.date_time_second_short_str()
+        sql = """
+                INSERT INTO aps_etl_ver_control_duck
+                ( ID, MODULE_ID, TOOLG_ID, TABLE_NAME, UPDATE_TIME, UPDATE_USER, FILE_NAME, START_TIME, SERVER_NAME )
+                VALUES('{}', '' , '', '{}', '{}', '{}', '{}', '{}', '{}') 
+                """.format(
+            Uuid,
+            TableName,
+            timeStr,
+            "CIMP",
+            FileName,
+            StartTime,
+            host_name
+        )
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+        # 给PG测试库也要判断主备服务，如果是备库则不需要写进去
+        if my_runner.judge_main_server(conn):
+            sql = """
+                INSERT INTO APS_ETL_SYNC_CONTROL_DUCK
+                ( ID, MODULE_ID, TOOLG_ID, TABLE_NAME, UPDATE_TIME, UPDATE_USER, FILE_NAME, START_TIME, SERVER_NAME )
+                VALUES('{}', '' , '', '{}', '{}', '{}', '{}', '{}', '{}') 
+                """.format(
+                Uuid,
+                TableName,
+                timeStr,
+                "CIMP",
+                FileName,
+                StartTime,
+                host_name
+            )
+            dbcursor = conn.cursor()
+            dbcursor.execute(sql)
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        conn.commit()
+        if dbcursor:
+            dbcursor.close()
+
+    if config.g_debug_mode:
+        conn.close()
+
+
+def get_last_create_file(conn, TableName):
+    if config.g_debug_mode:
+        conn = oracle_get_connection_local()
+
+    host_name = socket.gethostname()
+    sql = """
+    select * from (
+        select 
+            c.FILE_NAME,
+            row_number() OVER(PARTITION BY C.TABLE_NAME ORDER BY C.UPDATE_TIME DESC) AS RN
+        from aps_etl_ver_control_duck c
+        where 1 = 1
+        and c.TABLE_NAME = '{TABLE_NAME}'
+        and c.update_user = 'CIMP'
+        and c.server_name = '{server_name}'
+    ) A 
+    WHERE A.RN = 1
+    """.format(TABLE_NAME=TableName, server_name=host_name)
+    dbcursor = None
+    try:
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+        result = dbcursor.fetchone()
+        if result is not None:
+            if result[0] is not None and result[0] != "":
+                return result[0]
+            else:
+                return ""
+        else:
+            return ""
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        if dbcursor:
+            dbcursor.close()
+
+    if config.g_debug_mode:
+        conn.close()
+
+
+def GetLastPartCodeData(conn, TableName):
+    sql = """
+    SELECT * FROM (
+     	SELECT C.TABLE_NAME
+     	       ,C.UPDATE_TIME
+     	       ,C.PARTCODE
+     	       ,C.ID AS PARENTID
+     	       ,ROW_NUMBER() OVER(PARTITION BY C.TABLE_NAME ORDER BY C.UPDATE_TIME DESC) AS RN
+        FROM APS_ETL_VER_CONTROL C
+        WHERE 1=1
+        AND C.TABLE_NAME = '{}'
+    ) A
+    WHERE A.RN = 1
+    """.format(TableName)
+    dbcursor = None
+    try:
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+        result = dbcursor.fetchone()
+        if result is not None:
+            if result[2] is not None and result[2] != "":
+                return result[2]
+            else:
+                return cons.RLS_PART_VALUE1
+        else:
+            return cons.RLS_PART_VALUE1
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        if dbcursor:
+            dbcursor.close()
+
+
+
+
+def GetApsParamInfos(conn, DicType, DicValue):
+    if DicValue and DicValue != "":
+        sql = """
+            SELECT DIC_TYPE,
+                   DIC_KEY,
+                   DIC_VALUE,
+                   DIC_SEQ,
+                   DIC_PARAM,
+                   DIC_PARAM2,
+                   DIC_PARAM3,
+                   DIC_PARAM4,
+                   CREATE_USER,
+                   CREATE_TIME,
+                   UPDATE_USER,
+                   UPDATE_TIME,
+                   DIC_PARAM5,
+                   DIC_PARAM6,
+                   DIC_PARAM7,
+                   DIC_PARAM8
+            FROM   APS_ETL_SYS_PARAM T
+            WHERE  T.DIC_TYPE = '{}'
+            AND    T.DIC_VALUE = '{}'
+    """.format(DicType, DicValue)
+    else:
+        sql = """
+            SELECT DIC_TYPE,
+                   DIC_KEY,
+                   DIC_VALUE,
+                   DIC_SEQ,
+                   DIC_PARAM,
+                   DIC_PARAM2,
+                   DIC_PARAM3,
+                   DIC_PARAM4,
+                   CREATE_USER,
+                   CREATE_TIME,
+                   UPDATE_USER,
+                   UPDATE_TIME,
+                   DIC_PARAM5,
+                   DIC_PARAM6,
+                   DIC_PARAM7,
+                   DIC_PARAM8
+            FROM   APS_ETL_SYS_PARAM T
+            WHERE  T.DIC_TYPE = '{}'
+        """.format(DicType)
+    dbcursor = None
+    try:
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+        result = dbcursor.fetchone()
+        apsEtlSysParam = Params.ApsEtlSysParam()
+        apsEtlSysParam.DIC_TYPE = result[0]
+        apsEtlSysParam.DIC_KEY = result[1]
+        apsEtlSysParam.DIC_VALUE = result[2]
+        apsEtlSysParam.DIC_SEQ = result[3]
+        apsEtlSysParam.DIC_PARAM = result[4]
+        apsEtlSysParam.DIC_PARAM2 = result[5]
+        apsEtlSysParam.DIC_PARAM3 = result[6]
+        apsEtlSysParam.DIC_PARAM4 = result[7]
+        apsEtlSysParam.CREATE_USER = result[8]
+        apsEtlSysParam.CREATE_TIME = result[9]
+        apsEtlSysParam.UPDATE_USER = result[10]
+        apsEtlSysParam.UPDATE_TIME = result[11]
+        apsEtlSysParam.DIC_PARAM5 = result[12]
+        apsEtlSysParam.DIC_PARAM6 = result[13]
+        apsEtlSysParam.DIC_PARAM7 = result[14]
+        apsEtlSysParam.DIC_PARAM8 = result[15]
+        return apsEtlSysParam
+    except Exception as e:
+        logging.exception("处理出错: %s", e)
+        raise e
+    finally:
+        if dbcursor:
+            dbcursor.close()
+
+
+def StartCleanUpAndLog(conn, ETLProcName, ETLStartTime, EndMessage="OK"):
+    # 测试模式的时候，向本地数据库记录
+    if config.g_debug_mode:
+        conn = oracle_get_connection_local()
+
+    hostname = socket.gethostname()
+    hostAddress = socket.gethostbyname(hostname)
+    EndMessage = EndMessage + "\r\n" + "HostName : " + hostname + ", HostAddress : " + hostAddress
+    current_time = my_date.date_time_second_str()
+    sql = """
+        INSERT INTO ETL_EXEC_LOG (ETL_NAME, START_TIME, END_TIME, DURATION, REC_COUNT, END_MESSAGE, EVENT_NAME, partkey) 
+        VALUES('{ETLProcName}', TIMESTAMP '{ETLStartTime}', TIMESTAMP '{ETLStartTime}' , 0,  -1, '{EndMessage}', 'PSTART', TO_DATE('{current_time}','YYYY-MM-DD HH24:MI:SS') )
+        """.format(
+        ETLProcName=ETLProcName,
+        ETLStartTime=ETLStartTime,
+        EndMessage=EndMessage,
+        current_time=current_time
+    )
+    dbcursor = None
+    try:
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        conn.commit()
+        if dbcursor:
+            dbcursor.close()
+
+    if config.g_debug_mode:
+        conn.close()
+
+
+def EndCleanUpAndLog(conn, ETLProcName, ETLStartTime, EndMessage="OK"):
+    # 测试模式的时候，向本地数据库记录
+    if config.g_debug_mode:
+        conn = oracle_get_connection_local()
+
+    hostname = socket.gethostname()
+    hostAddress = socket.gethostbyname(hostname)
+    EndMessage = EndMessage + "\r\n" + "HostName : " + hostname + ", HostAddress : " + hostAddress
+
+    _start = datetime.strptime(ETLStartTime, "%Y-%m-%d %H:%M:%S")
+    _end = datetime.now()
+    _end_str = my_date.date_time_second_str()
+    dur = my_date.duration(_start, _end)
+
+    sql = """
+        INSERT INTO ETL_EXEC_LOG (ETL_NAME, START_TIME, END_TIME, DURATION, REC_COUNT, END_MESSAGE, EVENT_NAME, partkey) 
+        VALUES('{ETLProcName}', TIMESTAMP '{ETLStartTime}', TIMESTAMP '{_end_str}' , {dur},  -1, '{EndMessage}', 'PEND', TO_DATE('{_end_str}','YYYY-MM-DD HH24:MI:SS') )
+        """.format(
+        ETLProcName=ETLProcName,
+        ETLStartTime=ETLStartTime,
+        _end_str=_end_str,
+        dur=dur,
+        EndMessage=EndMessage,
+    )
+    dbcursor = None
+    try:
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        conn.commit()
+        if dbcursor:
+            dbcursor.close()
+
+    if config.g_debug_mode:
+        conn.close()
+
+
+def SaveAlarmLogDataForSync(conn, ETLProcName, Exception, file_name, alarm_code):
+    if config.g_debug_mode:
+        conn = oracle_get_connection_local()
+
+    hostname = socket.gethostname()
+    hostAddress = socket.gethostbyname(hostname)
+
+    # 日志输出
+    logging.error(Exception)
+    msg = Exception
+    # DB输出
+    job_msg = ETLProcName + "\r\n" + file_name + "\r\n" + str(Exception)
+    job_msg = job_msg + "\r\n" + "HostName : " + hostname + ", HostAddress : " + hostAddress
+    exception = str(Exception)
+    if not my_runner.judge_main_server(conn):
+        sql = """
+                insert into alarm_send_log
+                                   (code,
+                                    module,
+                                    level_id,
+                                    msg,
+                                    send_alarm,
+                                    dispatch_time,
+                                    job,
+                                    job_msg,
+                                    parentid)
+                                   select s.code,
+                                          s.module,
+                                          s.level_id,
+                                          s.msg_cn || ' {ETLProcName} ' || ' {exception}',
+                                          '0',
+                                          sysdate,
+                                          'SYNC ETL',
+                                          '{job_msg}',
+                                          'Python SYNC'
+                                     from set_alarm_code_mapping s
+                                    where s.code =  '{alarm_code}'
+                """.format(job_msg=job_msg, alarm_code=alarm_code, exception=exception,ETLProcName=ETLProcName)
+    else:
+        sql = """
+                insert into alarm_send_log
+                                   (code,
+                                    module,
+                                    level_id,
+                                    msg,
+                                    send_alarm,
+                                    dispatch_time,
+                                    job,
+                                    job_msg,
+                                    parentid)
+                                   select s.code,
+                                          s.module,
+                                          s.level_id,
+                                          s.msg_cn || ' {ETLProcName} ' || ' {exception}',
+                                          '0',
+                                          sysdate,
+                                          'SYNC ETL',
+                                          '{job_msg}',
+                                          'Python SYNC'
+                                     from set_alarm_code_mapping s
+                                    where s.code =  '{alarm_code}'
+           """.format(job_msg=job_msg, alarm_code=alarm_code, exception=exception,ETLProcName=ETLProcName)
+    dbcursor = None
+    try:
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        conn.commit()
+        if dbcursor:
+            dbcursor.close()
+    if config.g_debug_mode:
+        conn.close()
+def SaveAlarmLogData(conn, ETLProcName, Exception, file_name, alarm_code):
+    if config.g_debug_mode:
+        conn = oracle_get_connection_local()
+    hostname = socket.gethostname()
+    hostAddress = socket.gethostbyname(hostname)
+    job_msg = None
+    # 日志输出
+    logging.error(Exception)
+    # DB输出
+    if file_name is None:
+        job_msg = ETLProcName + "duckdb文件名为空，" + str(Exception)
+    else:
+        job_msg = ETLProcName + "[" + file_name + "]" + str(Exception)
+    job_msg = job_msg + ", HostName : " + hostname + ", HostAddress : " + hostAddress
+    exception = str(Exception)
+    # print(my_runner.judge_main_server(conn))
+    if not my_runner.judge_main_server(conn):
+        sql = """
+                insert into alarm_send_log
+                                   (code,
+                                    module,
+                                    level_id,
+                                    msg,
+                                    send_alarm,
+                                    dispatch_time,
+                                    job,
+                                    job_msg,
+                                    parentid)
+                                   select s.code,
+                                          s.module,
+                                          s.level_id,
+                                          s.msg_cn || ' {exception}',
+                                          '0',
+                                          sysdate,
+                                          'ETL',
+                                          '{job_msg}',
+                                          'Python ETL'
+                                     from set_alarm_code_mapping s
+                                    where s.code =  '{alarm_code}'
+                """.format(job_msg=job_msg, alarm_code=alarm_code, exception=exception)
+    else:
+        sql = """
+                insert into alarm_send_log
+                                   (code,
+                                    module,
+                                    level_id,
+                                    msg,
+                                    send_alarm,
+                                    dispatch_time,
+                                    job,
+                                    job_msg,
+                                    parentid)
+                                   select s.code,
+                                          s.module,
+                                          s.level_id,
+                                          s.msg_cn || ' {exception}',
+                                          s.send_alarm,
+                                          sysdate,
+                                          'ETL',
+                                          '{job_msg}',
+                                          'Python ETL'
+                                     from set_alarm_code_mapping s
+                                    where s.code =  '{alarm_code}'
+                """.format(job_msg=job_msg, alarm_code=alarm_code, exception=exception)
+    dbcursor = None
+    try:
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+    except Exception as e:
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        conn.commit()
+        if dbcursor:
+            dbcursor.close()
+    if config.g_debug_mode:
+        conn.close()
+
+def override_GetLastPartCodeData(conn, TableName):
+    sql = """
+                SELECT * FROM (
+                 	SELECT C.TABLE_NAME
+                 	       ,C.UPDATE_TIME
+                 	       ,C.PARTCODE
+                 	       ,C.ID AS PARENTID
+                 	       ,ROW_NUMBER() OVER(PARTITION BY C.TABLE_NAME ORDER BY C.UPDATE_TIME DESC) AS RN
+                    FROM APS_ETL_VER_CONTROL C
+                    WHERE 1=1
+                    AND C.TABLE_NAME = '{}'
+                ) A
+                WHERE A.RN = 1
+                """.format(TableName)
+    dbcursor = None
+    try:
+        dbcursor = conn.cursor()
+        dbcursor.execute(sql)
+        result = dbcursor.fetchone()
+        if result is not None:
+            if result[2] is not None and result[2] != "":
+                return result[2]
+            else:
+                return ""
+        else:
+            return ""
+    except Exception as e:
+        traceback.print_exc()
+        logging.error(traceback.format_exc())
+        raise e
+    finally:
+        if dbcursor:
+            dbcursor.close()

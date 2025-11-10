@@ -1,0 +1,46 @@
+import logging
+import os.path
+from datetime import datetime, timedelta
+
+from xinxiang.util import my_oracle, cons_error_code, my_cmder, my_date
+
+
+def execute():
+    """
+    部署在主服务器上，将主服务器上的Flow产出拷贝到备用机目录
+    """
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        table_name = "APS_ETL_FLOW"
+        backup_folder = "\\ip\workspace\ETLOutput"  # TODO
+        file_full_path = my_oracle.get_last_create_file(oracle_conn, table_name)
+        if file_full_path is not None and file_full_path != '':
+            file_name = file_full_path.split('\\')[-1]
+            create_date_str = file_name.replace(".db", "").split("_")[-1]
+            _create_date = datetime.strptime(create_date_str, '%Y%m%d%H%M%S')
+            print(_create_date)
+            if datetime.now() - _create_date > timedelta(minutes=30):
+                e = Exception("No Flow Outout In Recent 30 Mins")
+                my_oracle.SaveAlarmLogData(ETLProcName="ETLProcCopyFLow", Exception=e, file_name=None,
+                                           alarm_code=cons_error_code.APS_ETL_FLOW_CODE_XX_ETL)
+            else:
+                target_full_path = os.path.join(backup_folder, table_name, file_name)
+                copy_cmder = "xcopy {source} {target} /Y".format(source=file_full_path, target=target_full_path)
+                logging.info(copy_cmder)
+                my_cmder.exec(copy_cmder)
+                # 写版本号
+                my_oracle.HandlingVerControl(oracle_conn, my_oracle.UUID(), table_name, target_full_path, my_date.date_time_second_short_str())
+        else:
+            e = Exception("No Flow Outout In Recent 30 Mins")
+            my_oracle.SaveAlarmLogData(ETLProcName="ETLProcCopyFLow", Exception=e, file_name=None,
+                                       alarm_code=cons_error_code.APS_ETL_FLOW_CODE_XX_ETL)
+
+    except Exception as copyException:
+        my_oracle.SaveAlarmLogData(ETLProcName="ETLProcCopyFLow", Exception=copyException, file_name=None,
+                                   alarm_code=cons_error_code.APS_ETL_FLOW_CODE_XX_ETL)
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

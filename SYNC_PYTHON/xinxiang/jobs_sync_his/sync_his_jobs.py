@@ -1,0 +1,397 @@
+import logging
+
+import warnings
+from datetime import datetime
+
+from xinxiang.util import oracle_to_duck_his
+from xinxiang.util.oracle_to_duck_his import delete_over_three_version
+
+
+def sync_APS_TMP_LOTHISTORY():
+    source_table = "V_ETL_LOTHISTORY"
+    target_table = "APS_TMP_LOTHISTORY_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    query_sql = """SELECT LOT_ID, OPE_NO,OPE_SEQ,PASS_COUNT,LINE,CLAIM_TIME,MAINPD_ID,EQP_ID,MOVE_FLAG,REWORK_MOVE_FLAG,PURE_MOVE_FLAG,DUMMY_MOVE_FLAG,PROCESS_AREA,MODULE_ID,DETAIL_MODULE_ID,PRIORITY,PRIORITY_CLASS,SHL_FLAG,CYCLE_TIME,PREV_OP_COMP_TIME,BANK_ID,PREV_BANK_ID,REWORK_CHILD_FLAG,PW_FLAG,PRODSPEC_ID,PHOTO_LAYER,SHIFT_DATE,SHIFT_HOUR,SHIFT,RECIPE_ID,RETICLE_ID,WAFER_QTY,PRODGRP_ID,EQP_TYPE,CTRL_JOB,SUB_LOT_TYPE,OP_START_DATE_TIME,OPE_CATEGORY,LAYER,CHIP_BODY,SUFFIX,CLAIM_USER,REPLACE(REPLACE(claim_memo, chr(10), ''), chr(13), '')  AS claim_memo,LOT_OWNER_ID,NENG_FLAG,LOCATION_ID,PROCESS_START_TIME,CAST_ID,BANK_PERIOD_TIME,HOLD_PERIOD_TIME,BATCH_ID,LAST_MAIN_CTRL_JOB FROM V_ETL_LOTHISTORY"""
+    create_table_sql = """
+    CREATE TABLE APS_TMP_LOTHISTORY_VIEW (
+        LOT_ID VARCHAR,
+        OPE_NO VARCHAR,
+        OPE_SEQ DOUBLE,
+        PASS_COUNT DOUBLE,
+        LINE VARCHAR,
+        CLAIM_TIME VARCHAR,
+        MAINPD_ID VARCHAR,
+        EQP_ID VARCHAR,
+        MOVE_FLAG VARCHAR,
+        REWORK_MOVE_FLAG VARCHAR,
+        PURE_MOVE_FLAG VARCHAR,
+        DUMMY_MOVE_FLAG VARCHAR,
+        PROCESS_AREA VARCHAR,
+        MODULE_ID VARCHAR,
+        DETAIL_MODULE_ID VARCHAR,
+        PRIORITY BIGINT,
+        PRIORITY_CLASS BIGINT,
+        SHL_FLAG VARCHAR,
+        CYCLE_TIME DOUBLE,
+        PREV_OP_COMP_TIME VARCHAR,
+        BANK_ID VARCHAR,
+        PREV_BANK_ID VARCHAR,
+        REWORK_CHILD_FLAG VARCHAR,
+        PW_FLAG VARCHAR,
+        PRODSPEC_ID VARCHAR,
+        PHOTO_LAYER VARCHAR,
+        SHIFT_DATE VARCHAR,
+        SHIFT_HOUR VARCHAR,
+        SHIFT VARCHAR,
+        RECIPE_ID VARCHAR,
+        RETICLE_ID VARCHAR,
+        WAFER_QTY BIGINT,
+        PRODGRP_ID VARCHAR,
+        EQP_TYPE VARCHAR,
+        CTRL_JOB VARCHAR,
+        SUB_LOT_TYPE VARCHAR,
+        OP_START_DATE_TIME VARCHAR,
+        OPE_CATEGORY VARCHAR,
+        LAYER VARCHAR,
+        CHIP_BODY VARCHAR,
+        SUFFIX VARCHAR,
+        CLAIM_USER VARCHAR,
+        CLAIM_MEMO VARCHAR,
+        LOT_OWNER_ID VARCHAR,
+        NENG_FLAG VARCHAR,
+        LOCATION_ID VARCHAR,
+        PROCESS_START_TIME VARCHAR,
+        CAST_ID VARCHAR,
+        BANK_PERIOD_TIME DOUBLE,
+        HOLD_PERIOD_TIME DOUBLE,
+        BATCH_ID VARCHAR,
+        LAST_MAIN_CTRL_JOB VARCHAR
+    )
+    """
+    # logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="CLAIM_TIME",
+                                           sync_day=360,
+                                           duration_minute=5,
+                                           query_sql=query_sql,
+                                           create_table_sql=create_table_sql)
+    # logging.info("End " + etl_name)
+
+
+
+def sync_APS_MID_RSPILOT_RUN_HS():
+    # source_table = "V_RSPILOT_RUN_HS"
+    source_table = "v_rspilot_run_hs"
+    target_table = "APS_MID_RSPILOT_RUN_HS_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    query_sql = """SELECT JOB_NO, APC_TYPE, LOT_KEY_NO, DEVICE_GRP, DEVICE_NM, DEVICE_NM1, C_OP_NO, C_UNIT_ID, E_OP_NO, OP_NO_1, UNIT_ID_1, OP_NO_2, UNIT_ID_2, OP_NO_3, UNIT_ID_3, START_DATE, STATUS, DEL_MAN_NO, DEL_DATE, PILOT_COMMENT, PILOT_CHUCK, MASK_NM, PILOT_CNT, PIRUN_LOG FROM v_rspilot_run_hs"""
+    create_table_sql = """
+        CREATE TABLE APS_MID_RSPILOT_RUN_HS_VIEW (
+            JOB_NO INTEGER,
+            APC_TYPE VARCHAR,
+            LOT_KEY_NO VARCHAR,
+            DEVICE_GRP VARCHAR,
+            DEVICE_NM VARCHAR,
+            DEVICE_NM1 VARCHAR,
+            C_OP_NO VARCHAR,
+            C_UNIT_ID VARCHAR,
+            E_OP_NO VARCHAR,
+            OP_NO_1 VARCHAR,
+            UNIT_ID_1 VARCHAR,
+            OP_NO_2 VARCHAR,
+            UNIT_ID_2 VARCHAR,
+            OP_NO_3 VARCHAR,
+            UNIT_ID_3 VARCHAR,
+            START_DATE TIMESTAMP,
+            STATUS VARCHAR,
+            DEL_MAN_NO VARCHAR,
+            DEL_DATE TIMESTAMP,
+            PILOT_COMMENT VARCHAR,
+            PILOT_CHUCK VARCHAR,
+            MASK_NM VARCHAR,
+            PILOT_CNT INTEGER,
+            PIRUN_LOG VARCHAR
+        )
+        """
+    # logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="START_DATE",
+                                           sync_day=30,
+                                           duration_minute=5,
+                                           query_sql=query_sql,
+                                           create_table_sql=create_table_sql)
+    # logging.info("End " + etl_name)
+
+
+
+def sync_APS_MID_FHOPEHS():
+    # source_table = "V_FHOPEHS"
+    source_table = "V_FHOPEHS"
+    target_table = "APS_MID_FHOPEHS_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    query_sql = """SELECT LOT_ID, LOT_TYPE, SUB_LOT_TYPE, CAST_ID, CAST_CATEGORY, MAINPD_ID, OPE_NO, PD_ID, OPE_PASS_COUNT, PD_NAME, HOLD_STATE, CLAIM_TIME, CLAIM_SHOP_DATE, CLAIM_USER_ID, MOVE_TYPE, OPE_CATEGORY, PROD_TYPE, TEST_TYPE, MFG_LAYER, EXT_PRIORITY, PRIORITY_CLASS, PREV_PRODSPEC_ID, PRODSPEC_ID, PRODGRP_ID, TECH_ID, CUSTOMER_ID, CUSTPROD_ID, ORDER_NO, STAGE_ID, STAGEGRP_ID, PHOTO_LAYER, LOCATION_ID, AREA_ID, EQP_ID, REPLACE(REPLACE(EQP_NAME, chr(10), ''), chr(13), '')  AS EQP_NAME, OPE_MODE, LC_RECIPE_ID, RECIPE_ID, PH_RECIPE_ID, RETICLE_COUNT, FIXTURE_COUNT, RPARM_COUNT, INIT_HOLD_FLAG, LAST_HLDREL_FLAG, HOLD_TIME, HOLD_SHOP_DATE, HOLD_USER_ID, HOLD_TYPE, HOLD_REASON_CODE, HOLD_REASON_DESC, REASON_CODE, REASON_DESCRIPTION, BANK_ID, PREV_BANK_ID, PREV_MAINPD_ID, PREV_OPE_NO, PREV_PD_ID, PREV_PD_NAME, PREV_PASS_COUNT, PREV_STAGE_ID, PREV_STAGEGRP_ID, PREV_PHOTO_LAYER, FLOWBATCH_ID, CTRL_JOB, REWORK_COUNT, ORG_WAFER_QTY, CUR_WAFER_QTY, PROD_WAFER_QTY, CNTL_WAFER_QTY, CLAIM_PROD_QTY, CLAIM_CNTL_QTY, TOTAL_GOOD_UNIT, TOTAL_FAIL_UNIT, LOT_OWNER_ID, PLAN_END_TIME, WFRHS_TIME, CRITERIA_FLAG, REPLACE(REPLACE(CLAIM_MEMO, chr(10), ''), chr(13), '')  AS CLAIM_MEMO, STORE_TIME, ORIG_LOT_ID, GET_FROM, FAB_ID, EVENT_CREATE_TIME, HOLD_OPE_NO, HOLD_REASON_OPE_NO, ORIGINAL_FAB_ID, DESTINATION_FAB_ID, RELATED_LOT_ID, BOND_GRP_ID, EQPMONJOB_ID, PD_TYPE, PREV_PD_TYPE FROM V_FHOPEHS"""
+    create_table_sql = """
+            CREATE TABLE APS_MID_FHOPEHS_VIEW (
+                LOT_ID VARCHAR,
+                LOT_TYPE VARCHAR,
+                SUB_LOT_TYPE VARCHAR,
+                CAST_ID VARCHAR,
+                CAST_CATEGORY VARCHAR,
+                MAINPD_ID VARCHAR,
+                OPE_NO VARCHAR,
+                PD_ID VARCHAR,
+                OPE_PASS_COUNT INTEGER,
+                PD_NAME VARCHAR,
+                HOLD_STATE VARCHAR,
+                CLAIM_TIME TIMESTAMP,
+                CLAIM_SHOP_DATE FLOAT,
+                CLAIM_USER_ID VARCHAR,
+                MOVE_TYPE VARCHAR,
+                OPE_CATEGORY VARCHAR,
+                PROD_TYPE VARCHAR,
+                TEST_TYPE VARCHAR,
+                MFG_LAYER VARCHAR,
+                EXT_PRIORITY INTEGER,
+                PRIORITY_CLASS INTEGER,
+                PREV_PRODSPEC_ID VARCHAR,
+                PRODSPEC_ID VARCHAR,
+                PRODGRP_ID VARCHAR,
+                TECH_ID VARCHAR,
+                CUSTOMER_ID VARCHAR,
+                CUSTPROD_ID VARCHAR,
+                ORDER_NO VARCHAR,
+                STAGE_ID VARCHAR,
+                STAGEGRP_ID VARCHAR,
+                PHOTO_LAYER VARCHAR,
+                LOCATION_ID VARCHAR,
+                AREA_ID VARCHAR,
+                EQP_ID VARCHAR,
+                EQP_NAME VARCHAR,
+                OPE_MODE VARCHAR,
+                LC_RECIPE_ID VARCHAR,
+                RECIPE_ID VARCHAR,
+                PH_RECIPE_ID VARCHAR,
+                RETICLE_COUNT INTEGER,
+                FIXTURE_COUNT INTEGER,
+                RPARM_COUNT INTEGER,
+                INIT_HOLD_FLAG INTEGER,
+                LAST_HLDREL_FLAG INTEGER,
+                HOLD_TIME TIMESTAMP,
+                HOLD_SHOP_DATE FLOAT,
+                HOLD_USER_ID VARCHAR,
+                HOLD_TYPE VARCHAR,
+                HOLD_REASON_CODE VARCHAR,
+                HOLD_REASON_DESC VARCHAR,
+                REASON_CODE VARCHAR,
+                REASON_DESCRIPTION VARCHAR,
+                BANK_ID VARCHAR,
+                PREV_BANK_ID VARCHAR,
+                PREV_MAINPD_ID VARCHAR,
+                PREV_OPE_NO VARCHAR,
+                PREV_PD_ID VARCHAR,
+                PREV_PD_NAME VARCHAR,
+                PREV_PASS_COUNT FLOAT,
+                PREV_STAGE_ID VARCHAR,
+                PREV_STAGEGRP_ID VARCHAR,
+                PREV_PHOTO_LAYER VARCHAR,
+                FLOWBATCH_ID VARCHAR,
+                CTRL_JOB VARCHAR,
+                REWORK_COUNT INTEGER,
+                ORG_WAFER_QTY INTEGER,
+                CUR_WAFER_QTY INTEGER,
+                PROD_WAFER_QTY INTEGER,
+                CNTL_WAFER_QTY INTEGER,
+                CLAIM_PROD_QTY INTEGER,
+                CLAIM_CNTL_QTY INTEGER,
+                TOTAL_GOOD_UNIT INTEGER,
+                TOTAL_FAIL_UNIT INTEGER,
+                LOT_OWNER_ID VARCHAR,
+                PLAN_END_TIME TIMESTAMP,
+                WFRHS_TIME TIMESTAMP,
+                CRITERIA_FLAG INTEGER,
+                CLAIM_MEMO VARCHAR,
+                STORE_TIME TIMESTAMP,
+                ORIG_LOT_ID VARCHAR,
+                GET_FROM VARCHAR,
+                FAB_ID VARCHAR,
+                EVENT_CREATE_TIME TIMESTAMP,
+                HOLD_OPE_NO VARCHAR,
+                HOLD_REASON_OPE_NO VARCHAR,
+                ORIGINAL_FAB_ID VARCHAR,
+                DESTINATION_FAB_ID VARCHAR,
+                RELATED_LOT_ID VARCHAR,
+                BOND_GRP_ID VARCHAR,
+                EQPMONJOB_ID VARCHAR,
+                PD_TYPE VARCHAR,
+                PREV_PD_TYPE VARCHAR
+            );
+            """
+
+    # logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="CLAIM_TIME",
+                                           sync_day=60,
+                                           duration_minute=5,
+                                           query_sql=query_sql,
+                                           create_table_sql=create_table_sql)
+    # logging.info("End " + etl_name)
+
+
+
+def sync_APS_TMP_MASK_HISTORY():
+    # source_table = "V_ETL_MASK_HISTORY"
+    source_table = "V_ETL_MASK_HISTORY"
+    target_table = "APS_TMP_MASK_HISTORY_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    query_sql = """SELECT TID, FUNC_ID, MASK_SEQ_NO, RTCL_ID, MASK_GROUP, LOC_ID, STATUS, NEXT_LOC_ID, NEXT_STATUS, LOC_STATE, DOCUMENT_NO, PROPERTY, HR_CODE, SLOT_ID, REPLACE(REPLACE(COMM, chr(10), ''), chr(13), '')  AS COMM, "ACTION", USER_ID, "TIMESTAMP", SCRAP_CODE, PMOS_PROD_ID, POD_ID FROM V_ETL_MASK_HISTORY"""
+    create_table_sql = """
+                CREATE TABLE APS_TMP_MASK_HISTORY_VIEW (
+                    TID INTEGER,
+                    FUNC_ID VARCHAR,
+                    MASK_SEQ_NO INTEGER,
+                    RTCL_ID VARCHAR,
+                    MASK_GROUP VARCHAR,
+                    LOC_ID VARCHAR,
+                    STATUS VARCHAR,
+                    NEXT_LOC_ID VARCHAR,
+                    NEXT_STATUS VARCHAR,
+                    LOC_STATE VARCHAR,
+                    DOCUMENT_NO VARCHAR,
+                    PROPERTY VARCHAR,
+                    HR_CODE VARCHAR,
+                    SLOT_ID VARCHAR,
+                    COMM VARCHAR,
+                    "ACTION" VARCHAR,
+                    USER_ID VARCHAR,
+                    "TIMESTAMP" TIMESTAMP,
+                    SCRAP_CODE VARCHAR,
+                    PMOS_PROD_ID VARCHAR,
+                    POD_ID VARCHAR
+                )
+                """
+
+    # logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="TIMESTAMP",
+                                           sync_day=180,
+                                           duration_minute=5,
+                                           query_sql=query_sql,
+                                           create_table_sql=create_table_sql)
+    # logging.info("End " + etl_name)
+
+
+
+def sync_APS_MID_FHOPEHS_RETICLE():
+    # source_table = "V_FHOPEHS_RETICLE"
+    source_table = "V_FHOPEHS_RETICLE"
+    target_table = "APS_MID_FHOPEHS_RETICLE_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    query_sql = """SELECT LOT_ID, MAINPD_ID, OPE_NO, OPE_PASS_COUNT, CLAIM_TIME, OPE_CATEGORY, RETICLE_ID, ORIG_LOT_ID FROM V_FHOPEHS_RETICLE"""
+    create_table_sql = """
+        CREATE TABLE APS_MID_FHOPEHS_RETICLE_VIEW (
+                LOT_ID VARCHAR,
+                MAINPD_ID VARCHAR,
+                OPE_NO VARCHAR,
+                OPE_PASS_COUNT INTEGER,
+                CLAIM_TIME TIMESTAMP,
+                OPE_CATEGORY VARCHAR,
+                RETICLE_ID VARCHAR,
+                ORIG_LOT_ID VARCHAR
+            );
+        """
+
+    # logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="CLAIM_TIME",
+                                           sync_day=180,
+                                           duration_minute=5,
+                                           query_sql=query_sql,
+                                           create_table_sql=create_table_sql)
+    # logging.info("End " + etl_name)
+
+
+
+def sync_APS_TMP_OCS_MAIN_H():
+    # source_table = "VIEW_OCS_MAIN_H"
+    source_table = "VIEW_OCS_MAIN_H"
+    target_table = "APS_TMP_OCS_MAIN_H_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+
+    query_sql = """SELECT JOB_SPEC_GROUP_PO_ID, JOB_SPEC_GROUP_ID, JOB_SPEC_ID, SUB_NAME, MTOOL_ID, FOUP_ID, RECIPE, CJ_ID, PJ_ID, PROCESS_ST_TIME, PROCESS_ED_TIME, SLOT, STATUS, STATUS_TIME, RETICLE, TEST_FOR FROM VIEW_OCS_MAIN_H"""
+    create_table_sql = """
+            CREATE TABLE APS_TMP_OCS_MAIN_H_VIEW (
+                JOB_SPEC_GROUP_PO_ID VARCHAR,
+                JOB_SPEC_GROUP_ID VARCHAR,
+                JOB_SPEC_ID VARCHAR,
+                SUB_NAME VARCHAR,
+                MTOOL_ID VARCHAR,
+                FOUP_ID VARCHAR,
+                RECIPE VARCHAR,
+                CJ_ID VARCHAR,
+                PJ_ID VARCHAR,
+                PROCESS_ST_TIME TIMESTAMP,
+                PROCESS_ED_TIME TIMESTAMP,
+                SLOT VARCHAR,
+                STATUS VARCHAR,
+                STATUS_TIME TIMESTAMP,
+                RETICLE VARCHAR,
+                TEST_FOR VARCHAR
+            );
+            """
+
+    # logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="STATUS_TIME",
+                                           sync_day=40,
+                                           duration_minute=10,
+                                           query_sql=query_sql,
+                                           create_table_sql=create_table_sql)
+    # logging.info("End " + etl_name)
+
+def sync_APS_MID_OCS_JOB_GROUP_PO_STATE_H():
+    # source_table = "VIEW_OCS_MAIN_H"
+    source_table = "V_OCS_JOB_GROUP_PO_STATE_H"
+    target_table = "APS_MID_OCS_JOB_GROUP_PO_STATE_H_VIEW"
+    etl_name = "Sync " + source_table + " to " + target_table
+    query_sql = """SELECT JOB_SPEC_GROUP_PO_ID, JOB_SPEC_GROUP_ID, MODULE, JOB_SPEC_ID, TOOL_ID, SEQNO, START_TIME, END_TIME, STATUS FROM V_OCS_JOB_GROUP_PO_STATE_H"""
+    create_table_sql = """
+                CREATE TABLE APS_MID_OCS_JOB_GROUP_PO_STATE_H_VIEW (
+                    JOB_SPEC_GROUP_PO_ID VARCHAR,
+                    JOB_SPEC_GROUP_ID VARCHAR,
+                    MODULE VARCHAR,
+                    JOB_SPEC_ID VARCHAR,
+                    TOOL_ID VARCHAR,
+                    SEQNO VARCHAR,
+                    START_TIME TIMESTAMP,
+                    END_TIME TIMESTAMP,
+                    STATUS VARCHAR
+                );
+    """
+
+    # logging.info("Start " + etl_name)
+    oracle_to_duck_his.sync_oracle_to_duck_by_csv(etl_name=etl_name,
+                                           source_table=source_table,
+                                           target_table=target_table,
+                                           check_date_column="END_TIME",
+                                           sync_day=40,
+                                           duration_minute=10,query_sql=query_sql,
+                                           create_table_sql=create_table_sql)
+    # logging.info("End " + etl_name)
+
+
+if __name__ == '__main__':
+    warnings.filterwarnings("ignore")
+
+    sync_APS_MID_FHOPEHS_RETICLE()

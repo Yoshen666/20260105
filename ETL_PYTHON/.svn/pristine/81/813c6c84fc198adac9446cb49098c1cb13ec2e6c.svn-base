@@ -1,0 +1,5 @@
+schtasks /create /tn xinxiang_aps_etl_monitor /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_monitor.vbs /sc minute /mo 10 /st 00:09 /f
+
+
+schtasks /delete /tn "xinxiang_aps_etl_monitor"
+

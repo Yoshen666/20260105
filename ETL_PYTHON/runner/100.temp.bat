@@ -1,0 +1,1 @@
+schtasks /create /tn xinxiang_aps_etl_lot_situation /tr D:\XinXiang\ETL_PYTHON\runner\run_aps_etl_lot_situation.vbs /sc minute /mo 5 /st 00:02 /f

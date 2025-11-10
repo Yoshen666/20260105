@@ -1,0 +1,172 @@
+import gc
+import logging
+import os
+import shutil
+import time
+from datetime import datetime
+
+import duckdb
+
+from xinxiang import config
+from xinxiang.util import my_oracle, my_date, cons_error_code
+import pandas as pd
+
+
+def sync_oracle_to_duck(etl_name, source_table, target_table, where_start_sql=None, target_path=config.g_mem_sync_result_path, create_table_sql=None):
+    '''
+    封装给各个Job使用的oracle to duck的函数，可直接使用
+    :param conn:
+    :param etl_name:
+    :param source_table:
+    :param target_table:
+    :return:
+    '''
+    conn = None
+    start = datetime.now()
+    conn = my_oracle.oracle_get_connection()
+    try:
+        _base_oracle_to_duck(
+            conn=conn,
+            etl_name=etl_name,
+            source_table=source_table,
+            target_table=target_table,
+            where_start_sql=where_start_sql,
+            target_path=target_path,
+            create_table_sql=create_table_sql
+        )
+    except Exception as e:
+        try:
+            time.sleep(10)
+            _base_oracle_to_duck(
+                conn=conn,
+                etl_name=etl_name,
+                source_table=source_table,
+                target_table=target_table,
+                where_start_sql=where_start_sql,
+                target_path=target_path,
+                create_table_sql=create_table_sql
+            )
+        except Exception as e2:
+            logging.exception("{source_table} Sync to {target_table} 处理出错: {e}".format(source_table=source_table,
+                                                                                            target_table=target_table,
+                                                                                            e=e))
+            logging.info(">>> Retry to Sync {source_table} to {target_table}".format(source_table=source_table, target_table=target_table))
+            my_oracle.SaveAlarmLogData(conn,
+                                       ETLProcName=etl_name,
+                                       Exception=e,
+                                       file_name="Sync Error",
+                                       alarm_code="XSYNC")
+            raise e
+    finally:
+        conn.commit()
+        conn.close()
+        del conn
+        end = datetime.now()
+        logging.info("{source_table} Sync to {target_table} : 总时间 - {cost} 秒".format(source_table=source_table,
+                                                                                     target_table=target_table,
+                                                                                     cost=(
+                                                                                         my_date.duration(start, end))))
+        gc.collect()  # 内存释放
+
+
+def exec_base_oracle_to_duck(conn, etl_name, source_table, target_table, where_start_sql=None, target_path=config.g_mem_sync_result_path, create_table_sql=None):
+    _base_oracle_to_duck(conn, etl_name, source_table, target_table, where_start_sql=where_start_sql, target_path=target_path, create_table_sql=create_table_sql)
+
+
+def _base_oracle_to_duck(conn, etl_name, source_table, target_table, where_start_sql=None, target_path=config.g_mem_sync_result_path, create_table_sql=None):
+    '''
+    执行oracle到duckdb的函数，Job不可直接调用
+    :param conn:
+    :param etl_name:
+    :param source_table:
+    :param target_table:
+    :return:
+    '''
+    _now = my_date.date_time_second_str()
+
+    # 创建目录
+    target_table_name = target_table
+    target_folder = os.path.join(target_path, target_table_name, "inprocess")
+    if not os.path.isdir(target_folder):
+        os.makedirs(target_folder)
+
+    # 创建DuckDB的文件
+    _file_name = target_table_name + "_" + my_date.date_time_second_short_str() + ".db"
+    in_process_db_file = os.path.join(target_folder, _file_name)
+    target_db_file = os.path.join(target_path, target_table_name, _file_name) # 最终文件在inprocess目录上层
+
+    duck_db_cursor = None
+    result_count = 0
+    try:
+        # 记录开始日志
+        my_oracle.StartCleanUpAndLog(
+            conn=conn,
+            ETLProcName=etl_name,
+            ETLStartTime=_now)
+
+        # 创建DuckDB文件
+        duck_db_cursor = duckdb.connect(in_process_db_file)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_cursor.sql('SET threads TO 2')
+            duck_db_cursor.sql("SET memory_limit ='5GB'")
+        # 读取Oracle中的数据
+        start = datetime.now()
+        if where_start_sql is None:
+            query_sql = "select * from {}".format(source_table)
+        else:
+            query_sql = "select * from {} {}".format(source_table, where_start_sql)
+
+        pd_result = pd.read_sql(query_sql, conn)
+
+        result_count = pd_result.shape[0]
+        if config.g_debug_mode:
+            print(target_table + ":行数:" + str(result_count))
+        if create_table_sql is None:
+            end = datetime.now()
+            logging.debug("抽取时间:" + source_table + ":" + str(my_date.duration(start, end)))
+
+            create_sql = my_oracle.create_sql_from_oracle_to_duck(conn, source_table, target_table)
+            duck_db_cursor.sql(create_sql)
+        else:
+            duck_db_cursor.sql(create_table_sql)
+
+        # 处理Null列
+        for col, data_type in pd_result.dtypes.items():
+            if "datetime64[ns]" == str(data_type):
+                pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+            elif "float64" == str(data_type):
+                pd_result[col] = pd_result[col].fillna(0)
+            else:
+                pd_result[col] = pd_result[col].fillna('')
+
+        # 插入数据
+        start = datetime.now()
+        insert_sql = "INSERT INTO {} select * from pd_result".format(target_table)
+        duck_db_cursor.sql(insert_sql)
+        end = datetime.now()
+        logging.debug(":写入时间:" + target_table + ":" + str(my_date.duration(start, end)))
+
+        del pd_result
+        duck_db_cursor.commit()
+        duck_db_cursor.close()
+
+        # 写版本号
+        if result_count > 0:
+            my_oracle.HandlingVerControl(conn, my_oracle.UUID(), target_table, target_db_file)
+    except Exception as e:
+        logging.exception(">>>>>>>>>>" + source_table + "处理出错: %s", e)
+        duck_db_cursor.close()
+        raise e
+    finally:
+        my_oracle.EndCleanUpAndLog(
+            conn=conn,
+            ETLProcName=etl_name,
+            ETLStartTime=_now)
+        if result_count > 0:
+            try:
+                os.rename(in_process_db_file, target_db_file)
+            except Exception as eee:
+                logging.exception("文件太大，等待20秒后再拷贝... %s", eee)
+                time.sleep(20)
+                os.rename(in_process_db_file, target_db_file)

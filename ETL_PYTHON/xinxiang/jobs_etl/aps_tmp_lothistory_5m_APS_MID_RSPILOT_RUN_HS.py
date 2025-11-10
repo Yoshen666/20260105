@@ -1,0 +1,236 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_file
+
+
+def create_temp_table(duck_db):
+    pass
+
+
+def GetTypeFirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_MID_RSPILOT_RUN_HS_VIEW(                              
+       PARENTID,JOB_NO,APC_TYPE,LOT_KEY_NO,DEVICE_GRP,DEVICE_NM,DEVICE_NM1,
+       C_OP_NO,C_UNIT_ID,E_OP_NO,OP_NO_1,UNIT_ID_1,OP_NO_2,UNIT_ID_2,OP_NO_3,
+       UNIT_ID_3,START_DATE,STATUS,DEL_MAN_NO,DEL_DATE,PILOT_COMMENT,
+       PILOT_CHUCK,MASK_NM,PILOT_CNT,PIRUN_LOG,UPDATE_TIME,PARTKEY                                                                
+    )                                                                                    
+     SELECT   gen_random_uuid() AS GUID,                            
+              JOB_NO,                                        
+              APC_TYPE,                                      
+              LOT_KEY_NO,                                    
+              DEVICE_GRP,                                    
+              DEVICE_NM,                                     
+              DEVICE_NM1,                                    
+              C_OP_NO,                                       
+              C_UNIT_ID,                                     
+              E_OP_NO,                                       
+              OP_NO_1,                                       
+              UNIT_ID_1,                                     
+              OP_NO_2,                                       
+              UNIT_ID_2,                                     
+              OP_NO_3,                                       
+              UNIT_ID_3,                                     
+              START_DATE,                                    
+              STATUS,                                        
+              DEL_MAN_NO,                                    
+              DEL_DATE,                                      
+              PILOT_COMMENT,                                 
+              PILOT_CHUCK,                                   
+              MASK_NM,                                       
+              PILOT_CNT,                                     
+              PIRUN_LOG,                                     
+              '{current_time}',                           
+              START_DATE AS PARTKEY                          
+     FROM APS_MID_RSPILOT_RUN_HS_VIEW.APS_MID_RSPILOT_RUN_HS_VIEW H                                 
+     WHERE H.START_DATE >= DATE_TRUNC('day', CURRENT_TIMESTAMP) - INTERVAL '30 day'  
+    """.format(current_time=current_time)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_RSPILOT_RUN_HS_VIEW",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_MID_RSPILOT_RUN_HS_VIEW")
+
+
+def GetTypeOtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name, last_db_file):
+    last_db_file = my_file.get_last_db_file(oracle_conn, "APS_MID_RSPILOT_RUN_HS_VIEW")
+    my_duck.attach_table(duck_db_memory, 'LAST_APS_MID_RSPILOT_RUN_HS', last_db_file)
+    insert_sql = """
+    INSERT  /*+ append */  INTO APS_MID_RSPILOT_RUN_HS_VIEW(                              
+       PARENTID,JOB_NO,APC_TYPE,LOT_KEY_NO,DEVICE_GRP,DEVICE_NM,DEVICE_NM1,
+       C_OP_NO,C_UNIT_ID,E_OP_NO,OP_NO_1,UNIT_ID_1,OP_NO_2,UNIT_ID_2,OP_NO_3,
+       UNIT_ID_3,START_DATE,STATUS,DEL_MAN_NO,DEL_DATE,PILOT_COMMENT,
+       PILOT_CHUCK,MASK_NM,PILOT_CNT,PIRUN_LOG,UPDATE_TIME,PARTKEY                                                                
+    )                                                                      
+     SELECT   gen_random_uuid() AS GUID,                            
+              JOB_NO,                                        
+              APC_TYPE,                                      
+              LOT_KEY_NO,                                    
+              DEVICE_GRP,                                    
+              DEVICE_NM,                                     
+              DEVICE_NM1,                                    
+              C_OP_NO,                                       
+              C_UNIT_ID,                                     
+              E_OP_NO,                                       
+              OP_NO_1,                                       
+              UNIT_ID_1,                                     
+              OP_NO_2,                                       
+              UNIT_ID_2,                                     
+              OP_NO_3,                                       
+              UNIT_ID_3,                                     
+              START_DATE,                                    
+              STATUS,                                        
+              DEL_MAN_NO,                                    
+              DEL_DATE,                                      
+              PILOT_COMMENT,                                 
+              PILOT_CHUCK,                                   
+              MASK_NM,                                       
+              PILOT_CNT,                                     
+              PIRUN_LOG,                                     
+              '{current_time}',                           
+              START_DATE AS PARTKEY                          
+     FROM APS_MID_RSPILOT_RUN_HS_VIEW.APS_MID_RSPILOT_RUN_HS_VIEW H                                 
+     WHERE H.START_DATE >= date_add(CURRENT_TIMESTAMP, INTERVAL '-3 hour')      
+     AND NOT EXISTS (                                                                                  
+                SELECT HL.LOT_KEY_NO  FROM LAST_APS_MID_RSPILOT_RUN_HS.APS_MID_RSPILOT_RUN_HS_VIEW HL                                       
+                WHERE HL.PARTKEY > DATE_TRUNC('day', CURRENT_TIMESTAMP) - INTERVAL '1 day'  
+                AND HL.JOB_NO = H.JOB_NO AND COALESCE(HL.E_OP_NO,'*') = COALESCE(H.E_OP_NO,'*')                                           
+                AND COALESCE(HL.APC_TYPE,'*') = COALESCE(H.APC_TYPE,'*')  AND COALESCE(HL.LOT_KEY_NO,'*') = COALESCE(H.LOT_KEY_NO,'*')                 
+                AND COALESCE(HL.DEVICE_GRP,'*') = COALESCE(H.DEVICE_GRP,'*')  AND COALESCE(HL.DEVICE_NM,'*') = COALESCE(H.DEVICE_NM,'*')                    
+                AND COALESCE(HL.DEVICE_NM1,'*') = COALESCE(H.DEVICE_NM1,'*')  AND COALESCE(HL.C_OP_NO,'*') = COALESCE(H.C_OP_NO,'*')                         
+                AND COALESCE(HL.OP_NO_1,'*') = COALESCE(H.OP_NO_1,'*')  AND COALESCE(HL.UNIT_ID_1,'*') = COALESCE(H.UNIT_ID_1,'*')                            
+                AND COALESCE(HL.OP_NO_2,'*') = COALESCE(H.OP_NO_2,'*')  AND COALESCE(HL.UNIT_ID_2,'*') = COALESCE(H.UNIT_ID_2,'*')                           
+                AND COALESCE(HL.OP_NO_3,'*') = COALESCE(H.OP_NO_3,'*')  AND COALESCE(HL.UNIT_ID_3,'*') = COALESCE(H.UNIT_ID_3,'*')                          
+                AND START_DATE = H.START_DATE  AND COALESCE(HL.STATUS,'*') = COALESCE(H.STATUS,'*')                         
+                AND COALESCE(HL.DEL_MAN_NO,'*') = COALESCE(H.DEL_MAN_NO,'*')                    
+                AND COALESCE(HL.DEL_DATE,'1901-01-01 00:00:00') = COALESCE(H.DEL_DATE,'1901-01-01 00:00:00')                       
+                AND COALESCE(HL.PILOT_COMMENT,'*') = COALESCE(H.PILOT_COMMENT,'*')  
+                AND COALESCE(HL.PILOT_CHUCK,'*') = COALESCE(H.PILOT_CHUCK,'*')     
+                AND COALESCE(HL.MASK_NM,'*') = COALESCE(H.MASK_NM,'*')  AND COALESCE(HL.PILOT_CNT,-1) = COALESCE(H.PILOT_CNT,-1)                    
+                AND COALESCE(HL.PIRUN_LOG,'*') = COALESCE(H.PIRUN_LOG,'*') AND COALESCE(HL.C_UNIT_ID,'*') = COALESCE(H.C_UNIT_ID,'*') )                                                                                                           
+    """.format(current_time=current_time)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_RSPILOT_RUN_HS_VIEW",
+                     sql=insert_sql,
+                     current_time=current_time,
+                     update_table="APS_MID_RSPILOT_RUN_HS_VIEW")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_TMP_MASK_HISTORY_VIEW_5M_APS_MID_RSPILOT_RUN_HS"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_MID_RSPILOT_RUN_HS_VIEW"
+    used_table_list = ['APS_MID_RSPILOT_RUN_HS_VIEW']
+    target_table_sql = """
+        CREATE TABLE {}APS_MID_RSPILOT_RUN_HS_VIEW 
+        (	
+            PARENTID 			VARCHAR(32) NOT NULL , 
+            JOB_NO 				VARCHAR(60) NOT NULL , 
+            APC_TYPE 			VARCHAR(6) NOT NULL , 
+            LOT_KEY_NO 			VARCHAR(36) NOT NULL , 
+            DEVICE_GRP 			VARCHAR(60), 
+            DEVICE_NM 			VARCHAR(48), 
+            DEVICE_NM1 			VARCHAR(15), 
+            C_OP_NO 			VARCHAR(30) NOT NULL , 
+            C_UNIT_ID 			VARCHAR(24) NOT NULL , 
+            E_OP_NO 			VARCHAR(30) NOT NULL , 
+            OP_NO_1 			VARCHAR(30), 
+            UNIT_ID_1 			VARCHAR(24), 
+            OP_NO_2 			VARCHAR(30), 
+            UNIT_ID_2 			VARCHAR(24), 
+            OP_NO_3 			VARCHAR(30), 
+            UNIT_ID_3 			VARCHAR(24), 
+            START_DATE 			VARCHAR(60), 
+            STATUS 				VARCHAR(15), 
+            DEL_MAN_NO 			VARCHAR(36), 
+            DEL_DATE 			VARCHAR(60), 
+            PILOT_COMMENT 		VARCHAR(768), 
+            PILOT_CHUCK 		VARCHAR(6), 
+            MASK_NM 			VARCHAR(192), 
+            PILOT_CNT 			VARCHAR(60), 
+            PIRUN_LOG 			VARCHAR(768), 
+            UPDATE_TIME 		VARCHAR(64), 
+            PARTKEY 			VARCHAR(60), 
+            PRIMARY 			KEY (PARENTID, PARTKEY)
+         )
+    """.format("") # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_memory.sql('SET threads TO 2')
+            # 加上TMP目录:LQN:2023/08/21
+            duck_db_memory.execute(
+                "SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+        # 创建Temp表
+        create_temp_table(duck_db_memory)
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+
+        last_db_file = my_file.get_last_db_file(oracle_conn, "APS_MID_RSPILOT_RUN_HS_VIEW")
+        if last_db_file is None:
+            GetTypeFirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        else:
+            GetTypeOtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name, last_db_file)
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+                                                                                  target_table,
+                                                                                  target_table_sql.format("file_db."),
+                                                                                  current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file,
+                                   cons_error_code.APS_TR_TYPE_CODE_XX_ETL)
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            # 删除TMP目录:LQN:2023/08/21
+            if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+                os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

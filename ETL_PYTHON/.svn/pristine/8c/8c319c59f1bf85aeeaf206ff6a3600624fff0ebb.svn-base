@@ -1,0 +1,356 @@
+import gc
+import logging
+import os
+import shutil
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_file
+
+
+def create_temp_table(duck_db):
+    pass
+
+
+def GetTypeFirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_MID_PH_LOTHISTORY(                              
+        PARENTID,LOT_ID,OPE_NO,OPE_SEQ,PASS_COUNT,LINE,CLAIM_TIME,MAINPD_ID, 
+        EQP_ID,MOVE_FLAG,REWORK_MOVE_FLAG,PURE_MOVE_FLAG,DUMMY_MOVE_FLAG, 
+        PROCESS_AREA,MODULE_ID,DETAIL_MODULE_ID,PRIORITY,PRIORITY_CLASS, 
+        SHL_FLAG,CYCLE_TIME,PREV_OP_COMP_TIME,BANK_ID,PREV_BANK_ID, 
+        REWORK_CHILD_FLAG,PW_FLAG,PRODSPEC_ID,PHOTO_LAYER,SHIFT_DATE,
+        SHIFT_HOUR,SHIFT,RECIPE_ID,RETICLE_ID,WAFER_QTY,PRODGRP_ID, 
+        EQP_TYPE,CTRL_JOB,SUB_LOT_TYPE,OP_START_DATE_TIME,OPE_CATEGORY, 
+        LAYER,CHIP_BODY,SUFFIX,CLAIM_USER,CLAIM_MEMO,LOT_OWNER_ID,
+        NENG_FLAG,LOCATION_ID,PROCESS_START_TIME,CAST_ID,BANK_PERIOD_TIME,
+        HOLD_PERIOD_TIME,BATCH_ID,LAST_MAIN_CTRL_JOB,UPDATE_TIME,PARTKEY              
+    )                                                                                    
+     SELECT gen_random_uuid() AS GUID                  
+           ,LOT_ID                                        
+           ,OPE_NO                              
+           ,OPE_SEQ                             
+           ,PASS_COUNT                          
+           ,LINE                                
+           ,CLAIM_TIME                          
+           ,MAINPD_ID                           
+           ,EQP_ID                              
+           ,MOVE_FLAG                           
+           ,REWORK_MOVE_FLAG                    
+           ,PURE_MOVE_FLAG                      
+           ,DUMMY_MOVE_FLAG                     
+           ,PROCESS_AREA                        
+           ,MODULE_ID                           
+           ,DETAIL_MODULE_ID                    
+           ,PRIORITY                            
+           ,PRIORITY_CLASS                      
+           ,SHL_FLAG                            
+           ,CYCLE_TIME                          
+           ,PREV_OP_COMP_TIME                   
+           ,BANK_ID                             
+           ,PREV_BANK_ID                        
+           ,REWORK_CHILD_FLAG                   
+           ,PW_FLAG                             
+           ,PRODSPEC_ID                         
+           ,PHOTO_LAYER                         
+           ,SHIFT_DATE                          
+           ,SHIFT_HOUR                          
+           ,SHIFT                               
+           ,RECIPE_ID                           
+           ,RETICLE_ID                          
+           ,WAFER_QTY                           
+           ,PRODGRP_ID                          
+           ,EQP_TYPE                            
+           ,CTRL_JOB                            
+           ,SUB_LOT_TYPE                        
+           ,OP_START_DATE_TIME                  
+           ,OPE_CATEGORY                        
+           ,LAYER                               
+           ,CHIP_BODY                           
+           ,SUFFIX                              
+           ,CLAIM_USER                          
+           ,CLAIM_MEMO                          
+           ,LOT_OWNER_ID                        
+           ,NENG_FLAG                           
+           ,LOCATION_ID                         
+           ,PROCESS_START_TIME                  
+           ,CAST_ID                             
+           ,BANK_PERIOD_TIME                    
+           ,HOLD_PERIOD_TIME                    
+           ,BATCH_ID                            
+           ,LAST_MAIN_CTRL_JOB                   
+           ,'{current_time}'                
+           ,CLAIM_TIME AS PARTKEY               
+     FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW HS                   
+     WHERE CAST(HS.CLAIM_TIME AS TIMESTAMP) >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '300 day'  
+     -- AND INSTR(HS.EQP_ID,'P') = 1               
+     AND POSITION('P' IN HS.EQP_ID) = 1
+     AND HS.OPE_CATEGORY = 'OperationComplete'  
+    """.format(current_time=current_time)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_PH_LOTHISTORY",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_MID_PH_LOTHISTORY")
+
+
+def GetTypeOtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name, last_db_file):
+    last_db_file = my_file.get_last_db_file(oracle_conn, "APS_MID_PH_LOTHISTORY")
+    my_duck.attach_table(duck_db_memory, 'LAST_APS_MID_PH_LOTHISTORY', last_db_file)
+    insert_sql = """
+        INSERT  /*+ append */  INTO APS_MID_PH_LOTHISTORY(                              
+        PARENTID,LOT_ID,OPE_NO,OPE_SEQ,PASS_COUNT,LINE,CLAIM_TIME,MAINPD_ID, 
+        EQP_ID,MOVE_FLAG,REWORK_MOVE_FLAG,PURE_MOVE_FLAG,DUMMY_MOVE_FLAG, 
+        PROCESS_AREA,MODULE_ID,DETAIL_MODULE_ID,PRIORITY,PRIORITY_CLASS, 
+        SHL_FLAG,CYCLE_TIME,PREV_OP_COMP_TIME,BANK_ID,PREV_BANK_ID, 
+        REWORK_CHILD_FLAG,PW_FLAG,PRODSPEC_ID,PHOTO_LAYER,SHIFT_DATE,
+        SHIFT_HOUR,SHIFT,RECIPE_ID,RETICLE_ID,WAFER_QTY,PRODGRP_ID, 
+        EQP_TYPE,CTRL_JOB,SUB_LOT_TYPE,OP_START_DATE_TIME,OPE_CATEGORY, 
+        LAYER,CHIP_BODY,SUFFIX,CLAIM_USER,CLAIM_MEMO,LOT_OWNER_ID,
+        NENG_FLAG,LOCATION_ID,PROCESS_START_TIME,CAST_ID,BANK_PERIOD_TIME,
+        HOLD_PERIOD_TIME,BATCH_ID,LAST_MAIN_CTRL_JOB,UPDATE_TIME,PARTKEY              
+    )                                                                                
+     SELECT gen_random_uuid() AS GUID                  
+           ,LOT_ID                                        
+           ,OPE_NO                              
+           ,OPE_SEQ                             
+           ,PASS_COUNT                          
+           ,LINE                                
+           ,CLAIM_TIME                          
+           ,MAINPD_ID                           
+           ,EQP_ID                              
+           ,MOVE_FLAG                           
+           ,REWORK_MOVE_FLAG                    
+           ,PURE_MOVE_FLAG                      
+           ,DUMMY_MOVE_FLAG                     
+           ,PROCESS_AREA                        
+           ,MODULE_ID                           
+           ,DETAIL_MODULE_ID                    
+           ,PRIORITY                            
+           ,PRIORITY_CLASS                      
+           ,SHL_FLAG                            
+           ,CYCLE_TIME                          
+           ,PREV_OP_COMP_TIME                   
+           ,BANK_ID                             
+           ,PREV_BANK_ID                        
+           ,REWORK_CHILD_FLAG                   
+           ,PW_FLAG                             
+           ,PRODSPEC_ID                         
+           ,PHOTO_LAYER                         
+           ,SHIFT_DATE                          
+           ,SHIFT_HOUR                          
+           ,SHIFT                               
+           ,RECIPE_ID                           
+           ,RETICLE_ID                          
+           ,WAFER_QTY                           
+           ,PRODGRP_ID                          
+           ,EQP_TYPE                            
+           ,CTRL_JOB                            
+           ,SUB_LOT_TYPE                        
+           ,OP_START_DATE_TIME                  
+           ,OPE_CATEGORY                        
+           ,LAYER                               
+           ,CHIP_BODY                           
+           ,SUFFIX                              
+           ,CLAIM_USER                          
+           ,CLAIM_MEMO                          
+           ,LOT_OWNER_ID                        
+           ,NENG_FLAG                           
+           ,LOCATION_ID                         
+           ,PROCESS_START_TIME                  
+           ,CAST_ID                             
+           ,BANK_PERIOD_TIME                    
+           ,HOLD_PERIOD_TIME                    
+           ,BATCH_ID                            
+           ,LAST_MAIN_CTRL_JOB                   
+           ,'{current_time}'                 
+           ,CLAIM_TIME AS PARTKEY               
+     FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW HS                   
+     -- WHERE HS.CLAIM_TIME >= TRUNC(SYSDATE,'HH24')-5/24                                                  
+     WHERE CAST(HS.CLAIM_TIME AS TIMESTAMP) >= date_add(CURRENT_TIMESTAMP, INTERVAL '-5 hour') 
+     -- AND INSTR(HS.EQP_ID,'P') = 1               
+     AND POSITION('P' IN HS.EQP_ID) = 1              
+     AND HS.OPE_CATEGORY = 'OperationComplete'  
+     AND NOT EXISTS (                                                                                     
+                SELECT HL.LOT_ID  FROM LAST_APS_MID_PH_LOTHISTORY.APS_MID_PH_LOTHISTORY HL                                             
+                WHERE CAST(HL.PARTKEY AS TIMESTAMP) > DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1 day'                                                  
+                AND HL.LOT_ID = HS.LOT_ID                                                                          
+                AND HL.OPE_NO = HS.OPE_NO                                                                 
+                AND HL.CLAIM_TIME = HS.CLAIM_TIME)                                                                                                                                        
+    """.format(current_time=current_time)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_MID_PH_LOTHISTORY",
+                     sql=insert_sql,
+                     current_time=current_time,
+                     update_table="APS_MID_PH_LOTHISTORY")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_TMP_LOTHISTORY_5M_APS_MID_FHOPEHS"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_MID_PH_LOTHISTORY"
+    used_table_list = ['APS_TMP_LOTHISTORY_VIEW']
+    target_table_sql = """
+        CREATE TABLE {}APS_MID_PH_LOTHISTORY 
+       (	
+            PARENTID 				VARCHAR(64) NOT NULL , 
+            LOT_ID 					VARCHAR(64) NOT NULL , 
+            OPE_NO 					VARCHAR(64) NOT NULL , 
+            OPE_SEQ 				VARCHAR(126), 
+            PASS_COUNT 				VARCHAR(126), 
+            LINE 					VARCHAR(64), 
+            CLAIM_TIME 				VARCHAR(64) NOT NULL , 
+            MAINPD_ID 				VARCHAR(64), 
+            EQP_ID 					VARCHAR(64), 
+            MOVE_FLAG 				VARCHAR(1), 
+            REWORK_MOVE_FLAG 		VARCHAR(1), 
+            PURE_MOVE_FLAG 			VARCHAR(1), 
+            DUMMY_MOVE_FLAG 		VARCHAR(1), 
+            PROCESS_AREA 			VARCHAR(64), 
+            MODULE_ID 				VARCHAR(64), 
+            DETAIL_MODULE_ID 		VARCHAR(64), 
+            PRIORITY 				VARCHAR(126), 
+            PRIORITY_CLASS 			VARCHAR(126), 
+            SHL_FLAG 				VARCHAR(1), 
+            CYCLE_TIME 				VARCHAR(126), 
+            PREV_OP_COMP_TIME 		VARCHAR(64), 
+            BANK_ID 				VARCHAR(64), 
+            PREV_BANK_ID 			VARCHAR(64), 
+            REWORK_CHILD_FLAG 		VARCHAR(1), 
+            PW_FLAG 				VARCHAR(1), 
+            PRODSPEC_ID 			VARCHAR(64), 
+            PHOTO_LAYER 			VARCHAR(64), 
+            SHIFT_DATE 				VARCHAR(64), 
+            SHIFT_HOUR 				VARCHAR(64), 
+            SHIFT 					VARCHAR(1), 
+            RECIPE_ID 				VARCHAR(64), 
+            RETICLE_ID 				VARCHAR(64), 
+            WAFER_QTY 				VARCHAR(126), 
+            PRODGRP_ID 				VARCHAR(64), 
+            EQP_TYPE 				VARCHAR(64), 
+            CTRL_JOB 				VARCHAR(64), 
+            SUB_LOT_TYPE 			VARCHAR(64), 
+            OP_START_DATE_TIME 		VARCHAR(64), 
+            OPE_CATEGORY 			VARCHAR(64), 
+            LAYER 					VARCHAR(64), 
+            CHIP_BODY 				VARCHAR(64), 
+            SUFFIX 					VARCHAR(64), 
+            CLAIM_USER 				VARCHAR(64), 
+            CLAIM_MEMO 				VARCHAR(4000), 
+            LOT_OWNER_ID 			VARCHAR(64), 
+            NENG_FLAG 				VARCHAR(1), 
+            LOCATION_ID 			VARCHAR(64), 
+            PROCESS_START_TIME 		VARCHAR(64), 
+            CAST_ID 				VARCHAR(64), 
+            BANK_PERIOD_TIME 		VARCHAR(126), 
+            HOLD_PERIOD_TIME 		VARCHAR(126), 
+            BATCH_ID 				VARCHAR(64), 
+            LAST_MAIN_CTRL_JOB 		VARCHAR(64), 
+            UPDATE_TIME 			VARCHAR(64), 
+            PARTKEY 				VARCHAR(64) NOT NULL 
+       )
+    """.format("") # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    # -------------------------- 内存模式改成文件模式
+    _temp_db_path = os.path.join(config.g_mem_speed_etl_output_path, target_table, "inprocess")
+    if not os.path.exists(_temp_db_path):
+        os.makedirs(_temp_db_path)
+
+    temp_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + "_temp.db")
+    # 处理中文件
+    in_process_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + ".db")
+    # 结果文件
+    target_db_file = os.path.join(config.g_mem_etl_output_path, target_table,
+                                  target_table + "_" + current_time_short + ".db")
+    # --------------------------
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+
+        # -------------------------- 内存模式改成文件模式
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_file(_temp_db_path, in_process_db_file, target_table_sql)
+        duck_db_memory.sql('SET threads TO 4')
+        duck_db_memory.execute(
+            "SET temp_directory='{}'".format(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)))
+
+        if not config.g_debug_mode:
+            create_temp_table(duck_db_memory)
+        else:
+            duck_db_temp = my_duck.create_duckdb_for_temp_table(_temp_db_path, temp_db_file)
+            # 创建Temp表
+            create_temp_table(duck_db_temp)
+            duck_db_temp.commit()
+            duck_db_temp.close()
+            my_duck.attach_temp_db_write_able(duck_db_memory, "TEMPDB", temp_db_file)
+        # --------------------------
+
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+
+        last_db_file = my_file.get_last_db_file(oracle_conn, "APS_MID_PH_LOTHISTORY")
+        if last_db_file is None:
+            GetTypeFirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        else:
+            GetTypeOtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name, last_db_file)
+
+            sql = """insert into APS_MID_PH_LOTHISTORY select * from LAST_APS_MID_PH_LOTHISTORY.APS_MID_PH_LOTHISTORY"""
+            duck_db_memory.execute(sql)
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory, in_process_db_file=in_process_db_file, target_table=target_table, current_time=current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file, current_time_short)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, cons_error_code.APS_MID_PH_LOTHISTORY_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        # 导出到目标文件中
+        my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                  in_process_db_file=in_process_db_file,
+                                                                  target_table=target_table,
+                                                                  current_time=current_time_short)
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        # 删除TMP目录:LQN:2023/08/21
+        if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+            os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        if os.path.exists(temp_db_file) and not config.g_debug_mode:
+            os.remove(temp_db_file)
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

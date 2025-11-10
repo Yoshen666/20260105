@@ -1,0 +1,117 @@
+import logging
+import os
+import socket
+from datetime import datetime, timedelta
+
+from xinxiang import config
+from xinxiang.util import my_oracle
+
+
+def get_last_db_file(conn, table_name):
+    # if config.g_debug_mode:
+    #     try:
+    #         if os.path.isdir(os.path.join(config.g_mem_sync_result_path, table_name)):
+    #             file_names = os.listdir(os.path.join(config.g_mem_sync_result_path, table_name))
+    #             if file_names.__contains__('inprocess'):
+    #                 file_names.remove('inprocess')
+    #             sorted_file_names = sorted(file_names)
+    #             return os.path.join(config.g_mem_sync_result_path, table_name, sorted_file_names[-1])
+    #         elif os.path.isdir(os.path.join(config.g_mem_etl_output_path, table_name)):
+    #             file_names = os.listdir(os.path.join(config.g_mem_etl_output_path, table_name))
+    #             if file_names.__contains__('inprocess'):
+    #                 file_names.remove('inprocess')
+    #             sorted_file_names = sorted(file_names)
+    #             return os.path.join(config.g_mem_etl_output_path, table_name, sorted_file_names[-1])
+    #         else:
+    #             return None
+    #     except Exception as e:
+    #         print("{table_name} duckdb文件没做Sync，或无产出...".format(table_name=table_name))
+    #         logging.info("{table_name} duckdb文件没做Sync，或无产出...".format(table_name=table_name))
+    #         logging.exception("处理出错: %s", e)
+    #         return None
+    # else:
+    host_name = socket.gethostname()
+    if config.g_debug_mode:
+        conn = my_oracle.oracle_get_connection_local()
+    sql = '''
+    select FILE_NAME from APS_ETL_VER_CONTROL_DUCK
+    WHERE TABLE_NAME = '{table_name}'
+    AND update_user = 'CIMP'
+    AND SERVER_NAME = '{server_name}'
+    order by update_time desc
+    '''.format(table_name=table_name, server_name=host_name)
+    dbcursor = conn.cursor()
+    dbcursor.execute(sql)
+    result = dbcursor.fetchone()
+    if result is None:
+        print("{table_name} duckdb文件没做Sync，或无产出...".format(table_name=table_name))
+        logging.exception("{table_name} duckdb文件没做Sync，或无产出...".format(table_name=table_name))
+        return None
+
+    if config.g_debug_mode:
+        conn.close()
+
+    return result[0]
+
+
+def init_folder():
+    '''创建工作路径'''
+    if not os.path.isdir(config.g_mem_oracle_dat_input_path):
+        os.makedirs(config.g_mem_oracle_dat_input_path)
+    # if not os.path.isdir(config.g_mem_oracle_sqldr_config_path):
+    #     os.makedirs(config.g_mem_oracle_sqldr_config_path)
+    if not os.path.isdir(config.g_mem_sync_result_path):
+        os.makedirs(config.g_mem_sync_result_path)
+    # if not os.path.isdir(config.g_mem_sync_dat_output_path):
+    #     os.makedirs(config.g_mem_sync_dat_output_path)
+    if not os.path.isdir(config.g_mem_etl_output_path):
+        os.makedirs(config.g_mem_etl_output_path)
+    if not os.path.isdir(config.g_debug_file_path):
+        os.makedirs(config.g_debug_file_path)
+
+
+def delete_backup_files(folder, current_datetime=datetime.now(), save_days=3):
+    """
+    删除备份文件
+    :param folder: 目录
+    :param current_datetime:
+    :param save_days:
+    :return:
+    """
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            try:
+                file_path = os.path.join(root, file)
+                if os.path.isfile(file_path):
+                    _file_name = os.path.basename(file).replace(".db", "")
+
+                    if not _file_name.__contains__(".wal"):
+                        _create_date_str = _file_name.split("_")[-1]
+                        _create_date = datetime.strptime(_create_date_str, '%Y%m%d%H%M%S')
+
+                        if current_datetime - _create_date > timedelta(days=save_days):
+                            # logging.info("Delete Duck File:" + file_path)
+                            print("Delete Duck File:" + file_path)
+                            os.remove(file_path)
+            except Exception as e:
+                continue
+
+
+def delete_temp_files(folder, current_datetime=datetime.now(), check_hour=2):
+    '''刪除R盤超過兩個小時的臨時文件'''
+    for root, dirs, files in os.walk(folder):
+        for file in files:
+            try:
+                file_path = os.path.join(root, file)
+                if os.path.isfile(file_path):
+                    _file_name = os.path.basename(file).replace(".db", "").replace(".wal", "")
+                    _create_date_str = _file_name.split("_")[-1]
+                    if _create_date_str == 'temp':
+                        _create_date_str = _file_name.split("_")[-2]
+                    _create_date = datetime.strptime(_create_date_str, '%Y%m%d%H%M%S')
+                    if current_datetime - _create_date > timedelta(hours=check_hour):
+                        print(file_path, _create_date_str)
+                        # logging.info("Delete Temp File:" + file_path)
+                        os.remove(file_path)
+            except Exception as e:
+                continue

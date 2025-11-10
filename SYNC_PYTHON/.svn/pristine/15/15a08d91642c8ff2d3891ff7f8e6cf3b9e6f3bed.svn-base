@@ -1,0 +1,53 @@
+import logging
+import os
+from datetime import datetime
+
+from xinxiang import config
+from xinxiang.util import my_file, my_oracle
+
+
+def delete_backup_files_by_day():
+    '''
+    按天执行的JOB
+    需要修改的地方:表名称， save_days：保存几天
+    '''
+    now = datetime.now()
+    my_file.delete_backup_files(config.g_mem_sync_result_path, current_datetime=now, save_days=3)
+    my_file.delete_backup_files(config.g_mem_etl_output_path, current_datetime=now, save_days=3)
+
+def delete_oracle_db_log_by_12_hours():
+    oracle_conn = my_oracle.oracle_get_connection()
+    dbcursor = None
+    try:
+        dbcursor = oracle_conn.cursor()
+        # 删除表数据
+        sql = """
+            delete from ETL_EXEC_LOG where end_time < SYSDATE - 14
+            """
+        dbcursor.execute(sql)
+        sql = """
+            delete from APS_ETL_VER_CONTROL_DUCK  where update_time < TO_CHAR(SYSDATE - 30,'YYYYMMDDHH24MISS') 
+            """
+        dbcursor.execute(sql)
+        sql = """
+                delete from APS_ETL_METHOD_LOG_DUCK  where end_time < SYSDATE - 7
+            """
+        dbcursor.execute(sql)
+    except Exception as e:
+        logging.error(e)
+        raise e
+    finally:
+        oracle_conn.commit()
+        if dbcursor:
+            dbcursor.close()
+
+
+
+def delete_backup_files_by_6_hours():
+    '''
+    按6小时执行的JOB
+    需要修改的地方:表名称， save_days：保存几天
+    '''
+    now = datetime.now()
+    print("TODO")
+

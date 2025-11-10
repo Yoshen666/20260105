@@ -1,0 +1,291 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons
+
+
+def create_temp_table(duck_db):
+    '''
+    这里在内存中创建使用到的临时表
+    '''
+    sql = """
+    create table APS_TMP_TYPE21_TOOL
+    (
+      toolg_id  VARCHAR(64),
+      eqp_id    VARCHAR(64),
+      module_id VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+    sql = """
+    create table APS_TMP_TYPE21_HIST
+    (
+      eqp_id             VARCHAR(64),
+      ppid               VARCHAR(64),
+      qty                VARCHAR(64),
+      lot_id             VARCHAR(64),
+      ctrl_job           VARCHAR(64),
+      process_start      TIMESTAMP,
+      scanner_start      TIMESTAMP,
+      scanner_end        TIMESTAMP,
+      process_end        TIMESTAMP,
+      operation_complete TIMESTAMP
+    )
+    """
+    duck_db.sql(sql)
+    sql = """
+    create table APS_TMP_TYPE21_RESULT
+    (
+      eqp_id             VARCHAR(64),
+      ppid               VARCHAR(64),
+      qty                VARCHAR(64),
+      process_start      TIMESTAMP,
+      scanner_start      TIMESTAMP,
+      scanner_end        TIMESTAMP,
+      process_end        TIMESTAMP,
+      operation_complete TIMESTAMP
+    )
+    """
+    duck_db.sql(sql)
+
+
+def biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT INTO APS_TMP_TYPE21_TOOL (                                           
+       TOOLG_ID, EQP_ID, MODULE_ID                                                             
+    )                                                                          
+         SELECT MAX(EQP_G) AS TOOLG_ID, EQP_ID,                                                                             
+         MAX(REAL_MODULE) AS MODULE_ID                                                                                      
+         FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL                                                                     
+         WHERE EQP_CATEGORY <> 'Measurement'                                         
+         GROUP BY EQP_ID                     
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_TYPE21_TOOL",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_TYPE21_TOOL")
+
+    sql = """
+    INSERT INTO APS_TMP_TYPE21_HIST (                                                
+      EQP_ID, PPID, QTY, LOT_ID, CTRL_JOB, PROCESS_START, SCANNER_START, SCANNER_END, PROCESS_END, OPERATION_COMPLETE
+    )                                                                          
+         SELECT F.EQP_ID,                                                                                                   
+                F.PH_RECIPE_ID AS PPID,                                                                                     
+                F.CUR_WAFER_QTY AS QTY,                                                                                     
+                F.LOT_ID,                                                                                                   
+                F.CTRL_JOB,                                                                                                 
+                CASE WHEN OPE_CATEGORY='ProcessStart' THEN F.CLAIM_TIME ELSE NULL END AS PROCESS_START,                     
+                CASE WHEN OPE_CATEGORY='ScannerStart' THEN F.CLAIM_TIME ELSE NULL END AS SCANNER_START,                     
+                CASE WHEN OPE_CATEGORY='ScannerEnd' THEN F.CLAIM_TIME ELSE NULL END AS SCANNER_END,                         
+                CASE WHEN OPE_CATEGORY='ProcessEnd' THEN F.CLAIM_TIME ELSE NULL END AS PROCESS_END,                         
+                CASE WHEN OPE_CATEGORY='OperationComplete' THEN F.CLAIM_TIME ELSE NULL END AS OPERATION_COMPLETE            
+         FROM APS_MID_FHOPEHS.APS_MID_FHOPEHS F                                                                    
+         WHERE F.OPE_CATEGORY IN ('ProcessStart','ProcessEnd','ScannerEnd','ScannerStart','OperationComplete')              
+         -- AND F.PARTKEY >= DATE_TRUNC('day', CURRENT_DATE) - INTERVAL '30 day'     PARTKEY字段不存在 
+         AND F.CLAIM_TIME >= DATE_TRUNC('day', CURRENT_DATE) - INTERVAL '30 day'
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_TYPE21_HIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_TYPE21_HIST")
+
+    sql = """
+    INSERT INTO APS_TMP_TYPE21_RESULT (                                           
+       EQP_ID, PPID, QTY, PROCESS_START, SCANNER_START, SCANNER_END, PROCESS_END, OPERATION_COMPLETE                                                       
+    )                                                                          
+         SELECT MAX(F.EQP_ID) AS EQP_ID,                                                                                    
+                MAX(F.PPID) AS PPID,                                                                                        
+                MAX(F.QTY) AS QTY,                                                                                          
+                MAX(F.PROCESS_START) AS PROCESS_START,                                                                      
+                MAX(F.SCANNER_START) AS SCANNER_START,                                                                      
+                MAX(F.SCANNER_END) AS SCANNER_END,                                                                          
+                MAX(F.PROCESS_END) AS PROCESS_END,                                                                          
+                MAX(F.OPERATION_COMPLETE) AS OPERATION_COMPLETE                                                             
+         FROM  APS_TMP_TYPE21_HIST F                                                                                       
+         GROUP BY F.CTRL_JOB,F.LOT_ID                                                                                       
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_TYPE21_RESULT",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_TYPE21_RESULT")
+
+    sql = """
+    INSERT  /*+ append */  INTO APS_TR_TYPE21 (                                                              
+            GUID, MODULE_ID, TOOLG_ID, TOOL_ID, PPID, PROCESS_START, SCANNER_START, SCANNER_END, PROCESS_END, OPERATION_COMPLETE, QTY, PARTKEY
+    )                                                                                                                       
+     WITH SOURCE_DATA AS (                                                                                                       
+         SELECT  gen_random_uuid() AS GUID, 
+                TL.MODULE_ID,                                                                          
+                TL.TOOLG_ID,                                                                                                
+                PT.EQP_ID AS TOOL_ID,                                                                                       
+                PT.PPID,                                                                                                    
+                -- TO_CHAR(PT.PROCESS_START,'YYYY-MM-DD HH24:MI:SS') AS PROCESS_START,
+                PT.PROCESS_START,                                         
+                -- (CASE WHEN PT.SCANNER_END IS NULL THEN NULL ELSE TO_CHAR(PT.SCANNER_START,'YYYY-MM-DD HH24:MI:SS') END) AS SCANNER_START,
+                PT.SCANNER_END AS SCANNER_START,
+                -- (CASE WHEN PT.SCANNER_START IS NULL THEN NULL ELSE TO_CHAR(PT.SCANNER_END,'YYYY-MM-DD HH24:MI:SS') END) AS SCANNER_END,
+                PT.SCANNER_START  AS SCANNER_END,
+                -- TO_CHAR(PT.PROCESS_END,'YYYY-MM-DD HH24:MI:SS') AS PROCESS_END,
+                PT.PROCESS_END AS PROCESS_END,                                             
+                -- TO_CHAR(PT.OPERATION_COMPLETE,'YYYY-MM-DD HH24:MI:SS') AS OPERATION_COMPLETE,                               
+                PT.OPERATION_COMPLETE AS OPERATION_COMPLETE,
+                 LAG(PROCESS_START,1,NULL) OVER(PARTITION BY PT.EQP_ID ORDER BY PROCESS_START) AS NEXT_PROCESS_START,   
+                 LAG(PROCESS_END,1,NULL) OVER(PARTITION BY PT.EQP_ID ORDER BY PROCESS_END) AS NEXT_PROCESS_END,    
+                PT.QTY                                                                                                      
+         FROM APS_TMP_TYPE21_RESULT PT                                                                                     
+         INNER JOIN APS_TMP_TYPE21_TOOL TL                                                                                 
+         ON TL.EQP_ID = PT.EQP_ID                                                                                           
+         WHERE PT.PROCESS_END IS NOT NULL AND PT.PROCESS_START IS NOT NULL                                                  
+     ),
+     --modify by xiecheng for version up
+      TYPE21 AS (                                                                                                             
+             SELECT GUID, MODULE_ID,                                                                                            
+                    TOOLG_ID,                                                                                                   
+                    TOOL_ID,                                                                                                    
+                    PPID,                                                                                                       
+        -- 如果后一批的process_start 在前一批的process_start到process_end里边 则后一批的processs_start 取前一批的process_end的值
+                    CASE WHEN SCANNER_START IS NULL AND SCANNER_END IS NULL AND PROCESS_START > NEXT_PROCESS_START              
+                         AND PROCESS_START < NEXT_PROCESS_END AND NEXT_PROCESS_END < PROCESS_END THEN NEXT_PROCESS_END        
+                               ELSE PROCESS_START END AS PROCESS_START,                        
+                    SCANNER_START,                                                                                              
+                    SCANNER_END,                                                                                                
+                    PROCESS_END AS PROCESS_END,                                                
+                    OPERATION_COMPLETE,                                                                                         
+                    QTY                                                                                                         
+             FROM SOURCE_DATA                                                                                                   
+         )                                                                                                                                                
+     SELECT  GUID,                                                                                                          
+             MODULE_ID,                                                                                                     
+             TOOLG_ID,                                                                                                      
+             TOOL_ID,PPID,                                                                                                  
+             PROCESS_START,                                                                                                 
+             SCANNER_START,                                                                                                 
+             SCANNER_END,                                                                                                   
+             PROCESS_END,                                                                                                   
+             OPERATION_COMPLETE,                                                                                            
+             QTY,                                                                                                           
+             -- TO_DATE(PROCESS_START, 'YYYY-MM-DD HH24:MI:SS') AS PARTKEY
+             PROCESS_START AS PARTKEY
+     FROM  TYPE21 T                                                                                                         
+      WHERE                                                                                                                  
+         NOT EXISTS (                                                                                                           
+         SELECT MODULE_ID  FROM APS_TR_TYPE21 T21 WHERE T21.MODULE_ID = T.MODULE_ID                                         
+         AND T21.TOOL_ID= T.TOOL_ID AND T21.TOOLG_ID = T.TOOLG_ID                                                           
+         AND T21.PPID = T.PPID AND T21.PROCESS_START = T.PROCESS_START                                                      
+         AND T21.PROCESS_END = T.PROCESS_END AND T21.QTY = T.QTY                                                            
+     )                                                                                                                                                                                    
+    """
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TR_TYPE21",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TR_TYPE21")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_TR_TYPE21_30M"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_TR_TYPE21"
+    used_table_list = ['APS_SYNC_ETL_TOOL', 'APS_MID_FHOPEHS']
+    target_table_sql = """
+        create table {}APS_TR_TYPE21
+        (
+          module_id          VARCHAR(60) not null,
+          toolg_id           VARCHAR(60) not null,
+          tool_id            VARCHAR(60) not null,
+          ppid               VARCHAR(60) not null,
+          process_start      VARCHAR(60) not null,
+          scanner_start      VARCHAR(60),
+          scanner_end        VARCHAR(60),
+          process_end        VARCHAR(60),
+          qty                VARCHAR(60),
+          guid               VARCHAR(60) not null,
+          partkey            TIMESTAMP not null,
+          operation_complete VARCHAR(64)
+        )
+    """.format("")
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_memory.sql('SET threads TO 2')
+            # 加上TMP目录:LQN:2023/08/21
+            duck_db_memory.execute(
+                "SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+        # 创建Temp表
+        create_temp_table(duck_db_memory)
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+
+        biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+                                                                                  target_table,
+                                                                                  target_table_sql.format("file_db."),
+                                                                                  current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file, cons_error_code.APS_TR_TYPE_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            # 删除TMP目录:LQN:2023/08/21
+            if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+                os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

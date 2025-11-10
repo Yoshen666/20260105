@@ -1,0 +1,136 @@
+import logging
+from datetime import datetime, timedelta
+
+from xinxiang import config
+from xinxiang.jobs_manager import sync_to_pg_helper
+from xinxiang.util import my_oracle, my_postgres
+
+
+def _sync_duckdb_to_pg_test_db(id, table_name, file_name):
+    logging.info("Sync from duckdb to postgres(test) ::: {table_name} - {file_name}".format(table_name=table_name, file_name=file_name))
+    try:
+        file_date = file_name.split("\\")[-1:][0].replace(".db", '').replace(table_name + '_', '')
+        _create_date = datetime.strptime(file_date, '%Y%m%d%H%M%S')
+        if datetime.now() - _create_date > timedelta(minutes=10):
+            print(table_name, file_name, "Over 10 Mins, Do Not Need Sync to PG(Test)")
+            logging.info("Over 10 Mins, Do Not Need Sync to PG(Test) :{table_name}, {file_name}".format(table_name=table_name, file_name=file_name))
+        else:
+            logging.info(
+                "Not Over 10 Mins, Need Sync to PG(Test) :{table_name}, {file_name}".format(table_name=table_name,
+                                                                                               file_name=file_name))
+            # Phase 1
+            if table_name == 'APS_ETL_FLOW':
+                sync_to_pg_helper.export_to_test_APS_ETL_FLOW(table_name, file_name)
+
+            if table_name == 'APS_ETL_WIP':
+                sync_to_pg_helper.export_to_test_APS_ETL_WIP(table_name, file_name)
+
+            # Phase 2
+            if table_name == 'APS_ETL_TOOL_DOWN':
+                sync_to_pg_helper.export_to_test_APS_ETL_TOOL_DOWN(table_name, file_name)
+            if table_name == 'APS_ETL_QTIME_SPEC':
+                sync_to_pg_helper.export_to_test_APS_ETL_QTIME_SPEC(table_name, file_name)
+            if table_name == 'APS_ETL_QTIME_HOLD':
+                sync_to_pg_helper.export_to_test_APS_ETL_QTIME_HOLD(table_name, file_name)
+            if table_name == 'APS_ETL_WAFER_START':
+                sync_to_pg_helper.export_to_test_APS_ETL_WAFER_START(table_name, file_name)
+            if table_name == 'APS_ETL_VC_RECORD':
+                sync_to_pg_helper.export_to_test_APS_ETL_VC_RECORD(table_name, file_name)
+            if table_name == 'APS_ETL_TRANSPORT':
+                sync_to_pg_helper.export_to_test_APS_ETL_TRANSPORT(table_name, file_name)
+            if table_name == 'APS_ETL_TOOL':
+                sync_to_pg_helper.export_to_test_APS_ETL_TOOL(table_name, file_name)
+            if table_name == 'APS_ETL_SIZE_CONTROL':
+                sync_to_pg_helper.export_to_test_APS_ETL_SIZE_CONTROL(table_name, file_name)
+            if table_name == 'APS_ETL_SEASON_RULE':
+                sync_to_pg_helper.export_to_test_APS_ETL_SEASON_RULE(table_name, file_name)
+            if table_name == 'APS_ETL_SAMPLING_LOT':
+                sync_to_pg_helper.export_to_test_APS_ETL_SAMPLING_LOT(table_name, file_name)
+            if table_name == 'APS_ETL_PPID_INFO':
+                sync_to_pg_helper.export_to_test_APS_ETL_PPID_INFO(table_name, file_name)
+            if table_name == 'APS_ETL_HOLD_RLS':
+                sync_to_pg_helper.export_to_test_APS_ETL_HOLD_RLS(table_name, file_name)
+
+            # Phase 3
+            if table_name == 'APS_ETL_RLS':
+                sync_to_pg_helper.export_to_test_APS_ETL_RLS(table_name, file_name)
+
+            # Phase 4
+            if table_name == 'APS_ETL_PRI_WIP':
+                sync_to_pg_helper.export_to_test_APS_ETL_PRI_WIP(table_name, file_name)
+            if table_name == 'APS_ETL_MONITOR':
+                sync_to_pg_helper.export_to_test_APS_ETL_MONITOR(table_name, file_name)
+            if table_name == 'APS_ETL_LOTHISTORY':
+                sync_to_pg_helper.export_to_test_APS_ETL_LOTHISTORY(table_name, file_name)
+            if table_name == 'APS_ETL_LOT_OP_HIST':
+                sync_to_pg_helper.export_to_test_APS_ETL_LOT_OP_HIST(table_name, file_name)
+            if table_name == 'APS_ETL_MASK_HISTORY':
+                sync_to_pg_helper.export_to_test_APS_ETL_MASK_HISTORY(table_name, file_name)
+            if table_name == 'APS_ETL_SGS_RLS':
+                sync_to_pg_helper.export_to_test_APS_ETL_SGS_RLS(table_name, file_name)
+            if table_name == 'APS_ETL_PIRUN':
+                sync_to_pg_helper.export_to_test_APS_ETL_PIRUN(table_name, file_name)
+            if table_name == 'APS_ETL_SGS_RULE':
+                sync_to_pg_helper.export_to_test_APS_ETL_SGS_RULE(table_name, file_name)
+            if table_name == 'APS_ETL_MASK_INFO':
+                sync_to_pg_helper.export_to_test_APS_ETL_MASK_INFO(table_name, file_name)
+            if table_name == "APS_ETL_DEMAND":
+                sync_to_pg_helper.export_to_test_APS_ETL_DEMAND(table_name, file_name)
+
+
+    except Exception as e:
+        logging.error(e)
+    finally:
+        oracle_conn = None
+        oracle_dbcursor = None
+        if config.g_copy_to_pg:
+            oracle_conn = my_oracle.oracle_get_connection()
+            if config.g_debug_mode:
+                oracle_conn = my_oracle.oracle_get_connection_local()
+
+            oracle_dbcursor = oracle_conn.cursor()
+
+        delete_sql = "DELETE FROM APS_ETL_SYNC_CONTROL_DUCK WHERE ID = '{id}'".format(id=id)
+        oracle_dbcursor.execute(delete_sql)
+        if oracle_dbcursor:
+            oracle_dbcursor.close()
+        if oracle_conn:
+            oracle_conn.commit()
+            oracle_conn.close()
+
+
+def sync_duckdb_to_pg_test_db():
+    if config.g_copy_to_pg:
+        oracle_conn = my_oracle.oracle_get_connection()
+        if config.g_debug_mode:
+            oracle_conn = my_oracle.oracle_get_connection_local()
+
+        oracle_dbcursor = oracle_conn.cursor()
+
+        try:
+            sql_query = "SELECT * FROM APS_ETL_SYNC_CONTROL_DUCK"
+            oracle_dbcursor.execute(sql_query)
+            not_sync_result = oracle_dbcursor.fetchall()
+
+            if oracle_dbcursor:
+                oracle_dbcursor.close()
+            if oracle_conn:
+                oracle_conn.close()
+
+            print(not_sync_result)
+            for item in not_sync_result:
+                id = item[0]
+                table_name = item[3]
+                file_name = item[6]
+                logging.info("Copy {table_name} Data To Test Postgres DataBase By File:{file_name}".format(table_name=table_name, file_name=file_name))
+                _sync_duckdb_to_pg_test_db(id=id,
+                                           table_name=table_name,
+                                           file_name=file_name)
+        except Exception as e:
+            print(e)
+        finally:
+            pass
+
+
+if __name__ == '__main__':
+    sync_duckdb_to_pg_test_db()

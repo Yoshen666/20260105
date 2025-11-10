@@ -1,0 +1,469 @@
+import gc
+import logging
+import os
+
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_postgres
+from xinxiang import config
+
+
+def create_temp_table(duck_db):
+    table_type = ""
+    if not config.g_debug_mode:
+        table_type = 'TEMP'
+    '''
+    这里在内存中创建使用到的临时表
+    '''
+    sql = """
+       create {table_type} table APS_ETL_TOOL_DOWN_WAIT_TIME1
+       (
+           MODULE VARCHAR(64),
+           EQP_G VARCHAR(64),
+           EQP_ID VARCHAR(64),
+           CHAMBER_NO VARCHAR(64),
+           E10_STATE VARCHAR(64),
+           WAIT_TIME VARCHAR(64),
+           ACTIVE_FLAG VARCHAR(64)
+       )
+       """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+      create {table_type} table APS_ETL_TOOL_DOWN_WAIT_TIME2
+      (
+          MODULE VARCHAR(64),
+          EQP_G VARCHAR(64),
+          EQP_ID VARCHAR(64),
+          CHAMBER_NO VARCHAR(64),
+          E10_STATE VARCHAR(64),
+          WAIT_TIME VARCHAR(64),
+          ACTIVE_FLAG VARCHAR(64)
+      )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+          create {table_type} table APS_ETL_TOOL_DOWN_F
+            (
+                parentid    VARCHAR(60),
+                toolg_id    VARCHAR(60),
+                tool_id     VARCHAR(60) ,
+                ch_id       VARCHAR(60),
+                down_start  TIMESTAMP,
+                down_end    TIMESTAMP,
+                remark      VARCHAR(60),
+                update_time TIMESTAMP,
+                partcode    VARCHAR(60)
+            )
+          """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+       create {table_type} table APS_ETL_TOOL_DOWN_S
+        (
+            parentid    VARCHAR(60),
+            toolg_id    VARCHAR(60),
+            tool_id     VARCHAR(60) ,
+            ch_id       VARCHAR(60),
+            down_start  TIMESTAMP,
+            down_end    TIMESTAMP,
+            remark      VARCHAR(60),
+            update_time TIMESTAMP,
+            partcode    VARCHAR(60)
+        )
+      """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+       create {table_type}table APS_ETL_TOOL_DOWN_T
+        (
+            parentid    VARCHAR(60),
+            toolg_id    VARCHAR(60),
+            tool_id     VARCHAR(60) ,
+            ch_id       VARCHAR(60),
+            down_start  TIMESTAMP,
+            down_end    TIMESTAMP,
+            remark      VARCHAR(60),
+            update_time TIMESTAMP,
+            partcode    VARCHAR(60)
+        )
+          """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+
+def getUmtWaitTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # CHAMBER_NO 无值的情况
+    sql = """
+    INSERT  /*+ append */  INTO {tempdb}APS_ETL_TOOL_DOWN_WAIT_TIME1(                                                
+               MODULE,EQP_G,EQP_ID,CHAMBER_NO, 
+               E10_STATE,WAIT_TIME,ACTIVE_FLAG                                                                                     
+          )                                                                                                      
+          SELECT DISTINCT MODULE,EQP_G,EQP_ID,CHAMBER_NO,
+                 E10_STATE,WAIT_TIME,ACTIVE_FLAG 
+          FROM APS_SYNC_UMT_EQP_WAIT_TIME_SETTING.APS_SYNC_UMT_EQP_WAIT_TIME_SETTING 
+          WHERE ACTIVE_FLAG = 'Y'
+          AND (CHAMBER_NO IS NULL OR CHAMBER_NO ='')            
+    """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TOOL_DOWN_WAIT_TIME1",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TOOL_DOWN_WAIT_TIME1")
+
+    # CHAMBER_NO 有值的情况
+    sql = """
+        INSERT  /*+ append */  INTO {tempdb}APS_ETL_TOOL_DOWN_WAIT_TIME2(                                                
+                   MODULE,EQP_G,EQP_ID,CHAMBER_NO, 
+                   E10_STATE,WAIT_TIME,ACTIVE_FLAG                                                                                     
+              )                                                                                                      
+              SELECT DISTINCT MODULE,EQP_G,EQP_ID,CHAMBER_NO,
+                     E10_STATE,WAIT_TIME,ACTIVE_FLAG 
+              FROM APS_SYNC_UMT_EQP_WAIT_TIME_SETTING.APS_SYNC_UMT_EQP_WAIT_TIME_SETTING 
+              WHERE ACTIVE_FLAG = 'Y'
+              AND (CHAMBER_NO IS NOT NULL OR CHAMBER_NO <>'')            
+        """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TOOL_DOWN_WAIT_TIME2",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TOOL_DOWN_WAIT_TIME2")
+
+
+def getWetFTChemicalChangeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO {tempdb}APS_ETL_TOOL_DOWN_F(                                                
+          PARENTID,TOOLG_ID,TOOL_ID,CH_ID,DOWN_START,DOWN_END,REMARK,UPDATE_TIME,PARTCODE                                                                                      
+          )                                                                                                      
+          WITH TOOL_DATA AS (                                                                                                                                                                                                            
+               SELECT EQP_G,EQP_ID                                                                                                        
+               FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL T     
+               WHERE 1=1                                                               
+               AND T.HOST_EQP_FLAG ='Y'                                                                                 
+          ),                                                                                                                             
+          RESULT_SETTING_DATA AS (                                                                                                       
+              SELECT D.EQP_G AS TOOLG_ID,                                                                                                
+                     S.EQP_ID AS TOOL_ID,             
+                     --ROUND(S.COST_MINS/60,2) AS CHANGE_TIME,                                                                                   
+                     ROUND(CAST(S.COST_MINS AS DECIMAL)/60,2) AS CHANGE_TIME,                                                   
+                     TRIM(' ' FROM S.CHAMBER_NAME) AS TANK_NAME, 
+                     TRIM(' ' FROM S.CHAMBER_ID) AS TANK_ID,                                                                                      
+                     --STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' ' || S.UNIT_SPEC || ':00' AS START_DATE,  
+                    CASE WHEN T.DZ = 1 THEN STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' ' || S.UNIT_SPEC || ':00'
+                    WHEN T.DZ = 2 THEN STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day','%Y-%m-%d') || ' ' || S.UNIT_SPEC || ':00'                        
+                    WHEN T.DZ = 3 THEN STRFTIME(DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '2 day','%Y-%m-%d') || ' ' || S.UNIT_SPEC || ':00'                     
+                    END AS START_DATE,                                
+                     S.UNIT_TYPE AS CHANGE_TYPE                                                                                          
+              FROM APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING.APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING S   
+               -- LEFT JOIN (SELECT LEVEL DZ FROM DUAL CONNECT BY LEVEL <= 3) T ON T.DZ >= 1 AND T.DZ <= 3  
+              LEFT JOIN (WITH RECURSIVE cte(DZ) as ( select 1 as dz union all select dz + 1 from cte where dz < 3) select dz from cte ) T ON T.DZ >= 1 AND T.DZ <= 3                                                          
+              INNER JOIN TOOL_DATA D                                                                                                     
+              ON D.EQP_ID = S.EQP_ID                                                                                                     
+              WHERE S.UNIT_TYPE='FT'                                                                                                                                                                                            
+              AND S.COST_MINS IS NOT NULL AND S.COST_MINS <> ''                                                                                                
+          ),                                                                                                                             
+          CHAMBER_RULE AS (                                                                                                   
+             SELECT DISTINCT EQP_ID                                                                                                        
+             FROM APS_SYNC_UMT_WET_RECIPE_TANK_RULE.APS_SYNC_UMT_WET_RECIPE_TANK_RULE                               
+          )                                                                  
+          SELECT DISTINCT                                                                                                                
+                  '{uuid}' AS PARENTID,                                                                                      
+                 D.TOOLG_ID,D.TOOL_ID, 
+                 CASE WHEN C.EQP_ID IS NOT NULL AND C.EQP_ID <> '' AND EXISTS(SELECT 1 FROM APS_ETL_TOOL.APS_ETL_TOOL T WHERE T.CH_ID = D.TOOL_ID||'.'||TANK_NAME) THEN D.TOOL_ID||'.'||TANK_NAME                                                                                                  
+                      WHEN D.TANK_ID IS NOT NULL AND D.TANK_ID <> '' AND EXISTS(SELECT 1 FROM APS_ETL_TOOL.APS_ETL_TOOL T WHERE T.CH_ID = D.TOOL_ID||'.'||TANK_ID) THEN D.TOOL_ID||'.'||TANK_ID
+                      END AS CH_ID,                                         
+                 CAST(START_DATE AS TIMESTAMP) AS DOWN_START,                                                                                               
+                 --TO_CHAR(TO_DATE(D.START_DATE,'YYYY-MM-DD HH24:MI:SS')+ COALESCE(D.CHANGE_TIME,0)/24,'YYYY-MM-DD HH24:MI:SS') AS DOWN_END,  
+                 --TIMESTAMP 'epoch' + ( (EXTRACT(EPOCH FROM D.START_DATE::TIMESTAMP) + COALESCE(D.CHANGE_TIME,0)) * INTERVAL '1 second')   AS DOWN_END,
+                 CAST((DATE_TRUNC('second', STRPTIME(D.START_DATE,'%Y-%m-%d %H:%M:%S') ) +  INTERVAL (COALESCE(D.CHANGE_TIME,0) *3600) second ) AS TIMESTAMP) AS DOWN_END,
+                 TANK_NAME || '_' || CHANGE_TYPE || '(change_time)'  AS REMARK,                                                    
+                CAST('{current_time}' AS TIMESTAMP)  AS UPDATE_TIME,                                                                                  
+                ''  AS PARTCODE                                                                      
+          FROM RESULT_SETTING_DATA D                                                                                                     
+          LEFT JOIN CHAMBER_RULE C ON C.EQP_ID = D.TOOL_ID                                                                              
+          WHERE 
+          --TO_DATE(D.START_DATE,'YYYY-MM-DD HH24:MI:SS')+ NVL(D.CHANGE_TIME,0)/24 
+          DATE_TRUNC('second', cast(D.START_DATE as timestamp) ) +  INTERVAL (COALESCE(D.CHANGE_TIME,0)*3600) second                                               
+                           >  '{current_time}' 
+         --modify by xiecheng for version up                  
+          --AND TO_DATE(D.START_DATE,'YYYY-MM-DD HH24:MI:SS')+ NVL(D.CHANGE_TIME,0)/24 <= SYSDATE + 2     
+         AND DATE_TRUNC('second', cast(D.START_DATE as timestamp) ) +  INTERVAL (COALESCE(D.CHANGE_TIME,0)*3600) second                                               
+                            <= DATE_TRUNC('second', cast(CURRENT_TIMESTAMP as timestamp) ) +  INTERVAL (24*3600*2) second   
+
+    """.format(uuid=uuid, current_time=current_time,tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TOOL_DOWN_F",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TOOL_DOWN_F")
+
+
+def getWetLTChemicalChangeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO {tempdb}APS_ETL_TOOL_DOWN_S(
+          PARENTID,TOOLG_ID,TOOL_ID,CH_ID,DOWN_START,DOWN_END,REMARK,UPDATE_TIME,PARTCODE
+          )
+        WITH TOOL_DATA AS (
+             SELECT EQP_G,EQP_ID
+             FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL T
+             WHERE T.REAL_MODULE = 'WET'
+             AND T.HOST_EQP_FLAG ='Y'
+        ),
+         CHAMBER_RULE AS (
+            SELECT DISTINCT EQP_ID
+            FROM APS_SYNC_UMT_WET_RECIPE_TANK_RULE.APS_SYNC_UMT_WET_RECIPE_TANK_RULE
+         )
+        SELECT DISTINCT  '{uuid}' AS PARENTID,
+               T.EQP_G AS TOOLG_ID,
+               S.EQP_ID AS TOOL_ID,
+               CASE WHEN C.EQP_ID IS NOT NULL AND EXISTS(SELECT 1 FROM APS_ETL_TOOL.APS_ETL_TOOL T WHERE T.CH_ID = S.EQP_ID||'.'||TRIM(S.CHAMBER_NAME) ) THEN S.EQP_ID||'.'||TRIM(S.CHAMBER_NAME)
+                    WHEN S.CHAMBER_ID IS NOT NULL AND EXISTS(SELECT 1 FROM APS_ETL_TOOL.APS_ETL_TOOL T WHERE T.CH_ID = S.EQP_ID||'.'||TRIM(S.CHAMBER_ID) ) THEN S.EQP_ID||'.'||TRIM(S.CHAMBER_ID)
+                    END AS CH_ID,
+               -- STRFTIME(D.REPORT_TIME + (S.UNIT_SPEC - D.VALUE)/(60*24),'%Y-%m-%d %H:%M:%S') AS DOWN_START,        
+               CAST((DATE_TRUNC('second', cast(D.REPORT_TIME as timestamp) ) +  INTERVAL ( (cast(S.UNIT_SPEC as decimal) - cast(D.VALUE as decimal)) * 60 ) second ) AS TIMESTAMP) AS DOWN_START,              
+               --STRFTIME(D.REPORT_TIME + (S.UNIT_SPEC - D.VALUE)/(60*24) + S.COST_MINS/(60*24),'%Y-%m-%d %H:%M:%S') AS DOWN_END,             
+               CAST((DATE_TRUNC('second', cast(D.REPORT_TIME as timestamp) ) +  INTERVAL ( (cast(S.UNIT_SPEC as decimal) - cast(D.VALUE as decimal)) * 60 + cast(S.COST_MINS as decimal) * 60) second) AS TIMESTAMP) AS DOWN_END,            
+               TRIM(' ' FROM S.CHAMBER_NAME)||'_LT'||'(change_time)' AS REMARK,
+               CAST('{current_time}' AS TIMESTAMP) AS UPDATE_TIME,
+               '' AS PARTCODE
+        FROM APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING.APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING S
+        INNER JOIN TOOL_DATA T
+        ON T.EQP_ID = S.EQP_ID
+        INNER JOIN APS_SYNC_WET_ED_DATA.APS_SYNC_WET_ED_DATA D
+        ON D.ITEM_NAME = S.UNIT_DC_ITEM
+        AND D.EQP_ID = S.EQP_ID
+        LEFT JOIN CHAMBER_RULE C ON C.EQP_ID = S.EQP_ID
+        WHERE S.UNIT_TYPE='LT'
+        AND S.COST_MINS IS NOT NULL AND S.COST_MINS <> ''
+        --AND D.REPORT_TIME + ROUND((S.UNIT_SPEC - D.VALUE)/(60*24),2) + ROUND(S.COST_MINS/(60*24),2)
+        AND  DATE_TRUNC('second', cast(D.REPORT_TIME as timestamp) ) +  INTERVAL ((cast(S.UNIT_SPEC as decimal) - cast(D.VALUE as decimal)) * 60 +  cast(S.COST_MINS as decimal) * 60) second
+                        >  '{current_time}'
+    """.format(uuid=uuid, current_time=current_time,tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TOOL_DOWN_S",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TOOL_DOWN_S")
+
+
+def getWaitTimeData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO {tempdb}APS_ETL_TOOL_DOWN_T(
+          PARENTID,TOOLG_ID,TOOL_ID,CH_ID,DOWN_START,DOWN_END,REMARK,UPDATE_TIME,PARTCODE
+        )
+        WITH ALL_DATA_TOOL_DOWN AS (
+            SELECT * FROM {tempdb}APS_ETL_TOOL_DOWN_F
+            UNION ALL
+            SELECT * FROM {tempdb}APS_ETL_TOOL_DOWN_S
+        ),
+        SOURCE_DATA AS (
+            SELECT D.PARENTID,D.TOOLG_ID,D.TOOL_ID,D.CH_ID, 
+                   D.DOWN_END AS DOWN_START,
+                   CASE WHEN T2.WAIT_TIME IS NOT NULL AND T2.WAIT_TIME <>'' THEN 
+                            CAST((DATE_TRUNC('second', STRPTIME(D.DOWN_END,'%Y-%m-%d %H:%M:%S') ) +  INTERVAL (COALESCE(CAST(T2.WAIT_TIME AS DECIMAL),0) *3600) second ) AS TIMESTAMP)
+                         WHEN T1.WAIT_TIME IS NOT NULL AND T1.WAIT_TIME <>'' THEN 
+                            CAST((DATE_TRUNC('second', STRPTIME(D.DOWN_END,'%Y-%m-%d %H:%M:%S') ) +  INTERVAL (COALESCE(CAST(T1.WAIT_TIME AS DECIMAL),0) *3600) second ) AS TIMESTAMP)
+                   END AS DOWN_END, 
+                   REPLACE(D.REMARK,'change_time','wait_time') AS REMARK,
+                   D.UPDATE_TIME,D.PARTCODE 
+            FROM ALL_DATA_TOOL_DOWN D
+            LEFT JOIN {tempdb}APS_ETL_TOOL_DOWN_WAIT_TIME2 T2 
+            ON T2.EQP_ID = D.TOOL_ID AND T2.EQP_ID || '.' || T2.CHAMBER_NO = D.CH_ID
+            LEFT JOIN {tempdb}APS_ETL_TOOL_DOWN_WAIT_TIME1 T1 
+            ON T1.EQP_ID = D.TOOL_ID
+        )
+        SELECT DISTINCT D.PARENTID,D.TOOLG_ID,D.TOOL_ID,D.CH_ID, 
+               D.DOWN_START,D.DOWN_END,
+               D.REMARK,D.UPDATE_TIME,D.PARTCODE 
+        FROM SOURCE_DATA D
+        WHERE DOWN_END IS NOT NULL OR DOWN_END <> ''
+    """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TOOL_DOWN_T",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TOOL_DOWN_T")
+
+def getAllData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO APS_ETL_TOOL_DOWN(
+          PARENTID,TOOLG_ID,TOOL_ID,CH_ID,DOWN_START,DOWN_END,REMARK,UPDATE_TIME,PARTCODE
+        )
+        SELECT PARENTID,TOOLG_ID,TOOL_ID,CH_ID,DOWN_START,DOWN_END,REMARK,UPDATE_TIME,PARTCODE FROM {tempdb}APS_ETL_TOOL_DOWN_F
+        UNION ALL
+        SELECT PARENTID,TOOLG_ID,TOOL_ID,CH_ID,DOWN_START,DOWN_END,REMARK,UPDATE_TIME,PARTCODE FROM {tempdb}APS_ETL_TOOL_DOWN_S
+        UNION ALL
+        SELECT PARENTID,TOOLG_ID,TOOL_ID,CH_ID,DOWN_START,DOWN_END,REMARK,UPDATE_TIME,PARTCODE FROM {tempdb}APS_ETL_TOOL_DOWN_T
+    """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_TOOL_DOWN",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_TOOL_DOWN")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_ETL_TOOL_DOWN_10M"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_ETL_TOOL_DOWN"
+    used_table_list = ['APS_SYNC_ETL_TOOL',
+                       'APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING',
+                       'APS_SYNC_UMT_WET_RECIPE_TANK_RULE',
+                       'APS_SYNC_WET_ED_DATA',
+                       'APS_ETL_TOOL',
+                       'APS_SYNC_UMT_EQP_WAIT_TIME_SETTING']
+    target_table_sql = """
+        create table {}APS_ETL_TOOL_DOWN
+        (
+            parentid    VARCHAR(60) not null,
+            toolg_id    VARCHAR(60) not null,
+            tool_id     VARCHAR(60) not null,
+            ch_id       VARCHAR(60),
+            down_start  TIMESTAMP not null,
+            down_end    TIMESTAMP not null,
+            remark      VARCHAR(60),
+            update_time TIMESTAMP not null,
+            partcode    VARCHAR(60) not null
+        )
+    """.format("")  # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    # -------------------------- 内存模式改成文件模式
+    _temp_db_path = os.path.join(config.g_mem_speed_etl_output_path, target_table, "inprocess")
+    if not os.path.exists(_temp_db_path):
+        os.makedirs(_temp_db_path)
+
+    temp_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + "_temp.db")
+    # 处理中文件
+    in_process_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + ".db")
+    # 结果文件
+    target_db_file = os.path.join(config.g_mem_etl_output_path, target_table,
+                                  target_table + "_" + current_time_short + ".db")
+    # --------------------------
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+
+        # -------------------------- 内存模式改成文件模式
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_file(_temp_db_path, in_process_db_file, target_table_sql)
+        duck_db_memory.sql('SET threads TO 4')
+
+        if not os.path.exists(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)):
+            os.makedirs(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid))
+        duck_db_memory.execute(
+            "SET temp_directory='{}'".format(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)))
+
+        if not config.g_debug_mode:
+            create_temp_table(duck_db_memory)
+        else:
+            duck_db_temp = my_duck.create_duckdb_for_temp_table(_temp_db_path, temp_db_file)
+            # 创建Temp表
+            create_temp_table(duck_db_temp)
+            duck_db_temp.commit()
+            duck_db_temp.close()
+            my_duck.attach_temp_db_write_able(duck_db_memory, "TEMPDB", temp_db_file)
+        # --------------------------
+
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+
+        # 待值新逻辑加入wait_time
+        getUmtWaitTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 酸槽换酸 目前只有FT定时换酸的数据
+        getWetFTChemicalChangeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 酸槽换酸 目前只有LT定时换酸的数据
+        getWetLTChemicalChangeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 增加加入待值wait_time逻辑
+        getWaitTimeData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 全部汇总起来
+        getAllData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        if config.g_copy_to_pg:
+            select_sql_in_duck = """select  parentid,toolg_id,tool_id,
+                                            case when ch_id = '' then NULL ELSE ch_id END AS ch_id,
+                                            down_start,down_end,
+                                            case when remark = '' then NULL ELSE remark END AS remark,update_time
+                                    from APS_ETL_TOOL_DOWN
+                                 """
+            postgres_table_define = """etl_tool_down(parentid,toolg_id,tool_id,ch_id,down_start,down_end,remark,update_time)
+                                                              """
+            my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                                duckdb=duck_db_memory,
+                                                table_name_in_duckdb=target_table,
+                                                table_name_in_pg="etl_tool_down",  # 要小写
+                                                select_sql_in_duck=select_sql_in_duck,
+                                                postgres_table_define=postgres_table_define,
+                                                oracle_conn=oracle_conn,
+                                                ETL_Proc_Name=ETL_Proc_Name)
+
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                                   in_process_db_file=in_process_db_file,
+                                                                                   target_table=target_table,
+                                                                                   current_time=current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file, current_time_short)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file,
+                                   cons_error_code.APS_ETL_TOOL_DOWN_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        # 导出到目标文件中
+        my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                  in_process_db_file=in_process_db_file,
+                                                                  target_table=target_table,
+                                                                  current_time=current_time_short)
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        # 删除TMP目录:LQN:2023/08/21
+        if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+            os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        if os.path.exists(temp_db_file) and not config.g_debug_mode:
+            os.remove(temp_db_file)
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

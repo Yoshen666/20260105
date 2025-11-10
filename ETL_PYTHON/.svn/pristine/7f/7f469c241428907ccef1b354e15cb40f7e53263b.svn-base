@@ -1,0 +1,169 @@
+# 先閲讀sop_install.md
+    基本流程一致，只是涉及ETL對象不一致
+    需要注意（如下 Phase_3 代碼準備）
+        1.回寫數據到Oracle（是否要回寫要確認！！！和Phase2最大的區別）
+        2.開啓白名單寫數據到PG生產庫
+        3.回寫數據到Pg測試庫（5432）
+    
+    Phase_3 代碼準備 在本地準備好之後，按照 sop_install.md執行
+
+# Phase_3 代碼準備
+## write_back_to_oracle.py 
+###  （如果最終上綫，則需要在99_prod_temp_install_windows.bat中刪除 xinxiang_aps_etl_write_back_to_oracle_tool_down 定時任務）
+###   如果需要觀察一階段，則需要 開啓 Phase 3 對象回寫數據到Oracle 
+    # 對象如下
+    def execute_rls():
+        table_name = 'APS_ETL_RLS'
+        _execute(table_name)
+    
+    def execute_pri_wip():
+        table_name = 'APS_ETL_PRI_WIP'
+        _execute(table_name)
+    
+    def execute_monitor():
+        table_name = 'APS_ETL_MONITOR'
+        _execute(table_name)
+    
+    def execute_lothistory():
+        table_name = 'APS_ETL_LOTHISTORY'
+        _execute(table_name)
+    
+    def execute_lot_op_hist():
+        table_name = 'APS_ETL_LOT_OP_HIST'
+        _execute(table_name)
+    
+    def execute_mask_history():
+        table_name = 'APS_ETL_MASK_HISTORY'
+        _execute(table_name)
+    
+    def execute_sgs_rls():
+        table_name = 'APS_ETL_SGS_RLS'
+        _execute(table_name)
+    
+    def execute_pirun():
+        table_name = 'APS_ETL_PIRUN'
+        _execute(table_name)
+    
+    def execute_sgs_rule():
+        table_name = 'APS_ETL_SGS_RULE'
+        _execute(table_name)
+    
+    def execute_mask_info():
+        table_name = 'APS_ETL_MASK_INFO'
+        _execute(table_name)
+    
+    def execute_demand():
+        table_name = 'APS_ETL_DEMAND'
+        _execute(table_name)
+
+## SYNC_PYTHON & ETL_PYTHON 的 config/__init__.py 開啓白名單寫數據到PG生產庫
+### 如果是最終上綫，則需要設置 g_test_and_prod_mixed = False
+### 如果是涉及部分上綫，修改如下：
+    # 對象如下
+    g_etl_prod_tables = [
+                     'etl_flow',              # Phase1
+                     'etl_wip',               # Phase1
+
+                     'etl_tool_down',         # Phase2
+                     'etl_qtime_spec',        # Phase2
+                     'etl_qtime_hold',        # Phase2
+                     'etl_wafer_start',       # Phase2
+                     'etl_vc_record',         # Phase2
+                     'etl_transport',         # Phase2
+                     'etl_tool',              # Phase2
+                     'etl_size_control',      # Phase2
+                     'etl_season_rule',       # Phase2
+                     'etl_sampling_lot',      # Phase2
+                     'etl_ppid_info',         # Phase2
+                     'etl_hold_rls',          # Phase2
+                     
+                     # 上綫對象
+                     # 'etl_rls',             # Phase3
+                     # 'etl_pri_wip',         # Phase3
+                     # 'etl_monitor',         # Phase3
+                     # 'etl_lothistory',      # Phase3
+                     # 'etl_lot_op_hist',     # Phase3
+                     # 'etl_mask_history',    # Phase3
+                     # 'etl_sgs_rls',         # Phase3
+                     # 'etl_pirun',           # Phase3
+                     # 'etl_sgs_rule',        # Phase3
+                     # 'etl_mask_info',       # Phase3
+                     # 'etl_demand',          # Phase3
+                     ]
+    |||||||||||||||||||||||||||||
+    # PG的測試的測試環境 修改為 測試的測試庫
+    g_postgres_test_test_host = '10.52.192.99'
+    g_postgres_test_test_database = 'dev_uo'
+    g_postgres_test_test_port = '5432'
+    g_postgres_test_test_user = 'xxetl'
+    g_postgres_test_test_password = 'xxetl1234'
+    g_pgserver_test_test_path = '\\\\10.52.192.99\\ETLOutput'
+
+    >>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    # PG的測試的測試環境
+    g_postgres_test_test_host = '10.52.192.99'
+    g_postgres_test_test_database = 'uo'
+    g_postgres_test_test_port = '5433'
+    g_postgres_test_test_user = 'xxetl'
+    g_postgres_test_test_password = 'xxetl1234'
+    g_pgserver_test_test_path = '\\\\10.52.192.99\\ETLOutput'
+
+## SYNC_PYTHON/xinxiang/job_manager/sync_to_pg_jobs.py 回寫數據到Pg測試庫（5432）
+    # 對象和寫Pg生產庫一致
+    # ----------------------------------------------------------------------
+    # Phase 1
+    if table_name == 'APS_ETL_FLOW':
+        sync_to_pg_helper.export_to_test_APS_ETL_FLOW(table_name, file_name)
+
+    if table_name == 'APS_ETL_WIP':
+        sync_to_pg_helper.export_to_test_APS_ETL_WIP(table_name, file_name)
+
+    # Phase 2
+    if table_name == 'APS_ETL_TOOL_DOWN':
+        sync_to_pg_helper.export_to_test_APS_ETL_TOOL_DOWN(table_name, file_name)
+    if table_name == 'APS_ETL_QTIME_SPEC':
+        sync_to_pg_helper.export_to_test_APS_ETL_QTIME_SPEC(table_name, file_name)
+    if table_name == 'APS_ETL_QTIME_HOLD':
+        sync_to_pg_helper.export_to_test_APS_ETL_QTIME_HOLD(table_name, file_name)
+    if table_name == 'APS_ETL_WAFER_START':
+        sync_to_pg_helper.export_to_test_APS_ETL_WAFER_START(table_name, file_name)
+    if table_name == 'APS_ETL_VC_RECORD':
+        sync_to_pg_helper.export_to_test_APS_ETL_VC_RECORD(table_name, file_name)
+    if table_name == 'APS_ETL_TRANSPORT':
+        sync_to_pg_helper.export_to_test_APS_ETL_TRANSPORT(table_name, file_name)
+    if table_name == 'APS_ETL_TOOL':
+        sync_to_pg_helper.export_to_test_APS_ETL_TOOL(table_name, file_name)
+    if table_name == 'APS_ETL_SIZE_CONTROL':
+        sync_to_pg_helper.export_to_test_APS_ETL_SIZE_CONTROL(table_name, file_name)
+    if table_name == 'APS_ETL_SEASON_RULE':
+        sync_to_pg_helper.export_to_test_APS_ETL_SEASON_RULE(table_name, file_name)
+    if table_name == 'APS_ETL_SAMPLING_LOT':
+        sync_to_pg_helper.export_to_test_APS_ETL_SAMPLING_LOT(table_name, file_name)
+    if table_name == 'APS_ETL_PPID_INFO':
+        sync_to_pg_helper.export_to_test_APS_ETL_PPID_INFO(table_name, file_name)
+    if table_name == 'APS_ETL_HOLD_RLS':
+        sync_to_pg_helper.export_to_test_APS_ETL_HOLD_RLS(table_name, file_name)
+
+    # Phase 3
+    if table_name == 'APS_ETL_RLS':
+        sync_to_pg_helper.export_to_test_APS_ETL_RLS(table_name, file_name)
+    if table_name == 'APS_ETL_PRI_WIP':
+        sync_to_pg_helper.export_to_test_APS_ETL_PRI_WIP(table_name, file_name)
+    if table_name == 'APS_ETL_MONITOR':
+        sync_to_pg_helper.export_to_test_APS_ETL_MONITOR(table_name, file_name)
+    if table_name == 'APS_ETL_LOTHISTORY':
+        sync_to_pg_helper.export_to_test_APS_ETL_LOTHISTORY(table_name, file_name)
+    if table_name == 'APS_ETL_LOT_OP_HIST':
+        sync_to_pg_helper.export_to_test_APS_ETL_LOT_OP_HIST(table_name, file_name)
+    if table_name == 'APS_ETL_MASK_HISTORY':
+        sync_to_pg_helper.export_to_test_APS_ETL_MASK_HISTORY(table_name, file_name)
+    if table_name == 'APS_ETL_SGS_RLS':
+        sync_to_pg_helper.export_to_test_APS_ETL_SGS_RLS(table_name, file_name)
+    if table_name == 'APS_ETL_PIRUN':
+        sync_to_pg_helper.export_to_test_APS_ETL_PIRUN(table_name, file_name)
+    if table_name == 'APS_ETL_SGS_RULE':
+        sync_to_pg_helper.export_to_test_APS_ETL_SGS_RULE(table_name, file_name)
+    if table_name == 'APS_ETL_MASK_INFO':
+        sync_to_pg_helper.export_to_test_APS_ETL_MASK_INFO(table_name, file_name)
+    if table_name == "APS_ETL_DEMAND":
+        sync_to_pg_helper.export_to_test_APS_ETL_DEMAND(table_name, file_name)

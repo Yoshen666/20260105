@@ -1,0 +1,619 @@
+import logging
+
+import duckdb
+
+from xinxiang import config
+from xinxiang.util import my_postgres
+
+
+def export_to_test_APS_ETL_DEMAND(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,toolg_id,prodg_id,prodg_tech,prod_id,plan_id,step_id,tool_id,lot_type,   
+                                               recipe, lot_id, layer, stage, tech_id,customer,pty,seq,target_qty,target_shift,
+                                               target_time_from,target_time,target_mode,update_time,control_flag from APS_ETL_DEMAND
+                                     """
+    postgres_table_define = """etl_demand(parentid,toolg_id,prodg_id,prodg_tech,prod_id,plan_id,step_id,tool_id,lot_type,   
+                                                      recipe, lot_id, layer, stage, tech_id,customer,pty,seq,target_qty,target_shift,
+                                                      target_time_from,target_time,target_mode,update_time,control_flag)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_demand",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_FLOW(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid, prodg_id, prodg_tech,prod_id,plan_no,plan_id, step_id,layer,stage,toolg_id,recipe,reticle_group,step_type,toolg_type,process_time,
+                                                cycle_time,capability,sgs_flag,update_time,sgs_group,batch_name, batch_target_flag,multi_group,multi_target_flag  from APS_ETL_FLOW
+                                            """
+    postgres_table_define = """etl_flow(parentid, prodg_id, prodg_tech,prod_id,plan_no,plan_id, step_id,layer,stage,toolg_id,recipe,reticle_group,step_type,toolg_type,process_time,
+                                                    cycle_time,capability,sgs_flag,update_time,sgs_group,batch_name, batch_target_flag,multi_group,multi_target_flag)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_flow",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_HOLD_RLS(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid, toolg_id, lot_id, prod_id, layer,stage,hold_time, update_time  from APS_ETL_HOLD_RLS
+                                     """
+    postgres_table_define = """etl_hold_rls(parentid, toolg_id, lot_id, prod_id, layer,stage,hold_time, update_time)
+                                  """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_hold_rls",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_LOT_OP_HIST(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  lot_id, toolg_id, tool_id, prod_id, plan_id,step_id,lot_type, pty,shr_flag,layer, stage,recipe,ppid,
+                                                qty,reticle_id,arrival,job_prepare,track_in,process_start,update_time  from APS_ETL_LOT_OP_HIST
+                                     """
+    postgres_table_define = """etl_lot_op_hist(lot_id, toolg_id, tool_id, prod_id, plan_id,step_id,lot_type, pty,shr_flag,layer, stage,recipe,ppid,
+                                                            qty,reticle_id,arrival,job_prepare,track_in,process_start,update_time)
+                                  """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_lot_op_hist",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_LOTHISTORY(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  lot_id, toolg_id, tool_id, prod_id, plan_id,step_id, prodg_id,prodg_tech,lot_type, pty,shr_flag,layer, stage,recipe,ppid,
+                                                qty,reticle_id,tech_id, customer,arrival,job_prepare,track_in,process_start, process_end,track_out, rework_flag,
+                                                backup_flag,update_time, scanner_start,scanner_end, recipe_setup from APS_ETL_LOTHISTORY
+                                            """
+    postgres_table_define = """etl_lothistory(lot_id, toolg_id, tool_id, prod_id, plan_id,step_id, prodg_id,prodg_tech,lot_type, pty,shr_flag,layer, stage,recipe,ppid,
+                                                          qty,reticle_id,tech_id, customer,arrival,job_prepare,track_in,process_start, process_end,track_out, rework_flag,
+                                                          backup_flag,update_time, scanner_start,scanner_end, recipe_setup )
+                                         """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_lothistory",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_MASK_HISTORY(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select reticle_group,reticle_id,status,position_from,position,event,event_time,update_time from APS_ETL_MASK_HISTORY
+                                     """
+    postgres_table_define = """etl_mask_history(reticle_group,reticle_id,status,position_from,position,event,event_time,update_time)
+                                         """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_mask_history",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        copy_to_yto=False,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_MASK_INFO(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,reticle_group,reticle_id,reticle_count, position, position_time, reticle_status,inspection_time, 
+                                               run_qty,run_lbound,run_ubound,update_time,last_position from APS_ETL_MASK_INFO
+                                            """
+    postgres_table_define = """etl_mask_info(parentid,reticle_group,reticle_id,reticle_count,position, position_time, reticle_status,inspection_time, 
+                                                         run_qty,run_lbound,run_ubound,update_time,last_position)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_mask_info",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_MONITOR(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,toolg_id,tool_id,ch_id,job_id, start_date,end_date,
+                                               process_time,reticle_id,recipe,job_status,track_in,update_time,
+                                               foup_id,job_type,tool_code,fixed_flag,fixed_time,process_start from APS_ETL_MONITOR
+                                                 """
+    postgres_table_define = """etl_monitor(parentid,toolg_id,tool_id,ch_id,job_id, start_date,end_date,
+                                                       process_time,reticle_id,recipe,job_status,track_in,update_time,
+                                                        foup_id,job_type,tool_code,fixed_flag,fixed_time,process_start)
+                                             """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_monitor",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_PIRUN(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,toolg_id,tool_id,ch_id,prod_id, plan_id,step_id,recipe,ppid,layer,stage,
+                                               tech,customer,lot_id, reticle_id, pre_tool_id, rule_name,remaining_count,remaining_time,
+                                               recover_time, valid_recipe, valid_time, hold_time, update_time, valid_lot,count_unit,current_count,
+                                               lsl,usl,process_time,job_id,split_qty,parameter from APS_ETL_PIRUN
+                                    """
+    postgres_table_define = """etl_pirun(parentid,toolg_id,tool_id,ch_id,prod_id, plan_id,step_id,recipe,ppid,layer,stage,
+                                                     tech,customer,lot_id, reticle_id, pre_tool_id, rule_name,remaining_count,remaining_time,
+                                                     recover_time, valid_recipe, valid_time, hold_time, update_time, valid_lot,count_unit,current_count,
+                                                     lsl,usl,process_time,job_id,split_qty,parameter)
+                                                   """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_pirun",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_QTIME_HOLD(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,prod_id, plan_id,step_id,layer,stage,tool_id,
+                                               ch_id,used_tc,virtual_time_tc, hold_flag, update_time from APS_ETL_QTIME_HOLD
+                                     """
+    postgres_table_define = """etl_qtime_hold(parentid,prod_id, plan_id,step_id,layer,stage,tool_id,
+                                                          ch_id,used_tc,virtual_time_tc, hold_flag, update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_qtime_hold",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_QTIME_SPEC(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,prod_id, plan_id,step_id_from,step_id_to,
+                                               timelimit,update_time from APS_ETL_QTIME_SPEC
+                                     """
+    postgres_table_define = """etl_qtime_spec(parentid,prod_id, plan_id,step_id_from,step_id_to,
+                                                          timelimit,update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_qtime_spec",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_RLS(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,lot_id,target_step_id,target_plan_id,toolg_id,tool_id,recipe,ppid,reticle_id,ch_set,
+                                               set_status,max_batch_size,min_batch_size,non_process_runtime,process_runtime,update_time,
+                                               other_min_batch_size,recipe_setup from APS_ETL_RLS
+                                         """
+    postgres_table_define = """etl_rls(parentid,lot_id,target_step_id,target_plan_id,toolg_id,tool_id,recipe,ppid,reticle_id,ch_set,
+                                                   set_status,max_batch_size,min_batch_size,non_process_runtime,process_runtime,update_time,
+                                                   other_min_batch_size,recipe_setup)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_rls",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_SAMPLING_LOT(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select parentid,lot_id,prod_id,plan_no,plan_id,step_id,layer,stage,update_time from APS_ETL_SAMPLING_LOT
+                                     """
+    postgres_table_define = """etl_sampling_lot(parentid,lot_id,prod_id,plan_no,plan_id,step_id,layer,stage,update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_sampling_lot",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_SEASON_RULE(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,toolg_id,tool_id,ch_id,seq,process_time,lot_type,recipe_last,recipe_last_mode,
+                                                recipe_next,recipe_next_mode,idletime_from,idletime_to,run_limit,run_qty,update_time,
+                                                ppid_last, ppid_last_mode,ppid_next,ppid_next_mode, recipe_setup_last,recipe_setup_last_mode,
+                                                recipe_setup_next,recipe_setup_next_mode,prod_id_last,prod_id_last_mode, prod_id_next,prod_id_next_mode,
+                                                lot_id_last,lot_id_last_mode,lot_id_next,lot_id_next_mode,prodg_id_last,prodg_id_last_mode,prodg_id_next,
+                                                prodg_id_next_mode,layer_last,layer_last_mode,layer_next,layer_next_mode,stage_last,stage_last_mode,stage_next,
+                                                stage_next_mode,consec_unit,consec_cnt,consec_cnt_mode,rule_name from APS_ETL_SEASON_RULE
+                                     """
+    postgres_table_define = """etl_season_rule( parentid,toolg_id,tool_id,ch_id,seq,process_time,lot_type,recipe_last,recipe_last_mode,
+                                                            recipe_next,recipe_next_mode,idletime_from,idletime_to,run_limit,run_qty,update_time,
+                                                            ppid_last, ppid_last_mode,ppid_next,ppid_next_mode, recipe_setup_last,recipe_setup_last_mode,
+                                                            recipe_setup_next,recipe_setup_next_mode,prod_id_last,prod_id_last_mode, prod_id_next,prod_id_next_mode,
+                                                            lot_id_last,lot_id_last_mode,lot_id_next,lot_id_next_mode,prodg_id_last,prodg_id_last_mode,prodg_id_next,
+                                                            prodg_id_next_mode,layer_last,layer_last_mode,layer_next,layer_next_mode,stage_last,stage_last_mode,stage_next,
+                                                            stage_next_mode,consec_unit,consec_cnt,consec_cnt_mode,rule_name)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_season_rule",  # 要小写
+                                        csv_delimiter="<",
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_SGS_RLS(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,toolg_id,prod_id,plan_id,step_id,layer,stage,tool_id,create_time,pass_flg_prc,
+                                                prc_update_time,pass_flg_mfg,mfg_update_time,update_time from APS_ETL_SGS_RLS
+                                            """
+    postgres_table_define = """etl_sgs_rls(parentid,toolg_id,prod_id,plan_id,step_id,layer,stage,tool_id,create_time,pass_flg_prc,
+                                                       prc_update_time,pass_flg_mfg,mfg_update_time,update_time)
+                                               """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_sgs_rls",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_SGS_RULE(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,tool_id,prodg_id,from_layer,from_stage,to_layer,to_stage,update_time  from APS_ETL_SGS_RULE
+                                     """
+    postgres_table_define = """etl_sgs_rule( parentid,tool_id,prodg_id,from_layer,from_stage,to_layer,to_stage,update_time )
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_sgs_rule",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_SIZE_CONTROL(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,rule_name,toolg_id,tool_id,prodg_tech,prodg_id,prod_id,layer,stage,lot_type,foup_con,
+                                                min_batch_size,max_batch_size,min_foup_size,max_foup_size,hard_flag,update_time,other_min_batch_size from APS_ETL_SIZE_CONTROL
+                                            """
+    postgres_table_define = """etl_size_control(parentid,rule_name,toolg_id,tool_id,prodg_tech,prodg_id,prod_id,layer,stage,lot_type,foup_con,
+                                                            min_batch_size,max_batch_size,min_foup_size,max_foup_size,hard_flag,update_time,other_min_batch_size )
+                                               """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_size_control",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_TOOL(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,toolg_id,tool_id,ch_id,tool_status,tool_status_time,ch_status,ch_status_time,coat,lot_id,down_back_time,
+                                                port_num,reticle_num,location,update_time,cross_fab_flag,std_hr,std_wip,foup_num,process_mode,multi_flag,
+                                                entity,bn_flag,purge_time from APS_ETL_TOOL
+                                                        """
+    postgres_table_define = """etl_tool(parentid,toolg_id,tool_id,ch_id,tool_status,tool_status_time,ch_status,ch_status_time,coat,lot_id,down_back_time,
+                                                    port_num,reticle_num,location,update_time,cross_fab_flag,std_hr,std_wip,foup_num,process_mode,multi_flag,
+                                                    entity,bn_flag,purge_time)
+                                                           """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_tool",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_TOOL_DOWN(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,toolg_id,tool_id,ch_id,down_start,down_end,remark,update_time
+                                        from APS_ETL_TOOL_DOWN
+                                     """
+    postgres_table_define = """etl_tool_down(parentid,toolg_id,tool_id,ch_id,down_start,down_end,remark,update_time)
+                                                                  """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_tool_down",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_TRANSPORT(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid,location_from,location_to,transport_time,update_time from APS_ETL_TRANSPORT
+                                     """
+    postgres_table_define = """etl_transport(parentid,location_from,location_to,transport_time,update_time)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_transport",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_VC_RECORD(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select PARENTID, LOT_ID, TOOLG_ID, TOOL_ID, REST_TIME, QTY, UPDATE_TIME, VC_GROUP from APS_ETL_VC_RECORD
+                """
+    postgres_table_define = """etl_vc_record(PARENTID, LOT_ID, TOOLG_ID, TOOL_ID, REST_TIME, QTY, UPDATE_TIME, VC_GROUP)
+                """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_vc_record",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)
+
+
+def export_to_test_APS_ETL_WIP(pg_conn, table_name, file_name):
+    if config.g_debug_mode:
+        print("copy to test postgres db : {}".format(table_name))
+    logging.info("copy to test postgres db : {}".format(table_name))
+
+    duck_db_memory = duckdb.connect(file_name, read_only=True)
+    sql_query = "select parentid from {table_name} limit 1".format(table_name=table_name)
+    duck_db_memory.execute(sql_query)
+    uuid = duck_db_memory.fetchone()[0]
+    if config.g_debug_mode:
+        print("table_name", table_name, "uuid", uuid)
+
+    select_sql_in_duck = """select  parentid, lot_id, step_id, target_step_id, target_toolg_id,prodg_id,prodg_tech, prod_id,plan_id,target_plan_id,
+                                                   lot_type,foup_id,qty,pty,shr_flag,lot_status,remain_qtime,qtime_step_id_to,arrival,layer,stage,tool_id,reticle_id,
+                                                   recipe,ppid,track_in,process_start,tech_id,customer,location,parent_lot,critical_ratio,hold_code,pre_tool_id,update_time,
+                                                   factory,parent_tool_flag,target_prod_id,from_step_id,to_step_id,job_prepare,white_flag,batch_id,assign_batch_id,assign_multi_id,
+                                                   frombatch_time,assign_tool_id,foup_station_id,inhibit_pass_flag,preohb_tool_id  from APS_ETL_WIP
+                                           """
+    postgres_table_define = """etl_wip(parentid, lot_id, step_id, target_step_id, target_toolg_id,prodg_id,prodg_tech, prod_id,plan_id,target_plan_id,
+                                                   lot_type,foup_id,qty,pty,shr_flag,lot_status,remain_qtime,qtime_step_id_to,arrival,layer,stage,tool_id,reticle_id,
+                                                   recipe,ppid,track_in,process_start,tech_id,customer,location,parent_lot,critical_ratio,hold_code,pre_tool_id,update_time,
+                                                   factory,parent_tool_flag,target_prod_id,from_step_id,to_step_id,job_prepare,white_flag,batch_id,assign_batch_id,assign_multi_lot,
+                                                   formbatch_time,assign_tool_id,foup_station_id,inhibit_pass_flag,preohb_tool_id)
+                                        """
+    my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                        duckdb=duck_db_memory,
+                                        table_name_in_duckdb=table_name,
+                                        table_name_in_pg="etl_wip",  # 要小写
+                                        select_sql_in_duck=select_sql_in_duck,
+                                        postgres_table_define=postgres_table_define,
+                                        pg_conn=pg_conn)

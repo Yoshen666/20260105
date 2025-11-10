@@ -1,0 +1,587 @@
+from xinxiang.jobs_sync_view import sync_view_jobs
+from xinxiang.util import my_cron
+
+def set_sync_view_jobs_cron(schedule):
+    # V_APC_INHIBIT_BATCH > APS_SYNC_APC_INHIBIT_BATCH
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_APC_INHIBIT_BATCH, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_EQP_STATUS_BOOKING_SETTING > APS_SYNC_EQP_STATUS_BOOKING_SETTING
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_EQP_STATUS_BOOKING_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_EQP_STATUS_CONVERT_AVAILABLE > APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_EQP_STATUS_CONVERT_AVAILABLE,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_EQP_STATUS_E10_FORECAST > APS_SYNC_EQP_STATUS_E10_FORECAST
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_EQP_STATUS_E10_FORECAST,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_EQP_STATUS_WAIT_TIME_SETTING > APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_EQP_STATUS_WAIT_TIME_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_ETL_MASK_INFO > APS_SYNC_MASK_INFO
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MASK_INFO, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_ETL_WIP > APS_SYNC_WIP
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_WIP, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FRDRBL_ID_DYB > APS_SYNC_FRDRBL_ID_DYB
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FRDRBL_ID_DYB, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FUR_ED_CONTROL_SETTING > APS_SYNC_FUR_ED_CONTROL_SETTING
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FUR_ED_CONTROL_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_MASK_MES_STATUS > APS_SYNC_MASK_MES_STATUS
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MASK_MES_STATUS, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_MOVE_TARGET_RANK > APS_SYNC_MOVE_TARGET_RANK
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MOVE_TARGET_RANK, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_PHOTO_PATH_CONVERT > APS_SYNC_PHOTO_PATH_CONVERT
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_PHOTO_PATH_CONVERT, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SCHE_GROUP_EQPG_SETTING > APS_SYNC_SCHE_GROUP_EQPG_SETTING
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_GROUP_EQPG_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_SCHE_LOT_PURPTY_SETTING > APS_SYNC_SCHE_LOT_PURPTY_SETTING
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_LOT_PURPTY_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_SCHE_LOT_TO_EQPG > APS_SYNC_SCHE_LOT_TO_EQPG
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_LOT_TO_EQPG, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SCHE_OPE_NO_MODULE_SETTING > APS_SYNC_SCHE_OPE_NO_MODULE_SETTING
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_OPE_NO_MODULE_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_SCHE_PM_PROP_TIME > APS_SYNC_SCHE_PM_PROP_TIME
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_PM_PROP_TIME, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SCHE_UMT_MODULE_EQPG > APS_SYNC_SCHE_UMT_MODULE_EQPG
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_UMT_MODULE_EQPG, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SETTING_MCS_LOCATION_MANUAL > APS_SYNC_SETTING_MCS_LOCATION_MANUAL
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SETTING_MCS_LOCATION_MANUAL,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_TRANSFER_TIME_DEFALUT > APS_SYNC_TRANSFER_TIME_DEFALUTE
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_TRANSFER_TIME_DEFALUTE,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_UMT_CONTROL_LOT > APS_SYNC_UMT_CONTROL_LOT
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_CONTROL_LOT, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_UMT_EQP_CAP_STD > APS_SYNC_UMT_EQP_CAP_STD
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_EQP_CAP_STD, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_UMT_PATH_CONVERT_SETTING > APS_SYNC_UMT_PATH_CONVERT_SETTING
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_PATH_CONVERT_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_UMT_RUN_RULE_BATCH_SIZE > APS_SYNC_UMT_RUN_RULE_BATCH_SIZE
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_RUN_RULE_BATCH_SIZE,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_WET_ACID_CONTROL_SETTING > APS_SYNC_WET_ACID_CONTROL_SETTING
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_WET_ACID_CONTROL_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"), misfire_grace_time=60)
+
+    # V_WET_ACID_DATA > APS_SYNC_WET_ACID_DATA
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_WET_ACID_DATA, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_WS_SCHEDULE_LOT_INFO > APS_SYNC_WS_SCHEDULE_LOT_INFO
+    # Corn In Database:0 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_WS_SCHEDULE_LOT_INFO, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_DAILY_MOVE_TARGET > APS_SYNC_DAILY_MOVE_TARGET
+    # Corn In Database:10 8/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_DAILY_MOVE_TARGET, my_cron.CronTriger6.cron_triger("10 3/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RDS_RECIPEINFO > APS_SYNC_RDS_RECIPEINFO
+    # Corn In Database:10 8/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RDS_RECIPEINFO, my_cron.CronTriger6.cron_triger("10 3/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_CSLOT_FORCESAMP > APS_SYNC_CSLOT_FORCESAMP
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_CSLOT_FORCESAMP, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_ETL_RETICLE_USE > APS_SYNC_RETICLE_USE
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RETICLE_USE, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FLOW_DYB_RETURN > APS_SYNC_FLOW_DYB_RETURN
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FLOW_DYB_RETURN, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FRLOT_EQP_RESOURCE_FLAG > APS_SYNC_FRLOT_EQP_RESOURCE_FLAG
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FRLOT_EQP_RESOURCE_FLAG,
+                     my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"), misfire_grace_time=60)
+
+    # V_FVLOT_QTIME > APS_SYNC_FVLOT_QTIME
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FVLOT_QTIME, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_OCS_JOB_GROUP_SPEC > APS_SYNC_OCS_JOB_GROUP_SPEC
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_OCS_JOB_GROUP_SPEC, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RETICLE_PROD > APS_SYNC_RETICLE_PROD
+    # Corn In Database:
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RETICLE_PROD, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RSSPLIT_INFO > APS_SYNC_RSSPLIT_INFO
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RSSPLIT_INFO, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RTD_QTIME_PROD_EQP > APS_SYNC_RTD_QTIME_PROD_EQP
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_QTIME_PROD_EQP, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_UMT_RTD_BATCH_INFO > APS_SYNC_UMT_RTD_BATCH_INFO
+    # Corn In Database:0 6/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_RTD_BATCH_INFO, my_cron.CronTriger6.cron_triger("0 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_ETL_FLOW > APS_SYNC_FLOW
+    # Corn In Database:0 6/30 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FLOW, my_cron.CronTriger6.cron_triger("0 6/30 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_QTIME_EQP_LOADING > APS_SYNC_QTIME_EQP_LOADING
+    # Corn In Database:30 7/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_QTIME_EQP_LOADING, my_cron.CronTriger6.cron_triger("30 7/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_QTIME_EQP_LOADING_AM > APS_SYNC_QTIME_EQP_LOADING_AM
+    # Corn In Database:30 7/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_QTIME_EQP_LOADING_AM,
+                     my_cron.CronTriger6.cron_triger("30 7/10 * * * ?"), misfire_grace_time=60)
+
+    # V_RTD_RECIPEGROUP > APS_SYNC_RTD_RECIPEGROUP
+    # Corn In Database:30 7/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_RECIPEGROUP, my_cron.CronTriger6.cron_triger("30 7/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_CUT_LINE > APS_SYNC_CUT_LINE
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_CUT_LINE, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FLOW_ORDER_CHANGE > APS_SYNC_FLOW_ORDER_CHANGE
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FLOW_ORDER_CHANGE, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_LOT_LOCATION > APS_SYNC_LOT_LOCATION
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_LOT_LOCATION, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_LOT_PURPOSE > APS_SYNC_LOT_PURPOSE
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_LOT_PURPOSE, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_MCS_SCHED_TRANSFER_TIME > APS_SYNC_MCS_SCHED_TRANSFER_TIME
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MCS_SCHED_TRANSFER_TIME,
+                     my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"), misfire_grace_time=60)
+
+    # V_MLIF_FOR_BATCH_MANU_REG > APS_SYNC_MLIF_FOR_BATCH_MANU_REG
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MLIF_FOR_BATCH_MANU_REG,
+                     my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"), misfire_grace_time=60)
+
+    # V_PRODUCT_INFO > APS_SYNC_PRODUCT_INFO
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_PRODUCT_INFO, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RSPILOT_RUNING > APS_SYNC_RSPILOT_RUNING
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RSPILOT_RUNING, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RTD_MOVE_TARGET > APS_SYNC_RTD_MOVE_TARGET
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_MOVE_TARGET, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RTD_WET_BATCH_SIZE_SETTING > APS_SYNC_RTD_WET_BATCH_SIZE_SETTING
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_WET_BATCH_SIZE_SETTING,
+                     my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"), misfire_grace_time=60)
+
+    # V_SELECT_LOT > APS_SYNC_SELECT_LOT
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SELECT_LOT, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SHL_LOT_FIRE_NUMBER > APS_SYNC_SHL_LOT_FIRE_NUMBER
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SHL_LOT_FIRE_NUMBER, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SHR_PRI > APS_SYNC_SHR_PRI
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SHR_PRI, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_UMT_BOAT_CONSTAINT_SETTING > APS_SYNC_UMT_BOAT_CONSTAINT_SETTING
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_BOAT_CONSTAINT_SETTING,
+                     my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"), misfire_grace_time=60)
+
+    # V_UMT_EQP_BATCH_SIZE_SETTING > APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_EQP_BATCH_SIZE_SETTING,
+                     my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"), misfire_grace_time=60)
+
+    # V_UO_HOLDLOT_WAIT_DISPATCH > APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UO_HOLDLOT_WAIT_DISPATCH,
+                     my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"), misfire_grace_time=60)
+
+    # V_WET_ED_DATA > APS_SYNC_WET_ED_DATA
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_WET_ED_DATA, my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_WET_EXCHANGE_ACID_SETTING > APS_SYNC_WET_EXCHANGE_ACID_SETTING
+    # Corn In Database:15 4/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_WET_EXCHANGE_ACID_SETTING,
+                     my_cron.CronTriger6.cron_triger("15 4/5 * * * ?"), misfire_grace_time=60)
+
+    # V_OP_CHAMBER_RULE > APS_SYNC_OP_CHAMBER_RULE
+    # Corn In Database:40 15/60 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_OP_CHAMBER_RULE, my_cron.CronTriger6.cron_triger("40 15/44 * * * ?"),
+    sfire_grace_time = 60)
+
+    # V_PD_RECIPE_EQP_MAIN > APS_SYNC_PD_RECIPE_EQP_MAIN
+    # Corn In Database:40 15/60 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_PD_RECIPE_EQP_MAIN, my_cron.CronTriger6.cron_triger("40 15/44 * * * ?"),
+    sfire_grace_time = 60)
+
+    # V_PD_RECIPE_EQP_LOAD > APS_SYNC_PD_RECIPE_EQP_LOAD
+    # Corn In Database:55 9/10 * * * ?
+    # schedule.add_job(sync_view_jobs.sync_APS_SYNC_PD_RECIPE_EQP_LOAD, my_cron.CronTriger6.cron_triger("55 9/10 * * * ?"),
+    #                  misfire_grace_time=60)
+
+    # V_PF_PO_N1 > APS_SYNC_PF_PO_N1
+    # Corn In Database:55 8/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_PF_PO_N1, my_cron.CronTriger6.cron_triger("55 8/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SCHE_APC_PA > APS_SYNC_SCHE_APC_PA
+    # Corn In Database:0 11/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_APC_PA, my_cron.CronTriger6.cron_triger("0 11/10 * * * ?"), misfire_grace_time=60)
+
+    # VIEW_OCS_JOB_SPEC_GROUP_PO > APS_SYNC_OCS_JOB_SPEC_GROUP_PO
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_OCS_JOB_SPEC_GROUP_PO,
+                     my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"), misfire_grace_time=60)
+
+    # V_APC_RECIPE_EFFECT_TIME > APS_SYNC_APC_RECIPE_EFFECT_TIME
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_APC_RECIPE_EFFECT_TIME,
+                     my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"), misfire_grace_time=60)
+
+    # V_APC_SPLIT_WAFER > APS_SYNC_APC_SPLIT_WAFER
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_APC_SPLIT_WAFER, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_CSCMBMRCPPRCFG_MFG > APS_SYNC_CSCMBMRCPPRCFG_MFG
+    # Corn In Database:
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_CSCMBMRCPPRCFG_MFG, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_CSCMBMRCPRULE > APS_SYNC_CSCMBMRCPRULE
+    # Corn In Database:
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_CSCMBMRCPRULE, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_HOLD_DETAIL_HISTORY > APS_SYNC_HOLD_DETAIL_HISTORY
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_HOLD_DETAIL_HISTORY, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"), misfire_grace_time=60)
+
+    # V_LOT_PROCESS_MONITOR > APS_SYNC_LOT_PROCESS_MONITOR
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_LOT_PROCESS_MONITOR, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_MASK_GROUP_MAPPLING > APS_SYNC_MASK_GROUP_MAPPLING
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MASK_GROUP_MAPPLING, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_PD_RECIPE_EQP_DYB > APS_SYNC_PD_RECIPE_EQP_DYB
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_PD_RECIPE_EQP_DYB, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_PD_RECIPE_EQP_REWORK > APS_SYNC_PD_RECIPE_EQP_REWORK
+    # Corn In Database:0 6/10 * * * ?
+    # schedule.add_job(sync_view_jobs.sync_APS_SYNC_PD_RECIPE_EQP_REWORK,
+    #                  my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"), misfire_grace_time=60)
+
+    # V_QTIME_CONSTRAINT > APS_SYNC_QTIME_CONSTRAINT
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_QTIME_CONSTRAINT, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RMS_RECIPE_RETICLE > APS_SYNC_RMS_RECIPE_RETICLE
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RMS_RECIPE_RETICLE, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SCHE_APC_LOT_SPECIAL_VALUE > APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_APC_LOT_SPECIAL_VALUE,
+                     my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"), misfire_grace_time=60)
+
+    # V_TMS_EQP_PARAMETER > APS_SYNC_TMS_EQP_PARAMETER
+    # Corn In Database:0 6/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_TMS_EQP_PARAMETER, my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_UMT_EQP_UNIT_PLAN_SETTING > APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING
+    # Corn In Database:
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_EQP_UNIT_PLAN_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"), misfire_grace_time=60)
+
+    # V_UMT_WET_RECIPE_TANK_RULE > APS_SYNC_UMT_WET_RECIPE_TANK_RULE
+    # Corn In Database:
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_WET_RECIPE_TANK_RULE,
+                     my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"), misfire_grace_time=60)
+
+    # V_UNIT_EQP_CHAMBER_SETTING > APS_SYNC_UNIT_EQP_CHAMBER_SETTING
+    # Corn In Database:
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UNIT_EQP_CHAMBER_SETTING,
+                     my_cron.CronTriger6.cron_triger("0 6/10 * * * ?"), misfire_grace_time=60)
+
+    # V_DIFF_BATCH_SIZE_MIX > APS_SYNC_DIFF_BATCH_SIZE_MIX
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_DIFF_BATCH_SIZE_MIX, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_EQP_RCP_INHIBIT > APS_SYNC_EQP_RCP_INHIBIT
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_EQP_RCP_INHIBIT, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_ETL_TOOL > APS_SYNC_ETL_TOOL
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_ETL_TOOL, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FVEQP > APS_SYNC_FVEQP
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FVEQP, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FVPORT > APS_SYNC_FVPORT
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FVPORT, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_IDLE_DUMMY_SPEC > APS_SYNC_IDLE_DUMMY_SPEC
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_IDLE_DUMMY_SPEC, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_LOT_TO_EQP > APS_SYNC_LOT_TO_EQP
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_LOT_TO_EQP, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_MCS_SCHED_LOCATION_INFO > APS_SYNC_MCS_SCHED_LOCATION_INFO
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MCS_SCHED_LOCATION_INFO,
+                     my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"), misfire_grace_time=60)
+
+    # V_MLIF_FOR_WOT_MANU_REG > APS_SYNC_MLIF_FOR_WOT_MANU_REG
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MLIF_FOR_WOT_MANU_REG,
+                     my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"), misfire_grace_time=60)
+
+    # V_MLIF_HOLD_LOT > APS_SYNC_MLIF_HOLD_LOT
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MLIF_HOLD_LOT, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_MM_FRSTK > APS_SYNC_MM_FRSTK
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MM_FRSTK, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_PRODUCT > APS_SYNC_PRODUCT
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_PRODUCT, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RTD_MFG_HWLD_SPEC > APS_SYNC_RTD_MFG_HWLD_SPEC
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_MFG_HWLD_SPEC, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RTD_RUN_LOTBYEQP_COUNT > APS_SYNC_RTD_RUN_LOTBYEQP_COUNT
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_RUN_LOTBYEQP_COUNT,
+                     my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"), misfire_grace_time=60)
+
+    # V_SGS_LOT_WIP > APS_SYNC_SGS_LOT_WIP
+    # Corn In Database:30 3/5 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SGS_LOT_WIP, my_cron.CronTriger6.cron_triger("30 3/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_SCHE_APC_PB > APS_SYNC_SCHE_APC_PB
+    # Corn In Database:0 7/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SCHE_APC_PB, my_cron.CronTriger6.cron_triger("0 7/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_WP_SPLIT_MERGE_DETAIL_HISTORY > APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY
+    # Corn In Database:0 7/10 * * * ?
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_WP_SPLIT_MERGE_DETAIL_HISTORY,
+                     my_cron.CronTriger6.cron_triger("0 7/10 * * * ?"), misfire_grace_time=60)
+
+    # ##################################################################################################################
+    # 以下为手写
+    # ##################################################################################################################
+    # V_RTD_QTIME_FLOW > APS_SYNC_RTD_QTIME_FLOW
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_QTIME_FLOW, my_cron.CronTriger6.cron_triger("0 1/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RTD_LOT_RESOURCE_FLAG > APS_SYNC_RTD_LOT_RESOURCE_FLAG
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_LOT_RESOURCE_FLAG,
+                     my_cron.CronTriger6.cron_triger("0 1/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FRLOT_FUTUREHOLD > APS_SYNC_FRLOT_FUTUREHOLD
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FRLOT_FUTUREHOLD,  my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_RSPILOT_RUN_HS > APS_SYNC_RSPILOT_RUN_HS
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RSPILOT_RUN_HS, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+
+    # V_RECIPE_NPW_RULEMAP > APS_SYNC_RECIPE_NPW_RULEMAP
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RECIPE_NPW_RULEMAP, my_cron.CronTriger6.cron_triger("0 2/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    # V_FHOPEH_DELAY_10MINS > APS_SYNC_FHOPEH_DELAY
+    # schedule.add_job(sync_view_jobs.sync_APS_SYNC_FHOPEH_DELAY_10MINS, "cron", minute="1-59/5",
+    #                  misfire_grace_time=60)
+
+    # APS_TR_CSFRINHIBIT > APS_TR_CSFRINHIBIT
+    # schedule.add_job(sync_view_jobs.sync_APS_SYNC_CSFRINHIBIT, "cron", minute="1-59/5",
+    #                  misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_OCS_AUTODUMMY_COMPLETE, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_CSDYNAMICMWF, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_SAMPLING_RATE, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_EQP_RECIPE_ED_ADD_VALUE, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_OUT_DF_PURGE_COMBINE, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MLIF_EQP_SETTING, my_cron.CronTriger6.cron_triger("55 5/10 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_UMT_BOTTLENECK_EQPG_SETTING, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_ID_OPE_CONFIG, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_EQP_ED_DATA_REPORT, my_cron.CronTriger6.cron_triger("0 1/10 * * * ?"),
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_PREFER_TOOL, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_FREQP_UTS, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MES_FRLOT_RETNLIST, "cron", minute="1-59/5",
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MAJOR_ANOMALY_EWS_LOT, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_APC_INHIBIT_LOT, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_NPW_RECIPE_GROUP, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_RTD_IMP_SOURCE, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_MES_FRLRCP, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+    schedule.add_job(sync_view_jobs.sync_APS_SYNC_STRIP_CHAMBER, my_cron.CronTriger6.cron_triger("0 2/5 * * * ?"),
+                     misfire_grace_time=60)
+
+
+
+
+
+

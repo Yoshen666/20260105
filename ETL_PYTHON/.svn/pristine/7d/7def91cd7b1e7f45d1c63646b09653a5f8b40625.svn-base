@@ -1,0 +1,416 @@
+import logging
+import os
+import shutil
+import time
+from datetime import datetime, timedelta
+
+import duckdb
+
+from xinxiang import config
+from xinxiang.util import my_oracle, my_date, cons_error_code, my_duck
+import pandas as pd
+
+
+def check_need_resize_file(oracle_conn, table_name):
+    day_str = my_date.date_short_str()
+    hour_str = my_date.hour_short_str()
+
+    if hour_str not in config.g_resize_his_db_hour:
+        # 不在Resize时间段内
+        logging.info("Do Not Need Resize His Sync File")
+        return False
+    else:
+        # 在Resize时间段内,再检查是否已经做过一次了
+        sorted_file_names = []
+
+        if config.g_debug_mode:
+            try:
+                if os.path.isdir(os.path.join(config.g_mem_sync_result_path, table_name)):
+                    file_names = os.listdir(os.path.join(config.g_mem_sync_result_path, table_name))
+                    if file_names.__contains__('inprocess'):
+                        file_names.remove('inprocess')
+                    for file_name in file_names:
+                        if file_name.endswith('.db.wal'):
+                            file_names.remove(file_name)
+                    sorted_file_names = sorted(file_names)
+                elif os.path.isdir(os.path.join(config.g_mem_etl_output_path, table_name)):
+                    file_names = os.listdir(os.path.join(config.g_mem_etl_output_path, table_name))
+                    if file_names.__contains__('inprocess'):
+                        file_names.remove('inprocess')
+                    for file_name in file_names:
+                        if file_name.endswith('.db.wal'):
+                            file_names.remove(file_name)
+                    sorted_file_names = sorted(file_names)
+                else:
+                    return False
+            except Exception as e:
+                return False
+        else:
+            sql = '''
+                    select FILE_NAME from APS_ETL_VER_CONTROL_DUCK
+                    WHERE TABLE_NAME = '{table_name}'
+                    AND update_user = 'CIMP'
+                    order by update_time desc
+                    '''.format(table_name=table_name)
+            dbcursor = oracle_conn.cursor()
+            dbcursor.execute(sql)
+            result = dbcursor.fetchall()
+            for item in result:
+                sorted_file_names.append(item[0])
+
+        if sorted_file_names:
+            for file_name in sorted_file_names:
+                if file_name.__contains__(day_str + hour_str):
+                    return False
+        return True
+
+
+def sync_oracle_to_duck(etl_name, source_table, target_table, check_date_column, sync_day, duration_minute=5 , target_path=config.g_mem_sync_result_path):
+    '''
+    封装给各个Job使用的oracle to duck的函数，可直接使用
+    :param conn:
+    :param etl_name:
+    :param source_table:
+    :param target_table:
+    :return:
+    '''
+    conn = None
+    try:
+        start = datetime.now()
+        conn = my_oracle.oracle_get_connection()
+
+        check_need_resize = check_need_resize_file(conn, target_table)
+
+        if check_need_resize:
+            # 减小文件大小
+            base_big_oracle_to_duck_resize(
+                conn=conn,
+                etl_name=etl_name,
+                source_table=source_table,
+                target_table=target_table,
+                check_date_column=check_date_column,
+                sync_day=sync_day,
+                duration_minute=duration_minute,
+                target_path=target_path)
+        else:
+            base_big_oracle_to_duck(
+                conn=conn,
+                etl_name=etl_name,
+                source_table=source_table,
+                target_table=target_table,
+                check_date_column=check_date_column,
+                sync_day=sync_day,
+                duration_minute=duration_minute,
+                target_path=target_path
+            )
+        end = datetime.now()
+        logging.info("{source_table} Sync(His) to {target_table} : 总时间 - {cost} 秒".format(source_table=source_table,
+                                                                                          target_table=target_table,
+                                                                                          cost=(my_date.duration(start, end))))
+
+    except Exception as e:
+        logging.exception("{source_table} Sync(His) to {target_table} 处理出错: {e}".format(source_table=source_table,
+                                                                                        target_table=target_table,
+                                                                                        e=e))
+        raise e
+    finally:
+        conn.commit()
+        conn.close()
+        del conn
+
+
+def base_big_oracle_to_duck(conn, etl_name, source_table, target_table, check_date_column, sync_day, duration_minute=5, target_path=config.g_mem_sync_result_path, create_table_sql=None):
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = target_table
+    target_folder = os.path.join(target_path, target_table_name, "inprocess")
+    if not os.path.isdir(target_folder):
+        os.makedirs(target_folder)
+
+    # 创建DuckDB的文件
+    _file_name = target_table_name + "_" + my_date.date_time_second_short_str() + ".db"
+    in_process_db_file = os.path.join(target_folder, _file_name)
+    target_db_file = os.path.join(target_path, target_table_name, _file_name)  # 最终文件在inprocess目录上层
+
+    # 创建DuckDB文件
+    duck_db_cursor = None
+    result_count = 0
+    try:
+        # 记录开始日志
+        my_oracle.StartCleanUpAndLog(conn=conn, ETLProcName=etl_name, ETLStartTime=_now)
+
+        last_file_name = my_oracle.get_last_create_file(my_oracle.oracle_get_connection(), target_table)
+        if last_file_name is not None and "" != last_file_name and os.path.exists(last_file_name):
+            # 当上次文件存在的时候
+            shutil.copy2(last_file_name, in_process_db_file)
+            duck_db_cursor = duckdb.connect(in_process_db_file)
+
+            # 追加最新的数据
+            # 上次执行文件的创建时间戳
+            sql = """
+                SELECT MAX({check_date_column}) FROM {target_table}
+            """.format(check_date_column=check_date_column, target_table=target_table)
+            duck_db_cursor.execute(sql)
+            last_date = duck_db_cursor.fetchall()
+
+            # _create_time = os.path.basename(last_file_name).replace(".db", "").split("_")[-1]
+            _create_time_date = last_date[0][0]
+            if _create_time_date is not None:
+                if type(_create_time_date) is str:
+                    _create_time = datetime.strptime(_create_time_date, '%Y-%m-%d %H:%M:%S')
+                else:
+                    _create_time = _create_time_date
+                _day_delta = timedelta(days=sync_day)
+                _min_delta = timedelta(minutes=duration_minute)
+                delete_date = (_create_time - _day_delta - _min_delta).strftime("%Y-%m-%d %H:%M:%S")
+
+                select_columns_str = my_duck.get_select_column_in_duckdb(duck_db_cursor, target_table)
+
+                query_sql = """
+                select {cols_str} from {source_table} where {check_date_column} >= TO_DATE('{create_time}', 'YYYY-MM-DD HH24:MI:SS')
+                """.format(source_table=source_table,
+                           check_date_column=check_date_column,
+                           create_time=_create_time,
+                           cols_str=select_columns_str)
+                pd_result = pd.read_sql(query_sql, conn)
+
+                # oracle_cursor = conn.cursor()
+                # oracle_cursor.execute(query_sql)
+                # temp = oracle_cursor.fetchall()
+                # oracle_cursor.close()
+
+                # 追加最新的数据
+                result_count = pd_result.shape[0]
+                if result_count > 0:
+                    if 'PARTKEY' not in pd_result.columns:
+                        current_time_str = my_date.date_time_second_str()
+                        pd_result['PARTKEY'] = current_time_str
+
+                    # 处理Null列
+                    for col, data_type in pd_result.dtypes.items():
+                        if "datetime64[ns]" == str(data_type):
+                            pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                            pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+                        elif "float64" == str(data_type):
+                            pd_result[col] = pd_result[col].fillna(0)
+                        else:
+                            pd_result[col] = pd_result[col].fillna('')
+
+                    insert_sql = "INSERT INTO {} select * from pd_result".format(target_table)
+                    duck_db_cursor.sql(insert_sql)
+
+                    # num_columns = len(temp[0])
+                    # template = ','.join(['?']*num_columns)
+                    # # 插入数据
+                    # insert_sql = "INSERT INTO " + target_table + " VALUES ( {p} )".format(p=template)
+                    # duck_db_cursor.executemany(insert_sql, temp)
+                    #
+                    # result_count = my_duck.get_row_count_in_duckdb(duck_db_cursor, tableName=target_table)
+
+                # 删除老数据
+                delete_sql = """
+                delete from {target_table} where {check_date_column} < '{delete_date}'
+                """.format(target_table=target_table, check_date_column=check_date_column,delete_date=delete_date)
+
+                duck_db_cursor.execute(delete_sql)
+
+                duck_db_cursor.sql("VACUUM")
+
+            # 写版本号
+            if result_count > 0:
+                my_oracle.HandlingVerControl(conn, my_oracle.UUID(), target_table, target_db_file)
+        else:
+            duck_db_cursor = duckdb.connect(in_process_db_file)
+            query_sql = """
+            select * from {source_table} where {check_date_column} >= SYSDATE - {sync_day}
+            """.format(source_table=source_table,
+                       check_date_column=check_date_column,
+                       sync_day=sync_day)
+            pd_result = pd.read_sql(query_sql, conn)
+            result_count = pd_result.shape[0]
+
+            # # 创建表结构
+            # if create_table_sql is None:
+            #     create_sql = my_oracle.create_sql_from_oracle_to_duck(conn, source_table, target_table)
+            #     duck_db_cursor.sql(create_sql)
+            # else:
+            #     duck_db_cursor.sql(create_table_sql)
+
+
+            if 'PARTKEY' not in pd_result.columns:
+                current_time_str = my_date.date_time_second_str()
+                pd_result['PARTKEY'] = current_time_str
+
+            # 处理Null列
+            for col, data_type in pd_result.dtypes.items():
+                if "datetime64[ns]" == str(data_type):
+                    pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                    pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+                elif "float64" == str(data_type):
+                    pd_result[col] = pd_result[col].fillna(0)
+                else:
+                    pd_result[col] = pd_result[col].fillna('')
+
+            # 創建表結構
+            duck_db_cursor.sql("CREATE TABLE {} AS SELECT * FROM pd_result".format(target_table))
+
+            # 插入数据
+            insert_sql = "INSERT INTO {} select * from pd_result".format(target_table)
+            duck_db_cursor.sql(insert_sql)
+
+            del pd_result
+
+            # 写版本号
+            if result_count > 0:
+                my_oracle.HandlingVerControl(conn, my_oracle.UUID(), target_table, target_db_file)
+    except Exception as e:
+        logging.exception(">>>>>>>>>>" + source_table + "处理出错: %s", e)
+        if duck_db_cursor is not None:
+            duck_db_cursor.close()
+        my_oracle.SaveAlarmLogDataForSync(conn,
+                                   ETLProcName=etl_name,
+                                   Exception=e,
+                                   file_name=in_process_db_file,
+                                   alarm_code='Sync His')
+        raise e
+    finally:
+        if duck_db_cursor is not None:
+            duck_db_cursor.commit()
+            duck_db_cursor.close()
+
+        my_oracle.EndCleanUpAndLog(
+            conn=conn,
+            ETLProcName=etl_name,
+            ETLStartTime=_now)
+        if result_count > 0:
+            try:
+                os.rename(in_process_db_file, target_db_file)
+            except Exception as eee:
+                logging.exception("文件太大，等待20秒后再拷贝... %s", eee)
+                time.sleep(20)
+                os.rename(in_process_db_file, target_db_file)
+
+
+def base_big_oracle_to_duck_resize(conn, etl_name, source_table, target_table, check_date_column, sync_day, duration_minute=5, target_path=config.g_mem_sync_result_path, create_table_sql=None):
+    _now = my_date.date_time_second_str()
+    # 创建目录
+    target_table_name = target_table
+    target_folder = os.path.join(target_path, target_table_name, "inprocess")
+    if not os.path.isdir(target_folder):
+        os.makedirs(target_folder)
+
+    # 创建DuckDB的文件
+    _file_name = target_table_name + "_" + my_date.date_time_second_short_str() + ".db"
+    in_process_db_file = os.path.join(target_folder, _file_name)
+    target_db_file = os.path.join(target_path, target_table_name, _file_name)  # 最终文件在inprocess目录上层
+
+    # 创建DuckDB文件
+    duck_db_cursor = None
+    result_count = 0
+    try:
+        # 记录开始日志
+        my_oracle.StartCleanUpAndLog(conn=conn, ETLProcName=etl_name, ETLStartTime=_now)
+
+        duck_db_cursor = duckdb.connect(in_process_db_file)
+
+        # 把历史数据先ATTACH过来，再拷贝到新的库中去
+        last_file_name = my_oracle.get_last_create_file(my_oracle.oracle_get_connection(), target_table)
+        attach_sql = """
+            ATTACH '{last_file_name}' AS OLD_HIS (READ_ONLY)
+        """.format(last_file_name=last_file_name)
+        duck_db_cursor.execute(attach_sql)
+
+        copy_sql = """
+            create table {target_table} as select * FROM OLD_HIS.{target_table}
+        """.format(target_table=target_table)
+        duck_db_cursor.execute(copy_sql)
+        detach_sql = """ DETACH OLD_HIS """
+        duck_db_cursor.execute(detach_sql)
+
+        # 追加最新的数据
+        # 上次执行文件的创建时间戳
+        sql = """SELECT MAX({check_date_column}) FROM {target_table}""".format(check_date_column=check_date_column, target_table=target_table)
+        duck_db_cursor.execute(sql)
+        last_date = duck_db_cursor.fetchall()
+
+        _create_time_date = last_date[0][0]
+        if _create_time_date is not None:
+            if type(_create_time_date) is str:
+                _create_time = datetime.strptime(_create_time_date, '%Y-%m-%d %H:%M:%S')
+            else:
+                _create_time = _create_time_date
+            _day_delta = timedelta(days=sync_day)
+            _min_delta = timedelta(minutes=duration_minute)
+            delete_date = (_create_time - _day_delta - _min_delta).strftime("%Y-%m-%d %H:%M:%S")
+
+            select_columns_str = my_duck.get_select_column_in_duckdb(duck_db_cursor, target_table)
+
+            query_sql = """select {cols_str} from {source_table} where {check_date_column} >= TO_DATE('{create_time}', 'YYYY-MM-DD HH24:MI:SS') """.format(source_table=source_table,
+                                   check_date_column=check_date_column,
+                                   create_time=_create_time,
+                                   cols_str=select_columns_str)
+            pd_result = pd.read_sql(query_sql, conn)
+
+
+            # 追加最新的数据
+            result_count = pd_result.shape[0]
+            if result_count > 0:
+                if 'PARTKEY' not in pd_result.columns:
+                    add_column_sql = """ALTER TABLE {target_table} add column if not exists PARTKEY varchar(60)""".format(target_table=target_table)
+                    duck_db_cursor.execute(add_column_sql)
+                    current_time_str = my_date.date_time_second_str()
+                    pd_result['PARTKEY'] = current_time_str
+
+                # 处理Null列
+                for col, data_type in pd_result.dtypes.items():
+                    if "datetime64[ns]" == str(data_type):
+                        pd_result[col].fillna('1970-01-01 00:00:00', inplace=True)
+                        pd_result[col] = pd_result[col].dt.strftime('%Y-%m-%d %H:%M:%S')
+                    elif "float64" == str(data_type):
+                        pd_result[col] = pd_result[col].fillna(0)
+                    else:
+                        pd_result[col] = pd_result[col].fillna('')
+
+                insert_sql = "INSERT INTO {} select * from pd_result".format(target_table)
+                duck_db_cursor.sql(insert_sql)
+
+
+            # 删除老数据
+            delete_sql = """
+                        delete from {target_table} where {check_date_column} < '{delete_date}'
+                        """.format(target_table=target_table, check_date_column=check_date_column,
+                                   delete_date=delete_date)
+
+            duck_db_cursor.execute(delete_sql)
+
+            duck_db_cursor.sql("VACUUM")
+
+        # 写版本号
+        if result_count > 0:
+            my_oracle.HandlingVerControl(conn, my_oracle.UUID(), target_table, target_db_file)
+    except Exception as e:
+        logging.exception(">>>>>>>>>>" + source_table + "处理出错: %s", e)
+        if duck_db_cursor is not None:
+            duck_db_cursor.close()
+        my_oracle.SaveAlarmLogDataForSync(conn,
+                                   ETLProcName=etl_name,
+                                   Exception=e,
+                                   file_name=in_process_db_file,
+                                   alarm_code='Sync His')
+        raise e
+    finally:
+        if duck_db_cursor is not None:
+            duck_db_cursor.commit()
+            duck_db_cursor.close()
+
+        my_oracle.EndCleanUpAndLog(
+            conn=conn,
+            ETLProcName=etl_name,
+            ETLStartTime=_now)
+        if result_count > 0:
+            try:
+                os.rename(in_process_db_file, target_db_file)
+            except Exception as eee:
+                logging.exception("文件太大，等待20秒后再拷贝... %s", eee)
+                time.sleep(20)
+                os.rename(in_process_db_file, target_db_file)

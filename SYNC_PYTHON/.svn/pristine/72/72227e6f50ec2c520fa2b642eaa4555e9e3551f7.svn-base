@@ -1,0 +1,13 @@
+from xinxiang.jobs_manager import manager_jobs, sync_to_pg_jobs
+from xinxiang.util import my_cron
+
+
+def set_manager_jobs_cron(schedule):
+    # 每天1点执行一次
+    schedule.add_job(manager_jobs.delete_backup_files_by_day, "cron", hour=1, minute=0, second=0, misfire_grace_time=60)
+    # 每天2点，14点执行一次
+    schedule.add_job(manager_jobs.delete_oracle_db_log_by_12_hours, "cron", hour="2,14", minute=0, second=0, misfire_grace_time=60)
+    # 每天1,7,13,19点执行一次
+    schedule.add_job(manager_jobs.delete_backup_files_by_6_hours, "cron", hour="1,7,13,19", minute=0, second=0, misfire_grace_time=60)
+    # 定時將duckdb數據導入到PG測試庫 TODO
+    # schedule.add_job(sync_to_pg_jobs.sync_duckdb_to_pg_test_db, my_cron.CronTriger6.cron_triger("0 4/5 * * * ?"), misfire_grace_time=60)

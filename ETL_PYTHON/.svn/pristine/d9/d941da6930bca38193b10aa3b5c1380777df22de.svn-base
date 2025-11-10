@@ -1,0 +1,1209 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_postgres, my_file
+import pandas as pd
+
+def create_temp_table(duck_db):
+    table_type = ""
+    if not config.g_debug_mode:
+        table_type = 'TEMP'
+    '''
+    这里在内存中创建使用到的临时表
+    '''
+    sql = """
+    create {table_type} table APS_TMP_ETL_LOT_OP_HIST_OPHIST
+    (
+        lot_id         VARCHAR(64),
+        prodspec_id    VARCHAR(64),
+        mainpd_id      VARCHAR(64),
+        priority_class VARCHAR(64),
+        ope_no         VARCHAR(64),
+        cur_wafer_qty  VARCHAR(64),
+        ctrl_job       VARCHAR(64),
+        eqp_id         VARCHAR(64),
+        claim_time     VARCHAR(64),
+        ope_category   VARCHAR(64),
+        tech_id        VARCHAR(64),
+        customer_id    VARCHAR(64),
+        lot_type       VARCHAR(64),
+        ph_recipe_id   VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_LOT_OP_HIST_RETCLHIST
+    (
+        lot_id     VARCHAR(64),
+        mainpd_id  VARCHAR(64),
+        ope_no     VARCHAR(64),
+        claim_time VARCHAR(64),
+        reticle_id VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_LOT_OP_HIST_TRACKIN
+    (
+        lot_id        VARCHAR(64),
+        prodspec_id   VARCHAR(64),
+        mainpd_id     VARCHAR(64),
+        priority      VARCHAR(64),
+        ope_no        VARCHAR(64),
+        wafer_qty     VARCHAR(64),
+        ctrl_job      VARCHAR(64),
+        eqp_id        VARCHAR(64),
+        toolg_id      VARCHAR(64),
+        real_module   VARCHAR(64),
+        ope_category  VARCHAR(64),
+        tech_id       VARCHAR(64),
+        customer_id   VARCHAR(64),
+        lot_type      VARCHAR(64),
+        ph_recipe_id  VARCHAR(64),
+        rtd_groupname VARCHAR(64),
+        track_in      VARCHAR(64),
+        process_start VARCHAR(64),
+        scanner_start VARCHAR(64),
+        scanner_end   VARCHAR(64),
+        process_end   VARCHAR(64),
+        track_out     VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+    create {table_type} table APS_TMP_ETL_LOT_OP_HIST_RESERVE
+    (
+        reserve_time VARCHAR(64),
+        ctrl_job     VARCHAR(64),
+        lot_id       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+     create {table_type} table APS_TMP_ETL_LOT_OP_HIST_LOTHIST
+     (
+        track_out VARCHAR(64),
+        arrival   VARCHAR(64),
+        ctrl_job  VARCHAR(64),
+        lot_id    VARCHAR(64)
+     )
+     """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+     create {table_type} table APS_TMP_ETL_LOT_OP_HIST_CURRARRIVAL
+     (
+        lot_id  VARCHAR(64),
+        ope_no  VARCHAR(64),
+        arrival VARCHAR(64)
+     )
+     """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+     create {table_type} table APS_TMP_ETL_LOT_OP_HIST_OPEARRIVAL
+     (
+        lot_id  VARCHAR(64),
+        ope_no  VARCHAR(64),
+        arrival VARCHAR(64)
+     )
+     """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+     create {table_type} table APS_TMP_ETL_LOT_OP_HIST_SPLIT
+     (
+        lot_id     VARCHAR(64),
+        ope_no     VARCHAR(64),
+        split_time VARCHAR(64)
+     )
+     """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+     create {table_type} table APS_TMP_ETL_LOT_OP_HIST
+     (
+        lot_id        VARCHAR(64),
+        prodspec_id   VARCHAR(64),
+        mainpd_id     VARCHAR(64),
+        priority      VARCHAR(64),
+        ope_no        VARCHAR(64),
+        wafer_qty     VARCHAR(64),
+        ctrl_job      VARCHAR(64),
+        eqp_id        VARCHAR(64),
+        toolg_id      VARCHAR(64),
+        real_module   VARCHAR(64),
+        arrival       VARCHAR(64),
+        reserve_time  VARCHAR(64),
+        track_in      VARCHAR(64),
+        process_start VARCHAR(64),
+        scanner_start VARCHAR(64),
+        scanner_end   VARCHAR(64),
+        process_end   VARCHAR(64),
+        track_out     VARCHAR(64),
+        reticle_id    VARCHAR(64),
+        tech_id       VARCHAR(64),
+        customer_id   VARCHAR(64),
+        lot_type      VARCHAR(64),
+        ph_recipe_id  VARCHAR(64),
+        rtd_groupname VARCHAR(64)
+     )
+     """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+     create {table_type} table APS_TMP_ETL_LOT_OP_HIST_RECIPE
+     (
+        lcrecipe_id VARCHAR(60),
+        ope_no      VARCHAR(60),
+        prodspec_id VARCHAR(60),
+        mainpd_id   VARCHAR(60)
+     )
+     """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+     create table APS_TMP_ETL_LOT_OP_HIST_RECIPE1
+     (
+        lcrecipe_id VARCHAR(60),
+        ope_no      VARCHAR(60),
+        prodspec_id VARCHAR(60),
+        mainpd_id   VARCHAR(60)
+     )
+     """
+    duck_db.sql(sql)
+
+    sql = """
+     create {table_type} table APS_TMP_ETL_LOT_OP_HIST_FLOW
+    (
+        prod_id VARCHAR(60),
+        plan_id VARCHAR(60),
+        layer   VARCHAR(60),
+        stage   VARCHAR(60),
+        step_id VARCHAR(60)
+    )
+     """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+     create {table_type} table APS_TMP_ETL_LOT_OP_HIST_PO_N1
+    (
+        pos_pdid  VARCHAR(64) not null,
+        mainpd_id VARCHAR(64) not null,
+        ope_no    VARCHAR(10) not null
+    )
+     """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+         create {table_type} table APS_TMP_ETL_LOT_OP_HIST_EQP_LOAD
+        (
+            eqp_id      VARCHAR(10),
+            lcrecipe_id VARCHAR(40),
+            pd_id       VARCHAR(40) not null,
+            prodspec_id VARCHAR(30) not null
+        )
+         """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+         create {table_type} table APS_TMP_ETL_LOT_OP_HIST_RECIPE_GROUP
+        (
+            tool_id       VARCHAR(64),
+            ppid          VARCHAR(64),
+            rtd_groupname VARCHAR(64)
+        )
+         """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+         create {table_type} table APS_TMP_ETL_LOT_OP_HIST_PARTONE
+        (
+            lot_id        VARCHAR(64),
+            lotid         VARCHAR(64),
+            prodspec_id   VARCHAR(64),
+            mainpd_id     VARCHAR(64),
+            priority      VARCHAR(64),
+            ope_no        VARCHAR(64),
+            wafer_qty     VARCHAR(64),
+            ctrl_job      VARCHAR(64),
+            eqp_id        VARCHAR(64),
+            toolg_id      VARCHAR(64),
+            real_module   VARCHAR(64),
+            arrival_ld    VARCHAR(64),
+            arrival_ad    VARCHAR(64),
+            arrival_ad2   VARCHAR(64),
+            reserve_time  VARCHAR(64),
+            track_in      VARCHAR(64),
+            process_start VARCHAR(64),
+            scanner_start VARCHAR(64),
+            scanner_end   VARCHAR(64),
+            process_end   VARCHAR(64),
+            track_out     VARCHAR(64),
+            reticle_id    VARCHAR(64),
+            tech_id       VARCHAR(64),
+            customer_id   VARCHAR(64),
+            lot_type      VARCHAR(64),
+            ph_recipe_id  VARCHAR(64),
+            rtd_groupname VARCHAR(64)
+        )
+         """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+
+def GetRecipeGroupSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 是为了获取V_PF_PO_N1的信息
+    sql = """
+         INSERT INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_RECIPE_GROUP(                
+         TOOL_ID, PPID, RTD_GROUPNAME                                               
+         )                                                                    
+          SELECT DISTINCT P.TOOL_ID,                                          
+                 P.PPID,                                                      
+                 MAX(P.RTD_GROUPNAME) AS RTD_GROUPNAME                        
+          FROM APS_SYNC_RTD_RECIPEGROUP.APS_SYNC_RTD_RECIPEGROUP P             
+          WHERE P.RTD_GROUPNAME <> '*'
+          GROUP BY P.TOOL_ID,P.PPID                                                                                                            
+        """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_RECIPE_GROUP",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_RECIPE_GROUP")
+
+# 是为了获取V_PF_PO_N1的信息
+def GetPoN1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 是为了获取V_PF_PO_N1的信息
+    sql = """
+         INSERT INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_PO_N1(                           
+          POS_PDID, MAINPD_ID, OPE_NO                                                      
+        )                                                                     
+         SELECT N.POS_PDID,N.MAINPD_ID,N.OPE_NO                                                                     
+         FROM APS_SYNC_PF_PO_N1.APS_SYNC_PF_PO_N1 N                             
+        """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_PO_N1",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_PO_N1")
+
+def GetRecipeEqpLoadSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 是为了获取V_PD_RECIPE_EQP_MAIN/V_PD_RECIPE_EQP_REWORK的信息
+    sql = """
+        INSERT INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_EQP_LOAD(                          
+        EQP_ID, LCRECIPE_ID, PD_ID, PRODSPEC_ID                                                           
+        )                                                                          
+         SELECT L.EQP_ID,L.LCRECIPE_ID,                                                             
+                L.PD_ID,L.PRODSPEC_ID                                                                       
+         FROM APS_SYNC_PD_RECIPE_EQP_MAIN.APS_SYNC_PD_RECIPE_EQP_MAIN L                                                                    
+    """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_EQP_LOAD",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_EQP_LOAD")
+
+def GetOpHistSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 先保存5天的历史数据下来，方便后续使用
+    sql = """
+           INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_OPHIST(                                          
+               LOT_ID, PRODSPEC_ID, MAINPD_ID,PRIORITY_CLASS,OPE_NO,
+               CUR_WAFER_QTY,CTRL_JOB,EQP_ID,CLAIM_TIME,OPE_CATEGORY,TECH_ID,
+               CUSTOMER_ID,LOT_TYPE,PH_RECIPE_ID                                                                                            
+        )                                                                                                        
+         SELECT F.LOT_ID,                                 
+               F.PRODSPEC_ID,                             
+               F.MAINPD_ID,                               
+               F.PRIORITY_CLASS,                          
+               F.OPE_NO,                                  
+               F.CUR_WAFER_QTY,                           
+               F.CTRL_JOB,                                
+               F.EQP_ID,                                  
+               F.CLAIM_TIME,                              
+               F.OPE_CATEGORY,                            
+               F.TECH_ID,                                 
+               F.CUSTOMER_ID,                             
+               F.LOT_TYPE,                                
+               F.PH_RECIPE_ID                             
+         FROM APS_MID_FHOPEHS_VIEW.APS_MID_FHOPEHS_VIEW F                                 
+         WHERE CLAIM_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1' DAY                                    
+    """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_OPHIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_OPHIST")
+
+def GetOpReticleHistSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 先保存5天的RETICLE历史数据下来，方便后续使用
+    sql = """
+        INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_RETCLHIST(                                      
+        LOT_ID,MAINPD_ID,OPE_NO,CLAIM_TIME,RETICLE_ID                                                                                            
+       )                                                                                                        
+        WITH RETICLE_DATE AS (                                                                                  
+             SELECT LOT_ID,                                                                                     
+                 R.MAINPD_ID,                                                                                   
+                 R.OPE_NO,                                                                                      
+                 ROW_NUMBER() OVER (PARTITION BY LOT_ID,R.MAINPD_ID,R.OPE_NO ORDER BY CLAIM_TIME DESC) AS RN,   
+                 R.CLAIM_TIME,                                                                                  
+                 R.RETICLE_ID                                                                                   
+          FROM APS_MID_FHOPEHS_RETICLE_VIEW.APS_MID_FHOPEHS_RETICLE_VIEW R                                               
+          WHERE 1=1                                                                                             
+          AND CLAIM_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1' DAY                                                            
+        )                                                                                                       
+        SELECT LOT_ID,                                                                                          
+               MAINPD_ID,                                                                                       
+               OPE_NO,                                                                                          
+               CLAIM_TIME,                                                                                      
+               RETICLE_ID                                                                                       
+        FROM RETICLE_DATE                                                                                       
+        WHERE RN = 1                                                                                                                                                                                        
+     """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_RETCLHIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_RETCLHIST")
+
+def GetTrackInDataSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+           INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_TRACKIN(                                          
+                    LOT_ID,PRODSPEC_ID,MAINPD_ID,PRIORITY,
+                    OPE_NO,WAFER_QTY,CTRL_JOB,EQP_ID,TOOLG_ID,
+                    REAL_MODULE,TECH_ID,CUSTOMER_ID,LOT_TYPE,
+                    PH_RECIPE_ID,RTD_GROUPNAME,TRACK_IN,PROCESS_START,SCANNER_START,
+                    SCANNER_END,PROCESS_END,TRACK_OUT                                                                                           
+         )                                                                                                         
+          WITH TOOLG_DATA AS(                                                                                                                           
+                SELECT EQP_ID, MAX(REAL_MODULE) AS REAL_MODULE,                                                    
+                      MAX(EQP_G) AS TOOLG_ID                                                                      
+                FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL                                                                                                             
+                GROUP BY EQP_ID                                                                                   
+          ),                                                                                                       
+          TRACK_OUT_DATA AS(                                                                                                                           
+                SELECT LOT_ID, CTRL_JOB,                                                                          
+                      EQP_ID, HS.CLAIM_TIME AS TRACK_OUT                                                          
+                FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_OPHIST HS                                                               
+                WHERE  OPE_CATEGORY = 'OperationComplete'                                                          
+          ),                                                                                                       
+          TRACK_IN_DATA AS (                                                                                       
+            SELECT HS.LOT_ID,                                                                                 
+               HS.PRODSPEC_ID,                                                                              
+               HS.MAINPD_ID,                                                                                
+               HS.PRIORITY_CLASS AS PRIORITY,                                                               
+               HS.OPE_NO,                                                                                                                                         
+               HS.CUR_WAFER_QTY,                                                                                                                                                                                                                                                                                                       
+               HS.CTRL_JOB,                                                                                 
+               HS.EQP_ID,                                                                                   
+               TD.TOOLG_ID,TD.REAL_MODULE,                                                                  
+               HS.TECH_ID,HS.CUSTOMER_ID,                                                                   
+               HS.LOT_TYPE,HS.PH_RECIPE_ID,ETR.RTD_GROUPNAME,                                               
+               CASE WHEN OPE_CATEGORY='OperationStart' THEN HS.CLAIM_TIME ELSE NULL END AS TRACK_IN,        
+               CASE WHEN OPE_CATEGORY='ProcessStart' THEN HS.CLAIM_TIME ELSE NULL END AS PROCESS_START,     
+               CASE WHEN OPE_CATEGORY='ScannerStart' THEN HS.CLAIM_TIME ELSE NULL END AS SCANNER_START,     
+               CASE WHEN OPE_CATEGORY='ScannerEnd' THEN HS.CLAIM_TIME ELSE NULL END AS SCANNER_END,         
+               CASE WHEN OPE_CATEGORY='ProcessEnd' THEN HS.CLAIM_TIME ELSE NULL END AS PROCESS_END          
+            FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_OPHIST HS                                                               
+            INNER JOIN  TOOLG_DATA TD                                                                         
+            ON TD.EQP_ID = HS.EQP_ID                                                                          
+                  LEFT JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_RECIPE_GROUP ETR ON ETR.TOOL_ID = HS.EQP_ID AND ETR.PPID = HS.PH_RECIPE_ID     
+            WHERE 1=1                                                                                         
+               AND HS.OPE_CATEGORY IN ('OperationStart','ProcessStart','ProcessEnd')                                  
+               AND HS.CLAIM_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1' DAY                                                
+          )                                                                                                     
+           SELECT  HS.LOT_ID,                                                                                 
+                     MAX(HS.PRODSPEC_ID) AS PRODSPEC_ID,                                                            
+                     MAX(HS.MAINPD_ID) AS MAINPD_ID,                                                              
+                     MAX(HS.PRIORITY) AS PRIORITY,                                                            
+               MAX(HS.OPE_NO) AS OPE_NO,                                                                                                                                         
+               MAX(HS.CUR_WAFER_QTY) AS WAFER_QTY,                                                                                                                                                                                                                                                                                       
+                     HS.CTRL_JOB,                                                                             
+               MAX(HS.EQP_ID) AS EQP_ID,                                                                 
+               MAX(HS.TOOLG_ID) AS TOOLG_ID,                                                            
+               MAX(HS.REAL_MODULE) AS REAL_MODULE,                                                      
+
+               MAX(HS.TECH_ID) AS TECH_ID,                                                              
+               MAX(HS.CUSTOMER_ID) AS CUSTOMER_ID,                                                      
+               MAX(HS.LOT_TYPE) AS LOT_TYPE,                                                            
+               MAX(HS.PH_RECIPE_ID) AS PH_RECIPE_ID,                                                    
+               MAX(HS.RTD_GROUPNAME) AS RTD_GROUPNAME,                                                    
+
+               MAX(TRACK_IN) AS TRACK_IN,                                                               
+               MAX(PROCESS_START) AS PROCESS_START,                                                     
+               MAX(SCANNER_START) AS SCANNER_START,                                                     
+               MAX(SCANNER_END) AS SCANNER_END,                                                         
+               MAX(PROCESS_END) AS PROCESS_END,                                                         
+               MAX(ODS.TRACK_OUT) AS TRACK_OUT                                                          
+           FROM  TRACK_IN_DATA HS                                                                             
+           LEFT JOIN  TRACK_OUT_DATA ODS                                                                      
+           ON ODS.CTRL_JOB = HS.CTRL_JOB AND ODS.LOT_ID= HS.LOT_ID                                            
+           GROUP BY HS.CTRL_JOB, HS.LOT_ID                               
+    """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_TRACKIN",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_TRACKIN")
+
+def GetReserveTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 获取RESERVE_TIME
+    sql = """
+         INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_RESERVE(                            
+         RESERVE_TIME,CTRL_JOB,LOT_ID                                                                              
+         )                                                                                           
+          SELECT HS.CLAIM_TIME AS RESERVE_TIME, HS.CTRL_JOB,HS.LOT_ID                                                                           
+          FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_OPHIST HS                                                        
+          WHERE 1=1                                                                                  
+          AND HS.OPE_CATEGORY = 'Reserve'                                                                                                        
+        """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_RESERVE",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_RESERVE")
+
+def GetLotHistTrackOutTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 获取V_ETL_LOTHISTORY的信息
+    sql = """
+        INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_LOTHIST(                              
+         TRACK_OUT,ARRIVAL,CTRL_JOB,LOT_ID
+        )                                                                                           
+         SELECT L.CLAIM_TIME AS TRACK_OUT,                                                          
+           L.PREV_OP_COMP_TIME AS ARRIVAL,                                                         
+           L.CTRL_JOB,                                                                         
+           L.LOT_ID                                                                            
+         FROM APS_TMP_LOTHISTORY_VIEW.APS_TMP_LOTHISTORY_VIEW L                                         
+         WHERE L.OPE_CATEGORY='OperationComplete'                                                   
+         AND L.CLAIM_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '1' DAY             
+    """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_LOTHIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_LOTHIST")
+
+def GetCurArrivalTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 获取当前站点 之前的站点到站的时间
+    sql = """
+        INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_CURRARRIVAL(                              
+         LOT_ID,OPE_NO,ARRIVAL                                                                                    
+        )                                                                                              
+         SELECT LOT_ID, OPE_NO,                                                                        
+           MAX(CLAIM_TIME2) AS ARRIVAL                                                            
+         FROM (                                                                                        
+         SELECT F.OPE_NO,                                                                              
+         LAG(CLAIM_TIME,1,NULL) OVER(PARTITION BY LOT_ID,OPE_NO  ORDER BY CLAIM_TIME) AS CLAIM_TIME2,  
+         LAG(OPE_NO,1,NULL) OVER(PARTITION BY LOT_ID  ORDER BY CLAIM_TIME) AS OPE_NO2,                 
+         F.CLAIM_TIME ,F.LOT_ID                                                                        
+         FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_OPHIST F                                                            
+         WHERE 1=1                                                                                                                                        
+         )                                                                                             
+         WHERE OPE_NO <> OPE_NO2                                                                       
+         AND CLAIM_TIME2 IS NOT NULL AND CLAIM_TIME2 <> ''                                                                  
+         GROUP BY OPE_NO, LOT_ID                   
+    """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_CURRARRIVAL",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_CURRARRIVAL")
+
+def GetOperArrivalTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 获取 站点最早的纪录时间 到站的时间
+    sql = """
+         INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_OPEARRIVAL(                               
+         LOT_ID,OPE_NO,ARRIVAL                                                                               
+         )                                                                                            
+          SELECT F.LOT_ID,F.OPE_NO,                                                                         
+          MIN(F.CLAIM_TIME) AS ARRIVAL                                                                      
+          FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_OPHIST F                                                                
+          GROUP BY OPE_NO, LOT_ID                                                   
+       """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_OPEARRIVAL",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_OPEARRIVAL")
+
+def GetSplitTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 获取SPLIT_TIME数据信
+    sql = """
+       INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_SPLIT(                          
+       LOT_ID,OPE_NO,SPLIT_TIME                                                                             
+      )                                                                                           
+       WITH SPLIT_DATA AS (                            
+           SELECT OPE_NO,LOT_ID,                                             
+                  CLAIM_TIME AS SPLIT_TIME                                                       
+                  FROM APS_MID_FHOPEHS_VIEW.APS_MID_FHOPEHS_VIEW                                                   
+           WHERE OPE_CATEGORY ='Split'                 
+       )                                               
+       SELECT LOT_ID,OPE_NO,                                                 
+              MAX(SPLIT_TIME) AS SPLIT_TIME                                  
+       FROM SPLIT_DATA T                                                                   
+       GROUP BY T.OPE_NO,T.LOT_ID                                                 
+          """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_SPLIT",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_SPLIT")
+
+def GetViewLotHistorySql_PartOne(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # partone
+    sql = """      
+             INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_PARTONE(                                          
+                 LOT_ID,PRODSPEC_ID,MAINPD_ID,PRIORITY,
+                 OPE_NO,WAFER_QTY, CTRL_JOB,EQP_ID,TOOLG_ID,
+                 REAL_MODULE,LOTID,ARRIVAL_LD,ARRIVAL_AD,RESERVE_TIME, TRACK_IN,
+                 PROCESS_START,SCANNER_START,SCANNER_END, PROCESS_END,
+                 TRACK_OUT,TECH_ID,CUSTOMER_ID,LOT_TYPE,PH_RECIPE_ID, RTD_GROUPNAME                                                                              
+       )                                                                                                        
+        SELECT   HS.LOT_ID,                                                                                     
+           HS.PRODSPEC_ID,                                                                                
+           HS.MAINPD_ID,                                                                                  
+           PRIORITY,                                                                                      
+           HS.OPE_NO,                                                                                                                                        
+           WAFER_QTY,                                                                                                                                                                                                                                                                                                            
+           HS.CTRL_JOB,                                                                                   
+           EQP_ID,                                                                                        
+           TOOLG_ID,                                                                                      
+           REAL_MODULE,                                                                                   
+           LD.LOT_ID AS LOTID,LD.ARRIVAL AS ARRIVAL_LD, AD.ARRIVAL AS ARRIVAL_AD,                                                                               
+           RS.RESERVE_TIME,                                                                               
+           TRACK_IN,                                                                                      
+           PROCESS_START,                                                                                 
+           SCANNER_START,                                                                                 
+           SCANNER_END,                                                                                   
+           PROCESS_END,                                                                                   
+           CASE WHEN LD.LOT_ID IS NOT NULL AND LD.LOT_ID <> '' THEN LD.TRACK_OUT ELSE HS.TRACK_OUT END AS TRACK_OUT,          
+           HS.TECH_ID,HS.CUSTOMER_ID,                                                                     
+           HS.LOT_TYPE,HS.PH_RECIPE_ID, HS.RTD_GROUPNAME                                                  
+        FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_TRACKIN HS                                                                  
+        LEFT JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_RESERVE RS                                                          
+        ON RS.LOT_ID = HS.LOT_ID                                                                            
+        AND RS.CTRL_JOB = HS.CTRL_JOB                                                                       
+        LEFT JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_LOTHIST LD                                                          
+        ON  LD.LOT_ID = HS.LOT_ID                                                                           
+        AND LD.CTRL_JOB = HS.CTRL_JOB                                                                       
+        LEFT JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_CURRARRIVAL AD                                                       
+        ON AD.LOT_ID = HS.LOT_ID                                                                            
+        AND AD.OPE_NO = HS.OPE_NO                                                                                               
+          """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_PARTONE",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_PARTONE")
+
+def GetViewLotHistorySql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 整理出所有需要的时间信息
+    sql = """      
+         INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST(                                           
+                LOT_ID,PRODSPEC_ID,MAINPD_ID,PRIORITY,
+                OPE_NO,WAFER_QTY, CTRL_JOB,EQP_ID,TOOLG_ID,
+                REAL_MODULE,ARRIVAL,RESERVE_TIME, TRACK_IN,PROCESS_START,SCANNER_START,SCANNER_END, PROCESS_END,
+                TRACK_OUT, RETICLE_ID,TECH_ID,CUSTOMER_ID,LOT_TYPE,PH_RECIPE_ID, RTD_GROUPNAME                                                                                        
+        )                                                                                                         
+         SELECT   HS.LOT_ID,                                                                                      
+            HS.PRODSPEC_ID,                                                                                 
+            HS.MAINPD_ID,                                                                                   
+            HS.PRIORITY,                                                                                       
+            HS.OPE_NO,                                                                                                                                         
+            HS.WAFER_QTY,                                                                                                                                                                                                                                                                                                             
+            HS.CTRL_JOB,                                                                                    
+            HS.EQP_ID,                                                                                         
+            HS.TOOLG_ID,                                                                                       
+            HS.REAL_MODULE,                                                                                    
+            (CASE WHEN HS.ARRIVAL_LD IS NOT NULL AND HS.ARRIVAL_LD <> '' THEN HS.ARRIVAL_LD                                         
+                 WHEN HS.ARRIVAL_AD IS NOT NULL AND HS.ARRIVAL_AD <> '' AND CAST(HS.ARRIVAL_AD AS TIMESTAMP) < CAST(HS.TRACK_IN AS TIMESTAMP) THEN HS.ARRIVAL_AD 
+                 ELSE AD2.ARRIVAL END) AS ARRIVAL,   
+            HS.RESERVE_TIME,                                                                                
+            HS.TRACK_IN,                                                                                       
+            HS.PROCESS_START,                                                                                  
+            HS.SCANNER_START,                                                                                  
+            HS.SCANNER_END,                                                                                    
+            HS.PROCESS_END,                                                                                    
+            HS.TRACK_OUT,           
+            ORH.RETICLE_ID,                                                                                 
+            HS.TECH_ID,HS.CUSTOMER_ID,                                                                      
+            HS.LOT_TYPE,HS.PH_RECIPE_ID, HS.RTD_GROUPNAME                                                   
+         FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_PARTONE HS                                                                   
+         LEFT JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_OPEARRIVAL AD2                                                       
+         ON AD2.LOT_ID = HS.LOT_ID                                                                            
+         AND AD2.OPE_NO = HS.OPE_NO                                                                           
+         LEFT JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_RETCLHIST ORH                                                       
+         ON ORH.LOT_ID = HS.LOT_ID                                                                            
+         AND ORH.OPE_NO = HS.OPE_NO                                                                           
+         AND ORH.MAINPD_ID = HS.MAINPD_ID                                                                     
+         WHERE HS.TRACK_IN IS NOT NULL AND HS.TRACK_IN <> ''                                                                                                   
+           """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST")
+
+def GetFlowRecipeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # Recipe先获取出来
+    sql = """      
+        INSERT INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_RECIPE1(                                         
+        LCRECIPE_ID, OPE_NO, PRODSPEC_ID, MAINPD_ID                                                                              
+        )                                                                                              
+         SELECT MAX(BB.LCRECIPE_ID) AS LCRECIPE_ID,                                                                     
+                AA.OPE_NO,BB.PRODSPEC_ID,AA.MAINPD_ID                                                                           
+         FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_PO_N1 AA, {tempdb}APS_TMP_ETL_LOT_OP_HIST_EQP_LOAD BB,                                
+         {tempdb}APS_TMP_ETL_LOT_OP_HIST LL                                                              
+         WHERE 1=1                                                                                                  
+         AND AA.POS_PDID = BB.PD_ID                                                                   
+         AND LL.PRODSPEC_ID = BB.PRODSPEC_ID                                                          
+         AND LL.OPE_NO = AA.OPE_NO                                                                    
+         AND LL.MAINPD_ID = AA.MAINPD_ID                                                              
+         GROUP BY AA.OPE_NO,BB.PRODSPEC_ID ,AA.MAINPD_ID                                                                                                                                             
+         """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_RECIPE1",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_RECIPE1")
+
+    # APS_TMP_ETL_LOT_OP_HIST_RECIPE1
+    if my_duck.get_row_count_in_duckdb(duck_db_memory, "{tempdb}APS_TMP_ETL_LOT_OP_HIST_RECIPE1".format(
+            tempdb=my_duck.get_temp_table_mark())) != 0:
+        sql = """TRUNCATE TABLE {tempdb}APS_TMP_ETL_LOT_OP_HIST_RECIPE""".format(tempdb=my_duck.get_temp_table_mark())
+        my_duck.exec_sql(oracle_conn=oracle_conn,
+                         duck_db_memory=duck_db_memory,
+                         ETL_Proc_Name=ETL_Proc_Name,
+                         methodName="TRUNCATE APS_TMP_ETL_LOT_OP_HIST_RECIPE",
+                         sql=sql,
+                         current_time=current_time,
+                         update_table="APS_TMP_ETL_LOT_OP_HIST_RECIPE")
+
+        sql = """      
+            INSERT INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_RECIPE(                                                  
+            LCRECIPE_ID, OPE_NO, PRODSPEC_ID, MAINPD_ID                                                                                
+            )                                                                                                
+             SELECT LCRECIPE_ID,                                                                                              
+                    OPE_NO,PRODSPEC_ID,MAINPD_ID                                                                                      
+             FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST_RECIPE1                                                                                                                                                  
+                """.format(tempdb=my_duck.get_temp_table_mark())
+        my_duck.exec_sql(oracle_conn=oracle_conn,
+                         duck_db_memory=duck_db_memory,
+                         ETL_Proc_Name=ETL_Proc_Name,
+                         methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_RECIPE",
+                         sql=sql,
+                         current_time=current_time,
+                         update_table="APS_TMP_ETL_LOT_OP_HIST_RECIPE")
+
+    # 是为了获取最新版的FLow的信息
+    sql = """      
+      INSERT INTO {tempdb}APS_TMP_ETL_LOT_OP_HIST_FLOW(                                                   
+         PROD_ID, PLAN_ID, LAYER, STAGE, STEP_ID                                                                                
+        )                                                                                               
+         SELECT PROD_ID,PLAN_ID,                                                                                         
+                LAYER,STAGE,STEP_ID                                                                                              
+         FROM APS_ETL_FLOW.APS_ETL_FLOW                                                                                                                                                                                                                                                                
+            """.format(tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_LOT_OP_HIST_FLOW",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_LOT_OP_HIST_FLOW")
+
+
+def FirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+          INSERT  /*+ append */  INTO APS_ETL_LOT_OP_HIST(                                                                                                     
+               LOT_ID, TOOLG_ID, TOOL_ID, PROD_ID, PLAN_ID, STEP_ID, LOT_TYPE,PTY,SHR_FLAG,
+               LAYER, STAGE, RECIPE, PPID, QTY, RETICLE_ID, TECH_ID, CUSTOMER, ARRIVAL, JOB_PREPARE,
+               TRACK_IN, PROCESS_START, PROCESS_END, TRACK_OUT, REWORK_FLAG, BACKUP_FLAG, MODULE,
+               PRODG_ID, PRODG_TECH, UPDATE_TIME, PARTKEY, SCANNER_START, SCANNER_END, RECIPE_SETUP                                                                                                                                             
+         )                                                                                                                                                           
+          SELECT LOT_ID,                                                                                                                                              
+              LH.TOOLG_ID,                                                                                                                                            
+              LH.TOOL_ID,                                                                                                                                             
+              LH.PROD_ID,                                                                                                                                             
+              LH.PLAN_ID,                                                                                                                                             
+              LH.STEP_ID,                                                                                                                                             
+              LH.LOT_TYPE,                                                                                                                                            
+              LH.PTY,                                                                                                                                                 
+              LH.SHR_FLAG,                                                                                                                                            
+              LH.LAYER,                                                                                                                                               
+              LH.STAGE,                                                                                                                                               
+              LH.RECIPE,                                                                                                                                              
+              LH.PPID,                                                                                                                                                
+              LH.QTY,                                                                                                                                                 
+              LH.RETICLE_ID,                                                                                                                                          
+              LH.TECH_ID,                                                                                                                                             
+              LH.CUSTOMER,                                                                                                                                            
+              LH.ARRIVAL,                                                                                                                                             
+              LH.JOB_PREPARE,                                                                                                                                         
+              LH.TRACK_IN,                                                                                                                                            
+              LH.PROCESS_START,                                                                                                                                      
+              LH.PROCESS_END,                                                                                                                                         
+              LH.TRACK_OUT,                                                                                                                                           
+              LH.REWORK_FLAG,                                                                                                                                         
+              LH.BACKUP_FLAG,                                                                                                                                         
+              LH.MODULE,                                                                                                                                              
+              LH.PRODG_ID,                                                                                                                                            
+              LH.PRODG_TECH,                                                                                                                                          
+              '{current_time}' AS UPDATE_TIME,                                                                                                                  
+              LH.TRACK_IN AS PARTKEY,                                                                                              
+              LH.SCANNER_START,                                                                                                                                       
+              LH.SCANNER_END,                                                                                                                                         
+              LH.RECIPE_SETUP                                                                                                                                         
+           FROM APS_ETL_LOTHISTORY.APS_ETL_LOTHISTORY LH                                                                               
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_LOT_OP_HIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_LOT_OP_HIST")
+
+
+def OtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+    INSERT  /*+ append */  INTO APS_ETL_LOT_OP_HIST(                                                                                                     
+           LOT_ID, TOOLG_ID, TOOL_ID, PROD_ID, PLAN_ID, STEP_ID, LOT_TYPE,PTY,SHR_FLAG,
+           LAYER, STAGE, RECIPE, PPID, QTY, RETICLE_ID, TECH_ID, CUSTOMER, ARRIVAL, JOB_PREPARE,
+           TRACK_IN, PROCESS_START, PROCESS_END, TRACK_OUT, REWORK_FLAG, BACKUP_FLAG, MODULE,
+           PRODG_ID, PRODG_TECH, UPDATE_TIME, PARTKEY, SCANNER_START, SCANNER_END, RECIPE_SETUP                                                                                                                                             
+     )                                                                                                                                                           
+      WITH PRODG AS (                                                                                                                                                                                    
+        SELECT MAX(PRODG1) AS PRODG_ID, MAX(GROUP_TECH) AS PRODG_TECH,PRODSPEC_ID                                                                                
+        FROM APS_SYNC_PRODUCT.APS_SYNC_PRODUCT                                                                                                                                          
+        -- WHERE PARTCODE = '"+partCodeList.get(4)+"'
+        where 1=1                                                                                                                                    
+        GROUP BY PRODSPEC_ID                                                                                                                                     
+     ),                                                                                                                                                          
+     LOT_HIS AS (                                                                                                                                                
+          SELECT HS.LOT_ID,MAX(HS.TOOLG_ID) AS EQP_G,HS.PRODSPEC_ID,                                                                                             
+          HS.MAINPD_ID,                                                                                                                                          
+          FL.STEP_ID AS STEP_ID,                                                                                                                                 
+          MAX(HS.PRIORITY) AS PRIORITY, HS.OPE_NO,                                                                                                               
+          MAX(HS.WAFER_QTY) AS WAFER_QTY,MAX(HS.RETICLE_ID) AS RETICLE_ID,                                                                                       
+          MAX(HS.ARRIVAL) AS PREV_OP_COMP_TIME,HS.TRACK_IN AS OP_START_DATE_TIME,                                                                                  
+          MAX(HS.TRACK_OUT) AS CLAIM_TIME,                                                                                                          
+          MAX(HS.REAL_MODULE) AS REAL_MODULE, MAX(HS.CTRL_JOB) AS CTRL_JOB,                                                                                      
+          MAX(HS.PROCESS_START) AS PROCESS_START_TIME,HS.EQP_ID,                                                                                    
+          MAX(HS.RTD_GROUPNAME) AS RTD_GROUPNAME,                                                                                                   
+          MAX(HS.PROCESS_END) AS PROCESS_END,                                                                                                       
+          MAX(HS.SCANNER_START) AS SCANNER_START,                                                                                                   
+          MAX(HS.SCANNER_END) AS SCANNER_END,                                                                                                       
+          MAX(HS.RESERVE_TIME) AS RESERVE_TIME,                                                                                                     
+          MAX(HS.CUSTOMER_ID) AS CUSTOMER_ID,                                                                                                       
+          MAX(HS.TECH_ID) AS TECH_ID,                                                                                                               
+          MAX(HS.PH_RECIPE_ID) AS PH_RECIPE_ID,                                                                                                     
+          MAX(HS.LOT_TYPE) AS LOT_TYPE                                                                                                              
+          FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST HS                                                                                                            
+          INNER JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_FLOW FL                                                                                                                        
+          ON FL.PROD_ID = HS.PRODSPEC_ID AND FL.PLAN_ID = HS.MAINPD_ID                                                                                           
+          AND FL.LAYER = SUBSTRING(HS.OPE_NO, 1, POSITION('.' IN HS.OPE_NO)-1 )                                                                                       
+          AND FL.STAGE = SUBSTRING(HS.OPE_NO, POSITION('.' IN HS.OPE_NO)+1 )                                                                                          
+          GROUP BY HS.LOT_ID,HS.PRODSPEC_ID, HS.MAINPD_ID,                                                                                                       
+          HS.OPE_NO,HS.EQP_ID, HS.TRACK_IN,FL.STEP_ID                                                                                                  
+          UNION ALL                                                                                                                                              
+          SELECT HS.LOT_ID,MAX(HS.TOOLG_ID) AS EQP_G,HS.PRODSPEC_ID,                                                                                             
+          HS.MAINPD_ID,                                                                                                                                          
+          '.9999.9999' AS STEP_ID,                                                                                                                               
+          MAX(HS.PRIORITY) AS PRIORITY, HS.OPE_NO,                                                                                                               
+          MAX(HS.WAFER_QTY) AS WAFER_QTY,MAX(HS.RETICLE_ID) AS RETICLE_ID,                                                                                       
+          MAX(HS.ARRIVAL) AS PREV_OP_COMP_TIME,HS.TRACK_IN AS OP_START_DATE_TIME,                                                                                  
+          MAX(HS.TRACK_OUT) AS CLAIM_TIME,                                                                                                          
+          MAX(HS.REAL_MODULE) AS REAL_MODULE, MAX(HS.CTRL_JOB) AS CTRL_JOB,                                                                                      
+          MAX(HS.PROCESS_START) AS PROCESS_START_TIME,HS.EQP_ID,                                                                                    
+          MAX(HS.RTD_GROUPNAME) AS RTD_GROUPNAME,                                                                                                   
+          MAX(HS.PROCESS_END) AS PROCESS_END,                                                                                                       
+          MAX(HS.SCANNER_START) AS SCANNER_START,                                                                                                   
+          MAX(HS.SCANNER_END) AS SCANNER_END,                                                                                                       
+          MAX(HS.RESERVE_TIME) AS RESERVE_TIME,                                                                                                     
+          MAX(HS.CUSTOMER_ID) AS CUSTOMER_ID,                                                                                                       
+          MAX(HS.TECH_ID) AS TECH_ID,                                                                                                               
+          MAX(HS.PH_RECIPE_ID) AS PH_RECIPE_ID,                                                                                                     
+          MAX(HS.LOT_TYPE) AS LOT_TYPE                                                                                                                           
+          FROM {tempdb}APS_TMP_ETL_LOT_OP_HIST HS                                                                                                            
+          WHERE POSITION('DYB' IN HS.MAINPD_ID) = 1                                                                                                                   
+          GROUP BY HS.LOT_ID,HS.PRODSPEC_ID, HS.MAINPD_ID,                                                                                                       
+          HS.OPE_NO,HS.EQP_ID, HS.TRACK_IN                                                                                                             
+     ),                                                                                                                                                          
+     HIS_DATA AS (                                                                                                                                               
+         SELECT
+         LH.OP_START_DATE_TIME AS TRACK_IN,
+         LH.LOT_ID,                                                                                                                                              
+         LH.EQP_G AS TOOLG_ID,                                                                                                                                   
+         LH.EQP_ID AS TOOL_ID,                                                                                                                                   
+         LH.PRODSPEC_ID AS PROD_ID,                                                                                                                              
+         LH.MAINPD_ID AS PLAN_ID,                                                                                                                                
+         LH.STEP_ID,                                                                                                                                             
+         LH.LOT_TYPE AS LOT_TYPE,                                                                                                                                
+         LH.PRIORITY AS PTY,                                                                                                                                     
+         COALESCE(SP.PRI,'-1') AS SHR_FLAG,                                                                                                                           
+         SUBSTRING(LH.OPE_NO, 1, POSITION('.' IN LH.OPE_NO)-1 ) AS LAYER,                                                                                             
+         SUBSTRING(LH.OPE_NO, POSITION('.' IN LH.OPE_NO)+1 ) AS STAGE,                                                                                                
+         FO.LCRECIPE_ID AS RECIPE,                                                                                                                               
+         LH.PH_RECIPE_ID AS PPID,                                                                                                                                
+         LH.WAFER_QTY AS QTY,                                                                                                                                    
+         LH.RETICLE_ID,                                                                                                                                          
+         LH.TECH_ID AS TECH_ID,                                                                                                                                  
+         LH.CUSTOMER_ID AS CUSTOMER,                                                                                                                             
+         CASE WHEN SA.LOT_ID IS NOT NULL AND SA.LOT_ID <> '' AND CAST(SA.SPLIT_TIME AS TIMESTAMP) > CAST(LH.PREV_OP_COMP_TIME AS TIMESTAMP) 
+         AND  CAST(SA.SPLIT_TIME AS TIMESTAMP) < CAST(LH.OP_START_DATE_TIME AS TIMESTAMP) THEN                                     
+         SA.SPLIT_TIME ELSE LH.PREV_OP_COMP_TIME END AS ARRIVAL,                                  
+         LH.RESERVE_TIME AS JOB_PREPARE,                                                                                                                                                                           
+         LH.OP_START_DATE_TIME AS TRACK_IN,
+         COALESCE(LH.PROCESS_START_TIME, LH.OP_START_DATE_TIME) AS PROCESS_START,                                                                                                        
+         LH.SCANNER_START AS SCANNER_START,                                                                                        
+         LH.SCANNER_END AS SCANNER_END,
+         COALESCE(LH.PROCESS_END, LH.CLAIM_TIME) AS PROCESS_END,
+         LH.CLAIM_TIME AS TRACK_OUT,                                                                                            
+         CASE WHEN SUBSTRING(LH.MAINPD_ID,1,1)='Y' THEN 'Y' ELSE 'N' END AS REWORK_FLAG,                                                                            
+         'N' AS BACKUP_FLAG,                                                                                                                                     
+         LH.REAL_MODULE AS MODULE, P.PRODG_ID, P.PRODG_TECH,                                                                                                     
+         '' AS UPDATE_TIME,                                                                                                                  
+         LH.RTD_GROUPNAME AS RTD_GROUPNAME                                                                                                                      
+         FROM LOT_HIS LH                                                                                                                                         
+         LEFT JOIN APS_SYNC_SHR_PRI.APS_SYNC_SHR_PRI SP ON SP.LOT_ID = LH.LOT_ID                                                                                                   
+         LEFT JOIN PRODG P ON P.PRODSPEC_ID = LH.PRODSPEC_ID                                                                                                     
+         LEFT JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_RECIPE FO ON FO.PRODSPEC_ID = LH.PRODSPEC_ID AND FO.MAINPD_ID = LH.MAINPD_ID AND FO.OPE_NO = LH.OPE_NO                      
+         LEFT JOIN {tempdb}APS_TMP_ETL_LOT_OP_HIST_SPLIT SA ON LH.LOT_ID = SA.LOT_ID AND LH.OPE_NO = SA.OPE_NO                                                                              
+     )                                                                                                                                                           
+     SELECT LOT_ID,                                                                                                                                              
+         LH.TOOLG_ID,                                                                                                                                            
+         LH.TOOL_ID,                                                                                                                                             
+         LH.PROD_ID,                                                                                                                                             
+         LH.PLAN_ID,                                                                                                                                             
+         LH.STEP_ID,                                                                                                                                             
+         LH.LOT_TYPE,                                                                                                                                            
+         LH.PTY,                                                                                                                                                 
+         LH.SHR_FLAG,                                                                                                                                            
+         LH.LAYER,                                                                                                                                               
+         LH.STAGE,                                                                                                                                               
+         LH.RECIPE,                                                                                                                                              
+         LH.PPID,                                                                                                                                                
+         LH.QTY,                                                                                                                                                 
+         LH.RETICLE_ID,                                                                                                                                          
+         LH.TECH_ID,                                                                                                                                             
+         LH.CUSTOMER,                                                                                                                                            
+         LH.ARRIVAL,                                                                                                                                             
+         LH.JOB_PREPARE,                                                                                                                                         
+         LH.TRACK_IN,                                                                                                                                            
+         LH.PROCESS_START,                                                                                                                                       
+         LH.PROCESS_END,                                                                                                                                         
+         LH.TRACK_OUT,                                                                                                                                           
+         LH.REWORK_FLAG,                                                                                                                                         
+         LH.BACKUP_FLAG,                                                                                                                                         
+         LH.MODULE,                                                                                                                                              
+         LH.PRODG_ID,                                                                                                                                            
+         LH.PRODG_TECH,                                                                                                                                          
+         -- LH.UPDATE_TIME,
+         '{current_time}',                                                                                                                                         
+         -- TO_DATE(LH.TRACK_IN, 'YYYY-MM-DD HH24:MI:SS') AS PARTKEY,
+         LH.TRACK_IN AS PARTKEY,                                                                                               
+         LH.SCANNER_START,                                                                                                                                       
+         LH.SCANNER_END,                                                                                                                                         
+         LH.RTD_GROUPNAME AS RECIPE_SETUP                                                                                                                        
+      FROM HIS_DATA LH                                                                                                                                           
+      WHERE 1=1                                                                                              
+      AND NOT EXISTS (                                                                                                                                           
+                SELECT H.LOT_ID  FROM LAST_APS_ETL_LOT_OP_HIST.APS_ETL_LOT_OP_HIST H                                                                                                      
+                WHERE H.LOT_ID = LH.LOT_ID                                                                                                                       
+                AND H.TOOL_ID = LH.TOOL_ID AND H.PROD_ID = LH.PROD_ID                                                                                            
+                AND H.PLAN_ID = LH.PLAN_ID                                                                                                                       
+                 AND H.TRACK_IN = LH.TRACK_IN
+                ) 
+    """.format(current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_LOT_OP_HIST",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_LOT_OP_HIST")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_ETL_LOT_OP_HIST_10M"
+    current_time = my_date.date_time_second_str()
+    current_time_min = my_date.date_time_min_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_ETL_LOT_OP_HIST"
+    used_table_list = ['APS_SYNC_RTD_RECIPEGROUP',
+                       'APS_SYNC_PF_PO_N1',
+                       'APS_SYNC_PD_RECIPE_EQP_MAIN',
+                       'APS_MID_FHOPEHS_VIEW',
+                       'APS_MID_FHOPEHS_RETICLE_VIEW',
+                       'APS_SYNC_ETL_TOOL',
+                       'APS_TMP_LOTHISTORY_VIEW',
+                       'APS_ETL_LOTHISTORY',
+                       'APS_ETL_FLOW',
+                       'APS_SYNC_PRODUCT',
+                       'APS_SYNC_SHR_PRI'
+                       ]
+    target_table_sql = """
+        create table {}APS_ETL_LOT_OP_HIST
+        (
+            lot_id        VARCHAR(60) not null,
+            toolg_id      VARCHAR(60) not null,
+            tool_id       VARCHAR(60) not null,
+            prod_id       VARCHAR(60) not null,
+            plan_id       VARCHAR(60) not null,
+            step_id       VARCHAR(60),
+            lot_type      VARCHAR(30),
+            pty           VARCHAR(30) not null,
+            shr_flag      VARCHAR(30) not null,
+            layer         VARCHAR(60),
+            stage         VARCHAR(60),
+            recipe        VARCHAR(60),
+            ppid          VARCHAR(60),
+            qty           VARCHAR(30) not null,
+            reticle_id    VARCHAR(60),
+            tech_id       VARCHAR(60),
+            customer      VARCHAR(60),
+            arrival       VARCHAR(60) not null,
+            job_prepare   VARCHAR(60),
+            track_in      VARCHAR(60) not null,
+            process_start VARCHAR(60),
+            process_end   VARCHAR(60),
+            track_out     VARCHAR(60),
+            rework_flag   VARCHAR(1),
+            backup_flag   VARCHAR(2),
+            update_time   VARCHAR(60) not null,
+            module        VARCHAR(60),
+            prodg_id      VARCHAR(60),
+            prodg_tech    VARCHAR(60),
+            partkey       VARCHAR(30) not null,
+            scanner_start VARCHAR(60),
+            scanner_end   VARCHAR(60),
+            recipe_setup  VARCHAR(64),
+            PRIMARY KEY (LOT_ID, TOOL_ID, PROD_ID, PLAN_ID, TRACK_IN, PARTKEY)
+        )
+    """.format("")  # 注意:这里一定要这么写 [create {table_type} table 表名] => [create {table_type} table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    # -------------------------- 内存模式改成文件模式
+    _temp_db_path = os.path.join(config.g_mem_speed_etl_output_path, target_table, "inprocess")
+    if not os.path.exists(_temp_db_path):
+        os.makedirs(_temp_db_path)
+
+    temp_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + "_temp.db")
+    # 处理中文件
+    in_process_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + ".db")
+    # 结果文件
+    target_db_file = os.path.join(config.g_mem_etl_output_path, target_table,
+                                  target_table + "_" + current_time_short + ".db")
+    # --------------------------
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+
+        # -------------------------- 内存模式改成文件模式
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_file(_temp_db_path, in_process_db_file, target_table_sql)
+        duck_db_memory.sql('SET threads TO 4')
+        if not os.path.exists(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)):
+            os.makedirs(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid))
+        duck_db_memory.execute(
+            "SET temp_directory='{}'".format(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)))
+
+        if not config.g_debug_mode:
+            create_temp_table(duck_db_memory)
+        else:
+            duck_db_temp = my_duck.create_duckdb_for_temp_table(_temp_db_path, temp_db_file)
+            # 创建Temp表
+            create_temp_table(duck_db_temp)
+            duck_db_temp.commit()
+            duck_db_temp.close()
+            my_duck.attach_temp_db_write_able(duck_db_memory, "TEMPDB", temp_db_file)
+        # --------------------------
+
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+        # 先把V_RTD_RECIPEGROUP保存
+        GetRecipeGroupSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 先把V_PF_PO_N1保存
+        GetPoN1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 先把V_PD_RECIPE_EQP_MAIN/V_PD_RECIPE_EQP_REWORK保存
+        GetRecipeEqpLoadSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 先保存5天的历史数据下来，方便后续使用
+        GetOpHistSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 先保存5天的RETICLE历史数据下来，方便后续使用
+        GetOpReticleHistSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        GetTrackInDataSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        GetReserveTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        GetLotHistTrackOutTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        GetCurArrivalTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        GetOperArrivalTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        GetSplitTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        GetViewLotHistorySql_PartOne(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        GetViewLotHistorySql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # Recipe先获取出来
+        GetFlowRecipeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        file_name = my_file.get_last_db_file(conn=oracle_conn, table_name="APS_ETL_LOT_OP_HIST")
+        if file_name is None:
+            FirstSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        else:
+            my_duck.attach_table(duck_db_memory=duck_db_memory, table_name="LAST_APS_ETL_LOT_OP_HIST",
+                                 target_db_file=file_name)
+            OtherSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+            sql = """insert into APS_ETL_LOT_OP_HIST select * from LAST_APS_ETL_LOT_OP_HIST.APS_ETL_LOT_OP_HIST"""
+            duck_db_memory.execute(sql)
+            my_duck.detach_table(duck_db=duck_db_memory, db_name="LAST_APS_ETL_LOT_OP_HIST")
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        if config.g_copy_to_pg:
+            pg_conn = my_postgres.decide_postgres_db_connection(export_to_pg_prod_test=False,
+                                                                pg_table_name="etl_lot_op_hist")
+            sql_key_in_pg = """
+                            SELECT DISTINCT LOT_ID, TOOLG_ID, TOOL_ID, PROD_ID,PLAN_ID, TRACK_IN
+                            FROM yth.etl_lot_op_hist
+                            where track_in >= timestamp '{current_time}' - INTERVAL '1 day'
+                        """.format(current_time=current_time_min)
+            pg_exist_result = pd.read_sql(sql_key_in_pg, pg_conn)
+            print(pg_exist_result)
+
+            select_sql_in_duck = """select  lot_id, 
+                                            toolg_id, 
+                                            tool_id, 
+                                            prod_id, 
+                                            plan_id,
+                                            CASE WHEN step_id='' THEN NULL ELSE step_id END AS step_id,
+                                            CASE WHEN lot_type='' THEN NULL ELSE lot_type END AS lot_type, 
+                                            cast(pty as integer),
+                                            cast(shr_flag as integer),
+                                            CASE WHEN layer='' THEN NULL ELSE layer END AS layer,
+                                            CASE WHEN stage='' THEN NULL ELSE stage END AS stage,
+                                            CASE WHEN recipe='' THEN NULL ELSE recipe END AS recipe,
+                                            CASE WHEN ppid='' THEN NULL ELSE ppid END AS ppid,
+                                            qty,
+                                            CASE WHEN reticle_id='' THEN NULL ELSE reticle_id END AS reticle_id,
+                                            arrival,
+                                            CASE WHEN job_prepare='' THEN NULL ELSE job_prepare END AS job_prepare,
+                                            track_in,
+                                            CASE WHEN process_start='' THEN NULL ELSE process_start END AS process_start,
+                                            update_time  
+                                      FROM APS_ETL_LOT_OP_HIST t
+                                      WHERE track_in >= DATE_TRUNC('second', CAST('{current_time}' AS TIMESTAMP)) - INTERVAL '1 day'
+                                      AND NOT EXISTS (
+                                            SELECT 1 
+                                            FROM   pg_exist_result pd
+                                            WHERE  T.LOT_ID      = PD.LOT_ID
+                                            AND    T.TOOLG_ID    = PD.TOOLG_ID
+                                            AND    T.TOOL_ID     = PD.TOOL_ID
+                                            AND    T.PROD_ID     = PD.PROD_ID
+                                            AND    T.PLAN_ID     = PD.PLAN_ID
+                                            AND    T.TRACK_IN    = PD.TRACK_IN
+                                    )
+                                 """.format(current_time=current_time_min)
+
+            postgres_table_define = """etl_lot_op_hist(lot_id, toolg_id, tool_id, prod_id, plan_id,step_id,lot_type, pty,shr_flag,layer, stage,recipe,ppid,
+                                                                    qty,reticle_id,arrival,job_prepare,track_in,process_start,update_time)
+                                          """
+            my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                                duckdb=duck_db_memory,
+                                                table_name_in_duckdb=target_table,
+                                                table_name_in_pg="etl_lot_op_hist",  # 要小写
+                                                select_sql_in_duck=select_sql_in_duck,
+                                                postgres_table_define=postgres_table_define,
+                                                oracle_conn=oracle_conn,
+                                                ETL_Proc_Name=ETL_Proc_Name,
+                                                copy_to_yto=False)
+        # -------------------------- 内存模式改成文件模式
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                                   in_process_db_file=in_process_db_file,
+                                                                                   target_table=target_table,
+                                                                                   current_time=current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file, current_time_short)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file,
+                                   cons_error_code.APS_ETL_LOT_OP_HIST_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        # 导出到目标文件中
+        my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                  in_process_db_file=in_process_db_file,
+                                                                  target_table=target_table,
+                                                                  current_time=current_time_short)
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        # 删除TMP目录:LQN:2023/08/21
+        if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+            os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        if os.path.exists(temp_db_file) and not config.g_debug_mode:
+            os.remove(temp_db_file)
+        gc.collect()  # 内存释放
+
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

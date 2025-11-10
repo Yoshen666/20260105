@@ -1,0 +1,154 @@
+import logging
+import os
+import time
+import uuid
+
+import psycopg2
+from xinxiang import config
+from xinxiang.util import my_date, my_duck, my_cmder
+
+
+def postgres_get_connection():
+    # 生產環境
+    conn = psycopg2.connect(database=config.g_postgres_database,
+                            user=config.g_postgres_user,
+                            password=config.g_postgres_password,
+                            host=config.g_postgres_host,
+                            port=config.g_postgres_port)
+    return conn
+
+
+def postgres_get_test_db_connection():
+    # 測試環境
+    conn = psycopg2.connect(database=config.g_test_postgres_database,
+                            user=config.g_test_postgres_user,
+                            password=config.g_test_postgres_password,
+                            host=config.g_test_postgres_host,
+                            port=config.g_test_postgres_port)
+    return conn
+
+
+def uuid_csv_file_name():
+    s = str(uuid.uuid4())
+    s1 = s.replace("-", "")
+    return s1 + ".csv"
+
+
+def copy_duckdb_to_postgres(uuid, duckdb,
+                            table_name_in_duckdb,
+                            table_name_in_pg,
+                            csv_delimiter='@',
+                            select_sql_in_duck=None,
+                            postgres_table_define=None,
+                            copy_to_yto=True,
+                            pg_conn=None):
+    """
+    uuid                 : 当前ETL的uuid
+    duckdb               : 当前的Duckdb
+    table_name_in_duckdb : 准备将哪张表数据导出到postgres
+    table_name_in_pg     : 对应的postgers的表名
+    csv_delimiter        : csv字段间的分割符
+    postgres_table_define : postgres的copy sql的表信息部分
+                           例如 原SQL为
+                           copy 表名(字段1,字段2...字段n) from 'csv_file_name' delimiter ',' CSV HEADER
+                           则 postgres_table_define = '表名(字段1,字段2...字段n)'
+    """
+    start_time = time.time()
+    current_time = my_date.date_time_second_str()
+    _csv_file = uuid_csv_file_name()
+    csv_file_name = os.path.join(config.g_mem_etl_output_path, _csv_file)
+    pg_cur = None
+    try:
+        # 检查DuckDB的产出
+        duck_row = my_duck.get_row_count_in_duckdb(duckdb, tableName=table_name_in_duckdb)
+        if duck_row > 0:
+            # 从DuckDB导出CSV文件
+            duck_export_csv_sql = """
+                copy ({select_sql_in_duck}) to '{csv_file_name}' (HEADER, DELIMITER '{csv_delimiter}', NULL '')
+                """.format(select_sql_in_duck=select_sql_in_duck,
+                           csv_file_name=csv_file_name,
+                           csv_delimiter=csv_delimiter)
+            duckdb.sql(duck_export_csv_sql)
+
+            if pg_conn is None:
+                pg_conn = postgres_get_connection()
+                target_path = config.g_pgserver_path
+            else:
+                target_path = config.g_test_pgserver_path
+
+                # 10.52.192.99
+            copy_cmder = "xcopy {source} {target} /Y".format(source=csv_file_name, target=target_path)
+            if config.g_debug_mode:
+                print(copy_cmder)
+            my_cmder.exec(copy_cmder)
+
+            # 将CSV文件copy到Postgres
+            # yth
+            pg_cur = pg_conn.cursor()
+            copy_to_postgres_sql = r"""
+            copy {schema}.{postgres_table_define}
+            from '{csv_file_name}'
+            DELIMITER '{csv_delimiter}' NULL '' CSV HEADER
+            """.format(postgres_table_define=postgres_table_define,
+                       csv_file_name=csv_file_name,
+                       csv_delimiter=csv_delimiter,
+                       schema='yth')
+            pg_cur.execute(copy_to_postgres_sql)
+            # 版本号
+            sql = r"""
+            insert into yth.etl_ver_control(id, table_name, update_time, update_user)
+            values('{uuid}', '{table_name_in_pg}', '{current_time}', 'CIM')
+            """.format(uuid=uuid, table_name_in_pg=table_name_in_pg, current_time=current_time)
+            pg_cur.execute(sql)
+
+            if copy_to_yto:
+                # yto
+                copy_to_postgres_sql = r"""
+                copy {schema}.{postgres_table_define}
+                from '{csv_file_name}'
+                DELIMITER '{csv_delimiter}' NULL '' CSV HEADER
+                """.format(postgres_table_define=postgres_table_define,
+                           csv_file_name=csv_file_name,
+                           csv_delimiter=csv_delimiter,
+                           schema='yto')
+                pg_cur.execute(copy_to_postgres_sql)
+                # 版本号
+                sql = r"""
+                        insert into yto.etl_ver_control(id, table_name, update_time, update_user)
+                        values('{uuid}', '{table_name_in_pg}', '{current_time}', 'CIM')
+                        """.format(uuid=uuid, table_name_in_pg=table_name_in_pg, current_time=current_time)
+                pg_cur.execute(sql)
+            else:
+                logging.info("{table_name_in_duckdb} 不需要向 yto 中同步.".format(table_name_in_duckdb=table_name_in_duckdb))
+
+            pg_conn.commit()
+        else:
+            logging.info("""DuckDB的 {table_name_in_duckdb} 无产出数据,故不向Postgres[{table_name_in_pg}]中导入数据.""".format(table_name_in_duckdb=table_name_in_duckdb, table_name_in_pg=table_name_in_pg))
+    except Exception as e:
+        logging.exception("处理出错: %s", e)
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+        path = os.path.join(config.g_pgserver_path, _csv_file)
+        if os.path.exists(path):
+            os.remove(path)
+        raise e
+    finally:
+        # 删除PG Server中的临时文件
+        path = os.path.join(config.g_pgserver_path, _csv_file)
+        if os.path.exists(path):
+            os.remove(path)
+        if os.path.exists(csv_file_name):
+            os.remove(csv_file_name)
+
+        if pg_cur:
+            pg_cur.close()
+        if pg_conn:
+            pg_conn.close()
+
+        end_time = time.time()
+        exec_time = end_time -start_time
+        msg = """
+            拷贝{table_name_in_duckdb} 到Postgres完成，用时 {exec_time} 秒.
+        """.format(table_name_in_duckdb=table_name_in_duckdb, exec_time=exec_time)
+        logging.info(msg)

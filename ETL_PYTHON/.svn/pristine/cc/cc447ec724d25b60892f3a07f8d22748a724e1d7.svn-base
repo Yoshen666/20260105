@@ -1,0 +1,1305 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_postgres
+
+
+def create_temp_table(duck_db):
+    table_type = ""
+    if not config.g_debug_mode:
+        table_type = 'TEMP'
+    '''
+    这里在内存中创建使用到的临时表
+    '''
+    sql = """
+    create {table_type} table APS_TMP_ETL_MONITOR_DF_SOURCE
+    (
+        toolg_id          VARCHAR(64),
+        tool_id           VARCHAR(64),
+        ch_id             VARCHAR(64),
+        job_id            VARCHAR(64),
+        start_date        VARCHAR(64),
+        end_date          VARCHAR(64),
+        recipe            VARCHAR(64),
+        job_status        VARCHAR(64),
+        foup_id           VARCHAR(500),
+        job_type          VARCHAR(64),
+        job_spec_group_id VARCHAR(64),
+        create_time       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_MONITOR_DF_PROCESS
+    (
+        toolg_id          VARCHAR(64),
+        tool_id           VARCHAR(64),
+        ch_id             VARCHAR(64),
+        job_id            VARCHAR(64),
+        start_date        VARCHAR(64),
+        end_date          VARCHAR(64),
+        recipe            VARCHAR(64),
+        job_status        VARCHAR(64),
+        foup_id           VARCHAR(500),
+        job_type          VARCHAR(64),
+        job_spec_group_id VARCHAR(64),
+        process_time      VARCHAR(64),
+        create_time       VARCHAR(64)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+    create {table_type} table APS_TMP_ETL_MONITOR_V1
+    (
+        parentid     VARCHAR(60) not null,
+        toolg_id     VARCHAR(60) not null,
+        tool_id      VARCHAR(60) not null,
+        ch_id        VARCHAR(60) not null,
+        job_id       VARCHAR(60) not null,
+        start_date   VARCHAR(60) not null,
+        end_date     VARCHAR(60) not null,
+        process_time VARCHAR(60) not null,
+        reticle_id   VARCHAR(60),
+        recipe       VARCHAR(60),
+        job_status   VARCHAR(60),
+        track_in     VARCHAR(60),
+        update_time  VARCHAR(60) not null,
+        partcode     VARCHAR(60) not null,
+        foup_id      VARCHAR(500),
+        job_type     VARCHAR(60),
+        tool_code    VARCHAR(60),
+        fixed_flag   VARCHAR(1),
+        fixed_time   VARCHAR(60),
+        prop_time_flag VARCHAR(1)
+    )
+    """.format(table_type=table_type)
+    duck_db.sql(sql)
+    sql = """
+        create {table_type} table APS_TMP_ETL_MONITOR_DF_PT
+        (
+            job_spec_group_id VARCHAR(64),
+            tool_id           VARCHAR(64),
+            track_in          VARCHAR(64),
+            track_out         VARCHAR(64)
+        )
+        """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+           create {table_type} table APS_TMP_ETL_MONITOR_TRACKIN
+           (
+                job_spec_group_id VARCHAR(64),
+                tool_id           VARCHAR(64),
+                track_in          VARCHAR(64),
+                create_time       VARCHAR(64)
+           )
+           """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+       create {table_type} table APS_TMP_ETL_MONITOR_QTY1
+       (
+            montior_plan_name VARCHAR(64),
+            qty               decimal
+       )
+           """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+       create {table_type} table APS_TMP_ETL_MONITOR_QTY2
+       (
+            mtool_id    VARCHAR(64),
+            job_spec_id VARCHAR(64),
+            qty         decimal
+       )
+           """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+    sql = """
+        create {table_type} table APS_TMP_ETL_MONITOR_WET_V1
+        (
+             PROCESS_TIME    decimal
+        )
+            """.format(table_type=table_type)
+    duck_db.sql(sql)
+
+
+def getTrackInTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT INTO {tempdb}APS_TMP_ETL_MONITOR_TRACKIN(                                    
+             JOB_SPEC_GROUP_ID, TOOL_ID, TRACK_IN, CREATE_TIME                                               
+            )                                                                                  
+             SELECT W.JOB_SPEC_GROUP_ID, W.MTOOL_ID,                                                                                                                     
+                    MAX(H.START_TIME) AS TRACK_IN,                                                                                      
+                    MAX(W.CREATE_TIME) AS CREATE_TIME                                                                                   
+             FROM APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO W                            
+             INNER JOIN APS_MID_OCS_JOB_GROUP_PO_STATE_H_VIEW.APS_MID_OCS_JOB_GROUP_PO_STATE_H_VIEW H                        
+             ON W.JOB_SPEC_GROUP_ID = H.JOB_SPEC_GROUP_ID AND W.MTOOL_ID = H.TOOL_ID                                                     
+             AND H.STATUS='OpeStart' AND W.STATUS = 'PRD' 
+             AND H.END_TIME > DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '5 day'    
+               --AND H.END_TIME > CAST('2023-11-01 21:05:00' AS TIMESTAMP)                                       
+             WHERE  W.MTOOL_ID = W.PTOOL_ID                                                    
+             GROUP BY  W.JOB_SPEC_GROUP_ID, W.MTOOL_ID      
+           """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_MONITOR_TRACKIN",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_MONITOR_TRACKIN")
+
+
+def getMonitorQty1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT INTO {tempdb}APS_TMP_ETL_MONITOR_QTY1(                                             
+            MONTIOR_PLAN_NAME, QTY
+            )                                                                                             
+             WITH SLOT_DATA AS (                                                                          
+                SELECT MONTIOR_PLAN_NAME,                                                                 
+                      CASE WHEN MAX(T.EQP_ID) IS NOT NULL AND MAX(T.EQP_ID) <> '' THEN 'Y' ELSE 'N' END AS BATCH_FLAG,            
+                      STRING_AGG(DISTINCT H.SLOTS,',' ORDER BY H.SLOTS) AS SLOT               
+                FROM  APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO H                                                    
+                LEFT JOIN APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL T                                  
+                ON T.EQP_ID = H.MTOOL_ID  AND T.EQP_CATEGORY = 'Internal Buffer'                          
+                AND T.HOST_EQP_FLAG='Y'                    
+                WHERE H.MAINTOOLFLAG='true'                                                               
+                AND H.MONTIOR_PLAN_NAME IS NOT NULL AND H.MONTIOR_PLAN_NAME <> ''                                                  
+                AND H.CREATE_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '3 day'                                                         
+                AND H.PTOOL_ID = H.MTOOL_ID                                                                                                        
+                GROUP BY MONTIOR_PLAN_NAME                                                                
+             )                                                                                            
+             SELECT MONTIOR_PLAN_NAME,                                                                    
+                    CASE WHEN BATCH_FLAG = 'Y' THEN 1                                                     
+                    ELSE LENGTH(SLOT) - LENGTH(REPLACE(SLOT,',',''))+1 END AS QTY                         
+             FROM SLOT_DATA                                                                               
+    """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_MONITOR_QTY1",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_MONITOR_QTY1")
+
+
+def getMonitorQty2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT INTO {tempdb}APS_TMP_ETL_MONITOR_QTY2(                                            
+            MTOOL_ID,JOB_SPEC_ID,QTY
+        )                                                                                            
+         WITH SOURCE_DATA AS (                                                                       
+            SELECT OP.MTOOL_ID,OP.SLOTS,                                                             
+                   CASE WHEN OP.JOB_SPEC_GROUP_ID <> OP.SUB_NAME                                     
+                        THEN REPLACE(OP.JOB_SPEC_GROUP_ID,OP.SUB_NAME,'*')                   
+                                 ELSE OP.JOB_SPEC_GROUP_ID END AS JOB_SPEC_ID        
+            FROM APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO OP                                                  
+            WHERE OP.MAINTOOLFLAG='true'                                                             
+            AND OP.MONTIOR_PLAN_NAME IS NULL                                                         
+            AND OP.CREATE_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '3 day'                                                              
+            AND OP.PTOOL_ID = OP.MTOOL_ID                                                                                                   
+         ),                                                                                          
+         SLOT_DATA AS (                                                                              
+            SELECT MTOOL_ID,JOB_SPEC_ID,                                                             
+                  CASE WHEN MAX(T.eqp_ID) IS NOT NULL THEN 'Y' ELSE 'N' END AS BATCH_FLAG,           
+                  STRING_AGG(DISTINCT H.SLOTS, ',' ORDER BY H.SLOTS) AS SLOT              
+            FROM  SOURCE_DATA H                                                                      
+            LEFT JOIN APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL  T                                 
+            ON T.EQP_ID = H.MTOOL_ID  AND T.EQP_CATEGORY = 'Internal Buffer'                         
+             AND T.HOST_EQP_FLAG='Y'                   
+            GROUP BY MTOOL_ID,JOB_SPEC_ID                                                            
+         )                                                                                           
+         SELECT MTOOL_ID,JOB_SPEC_ID,                                                                
+                CASE WHEN BATCH_FLAG = 'Y' THEN 1                                                    
+                ELSE LENGTH(SLOT) - LENGTH(REPLACE(SLOT,',',''))+1 END AS QTY                        
+         FROM SLOT_DATA                                                                                                                         
+    """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_MONITOR_QTY2",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_MONITOR_QTY2")
+
+
+def getSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO APS_ETL_MONITOR (                                                                                                                 
+             PARENTID, TOOLG_ID, TOOL_ID, CH_ID, JOB_ID, START_DATE, END_DATE,
+             PROCESS_TIME, RETICLE_ID, RECIPE, JOB_STATUS,TRACK_IN, PROCESS_START,
+             UPDATE_TIME,PARTCODE, FOUP_ID, JOB_TYPE, TOOL_CODE, FIXED_FLAG, FIXED_TIME 
+        )                                                                                                                                                                    
+        WITH GET_TOOLG AS(                                                                                                                                                                                                                                                                                   
+             SELECT T.TOOL_ID,T.CH_ID,T.TOOLG_ID FROM APS_ETL_TOOL.APS_ETL_TOOL T                                                                                                                  
+                 WHERE 
+                 --T.PARTCODE = '" + lastPartCode + "'                                                                                                                      
+                 1=1 AND POSITION('F' IN T.TOOL_ID) = 0                                                                                                                                                                                                                                               
+        ),                                                                                                                                                                         
+         MONITOR_PLAN_DATA AS (                                                                                                                                                     
+           SELECT OP.MONTIOR_PLAN_NAME,                                                                                                                                             
+             T.TOOLG_ID AS  TOOLG_ID,                                                                                                                                        
+             OP.JOB_SPEC_GROUP_ID AS JOB_SPEC_GROUP_ID,                                                                                                                                        
+             OP.CREATE_TIME AS CREATE_TIME,                                                                                                                                                                                                                                                                                               
+             OP.MTOOL_ID AS MTOOL_ID,                                                                                                                                                                                                                                                                                                  
+             OP.STATUS AS STATUS,                                                                                                                                                   
+             OP.RETICLE AS RETICLE,                                                                                                                                                  
+             OP.TEST_FOR AS TEST_FOR,                                                                                                                                        
+             (SELECT  STRING_AGG(distinct FOUP_ID,',' ORDER BY FOUP_ID) 
+               FROM APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO OO 
+               WHERE OO.MONTIOR_PLAN_NAME = OP.MONTIOR_PLAN_NAME  
+               AND OO.MAINTOOLFLAG='true' AND OO.PTOOL_ID = OO.MTOOL_ID                                                                                                                     
+               AND OO.MONTIOR_PLAN_NAME IS NOT NULL AND OO.MONTIOR_PLAN_NAME <> ''
+               ) AS FOUP_ID,                                                                                    
+             (SELECT  STRING_AGG(distinct COALESCE(CH_ID,MTOOL_ID),';' ORDER BY COALESCE(CH_ID,MTOOL_ID))
+              FROM APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO OO
+              LEFT JOIN GET_TOOLG T1 ON OO.MTOOL_ID || '.' || OO.SUB_NAME = T1.CH_ID   
+               WHERE OO.MONTIOR_PLAN_NAME = OP.MONTIOR_PLAN_NAME AND OO.MAINTOOLFLAG='true' AND OO.PTOOL_ID = OO.MTOOL_ID
+                AND OO.MONTIOR_PLAN_NAME IS NOT NULL AND OO.MONTIOR_PLAN_NAME <> ''
+               ) AS CH_ID,
+             MT.QTY AS QTY                                                                                                                                              
+           FROM APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO OP   
+           INNER JOIN {tempdb}APS_TMP_ETL_MONITOR_QTY1 MT                                                                                                                                                    
+           ON MT.MONTIOR_PLAN_NAME = OP.MONTIOR_PLAN_NAME                                                                                                    
+           INNER JOIN GET_TOOLG T                                                                                                                                                   
+           ON OP.MTOOL_ID = T.TOOL_ID                                                                                                                                               
+           LEFT JOIN GET_TOOLG T1                                                                                                                                                   
+           ON OP.MTOOL_ID || '.' || OP.SUB_NAME = T1.CH_ID                                                                                                                            
+           WHERE OP.MAINTOOLFLAG='true' AND PTOOL_ID = MTOOL_ID                                                                                                                     
+           AND OP.MONTIOR_PLAN_NAME IS NOT NULL AND OP.MONTIOR_PLAN_NAME <> ''                                                                                                                                    
+           -- AND OP.CREATE_TIME >= SYSDATE -3 
+            AND OP.CREATE_TIME >=  DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '3 day'                                                                                                                                                                                                                                                              
+         ), 
+           MONITOR_PLAN_DATA_AGG AS (                                                                                                                                                     
+           SELECT PD.MONTIOR_PLAN_NAME,                                                                                                                                             
+             MAX(PD.TOOLG_ID) AS  TOOLG_ID,                                                                                                                                        
+             MAX(PD.JOB_SPEC_GROUP_ID) AS JOB_SPEC_GROUP_ID,                                                                                                                                        
+             MAX(PD.CREATE_TIME) AS CREATE_TIME,                                                                                                                                                                                                                                                                                               
+             MAX(PD.MTOOL_ID) AS MTOOL_ID,                                                                                                                                                                                                                                                                                                  
+             MAX(PD.STATUS) AS STATUS,                                                                                                                                                   
+             MAX(PD.RETICLE) AS RETICLE,                                                                                                                                                  
+             MAX(PD.TEST_FOR) AS TEST_FOR,                                                                                                                                        
+             PD.FOUP_ID AS FOUP_ID,                                                                                    
+             PD.CH_ID  AS CH_ID,
+             CASE WHEN MAX(PD.QTY) > 25 THEN 25 ELSE MAX(PD.QTY) END AS QTY                                                                                                                                              
+           FROM MONITOR_PLAN_DATA PD                                                                                                                   
+           GROUP BY PD.MONTIOR_PLAN_NAME,PD.FOUP_ID,PD.CH_ID                                                                                                                                           
+         ),                                                                                                                                                                        
+         SOURCE_DATA AS (                                                                                                                                                           
+          SELECT   OP.JOB_SPEC_GROUP_ID,                                                                                                                                            
+               T.TOOLG_ID,                                                                                                                                                                                
+             OP.CREATE_TIME,                                                                                                                                                    
+             OP.FOUP_ID,                                                                                                                                                        
+             OP.MTOOL_ID,                                                                                                                                                       
+             OP.SUB_NAME,                                                                                                                                                       
+             OP.STATUS,                                                                                                                                                         
+             OP.RETICLE,                                                                                                                                                        
+             OP.TEST_FOR,                                                                                                                                                       
+             COALESCE(T1.CH_ID,OP.MTOOL_ID) AS CH_ID,                                                                                                                                 
+             CASE WHEN OP.JOB_SPEC_GROUP_ID <> OP.SUB_NAME THEN REPLACE(OP.JOB_SPEC_GROUP_ID,OP.SUB_NAME,'*') ELSE OP.JOB_SPEC_GROUP_ID END AS JOB_SPEC_ID ,                    
+             OP.JOB_SPEC_GROUP_ID || '(' || OP.SUB_NAME || ')' AS JOB_ID                                                                                                                                               
+           FROM APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO OP                                                                                                      
+           INNER JOIN GET_TOOLG T ON OP.MTOOL_ID = T.TOOL_ID                                                                                                                        
+           LEFT JOIN GET_TOOLG T1 ON OP.MTOOL_ID || '.' || OP.SUB_NAME = T1.CH_ID                                                                                                                             
+           WHERE OP.MAINTOOLFLAG='true'                                                                                                                                             
+           AND OP.PTOOL_ID = OP.MTOOL_ID                                                                                                                                            
+           AND OP.MONTIOR_PLAN_NAME IS NULL                                                                                                                                         
+           --AND OP.CREATE_TIME >= SYSDATE -3        
+             AND OP.CREATE_TIME >=  DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '3 day'                                                                                                                        
+         ),                                                                                                                                                                         
+         OTHER_PLAN_DATA AS (                                                                                                                                                       
+            SELECT D.JOB_SPEC_ID,                                                                                                                                                 
+                   D.MTOOL_ID,                                                                                                                                                        
+                   D.TOOLG_ID,                                                                                                                                                          
+                    D.CREATE_TIME AS CREATE_TIME,                                                                                                                              
+                    TEST_FOR AS TEST_FOR,                                                                                                                                      
+                    STATUS AS STATUS,                                                                                                                                          
+                    RETICLE AS RETICLE,                                                                                                                                        
+                    JOB_SPEC_GROUP_ID AS JOB_SPEC_GROUP_ID,      
+                    (select STRING_AGG(distinct FOUP_ID,','  ORDER BY FOUP_ID)
+                     FROM SOURCE_DATA S WHERE S.JOB_SPEC_ID = D.JOB_SPEC_ID AND S.MTOOL_ID = D.MTOOL_ID AND S.TOOLG_ID = D.TOOLG_ID
+                     ) as FOUP_ID,                                                                                                           
+                     (select STRING_AGG(distinct JOB_ID,';' ORDER BY JOB_ID)
+                     FROM SOURCE_DATA S WHERE S.JOB_SPEC_ID = D.JOB_SPEC_ID AND S.MTOOL_ID = D.MTOOL_ID AND S.TOOLG_ID = D.TOOLG_ID
+                     ) as JOB_ID,  
+                      (select STRING_AGG(distinct CH_ID,';'  ORDER BY CH_ID)
+                     FROM SOURCE_DATA S WHERE S.JOB_SPEC_ID = D.JOB_SPEC_ID AND S.MTOOL_ID = D.MTOOL_ID AND S.TOOLG_ID = D.TOOLG_ID
+                     ) as CH_ID,                                                                             
+                    MT.QTY AS QTY                                                                                           
+             FROM SOURCE_DATA D    
+              INNER JOIN {tempdb}APS_TMP_ETL_MONITOR_QTY2 MT
+               ON MT.JOB_SPEC_ID = D.JOB_SPEC_ID AND MT.MTOOL_ID = D.MTOOL_ID                                                                                                                                                                                                                                                                          
+         ), 
+         ss as (
+          SELECT D.JOB_SPEC_ID,                                                                                                                                                 
+                   D.MTOOL_ID,                                                                                                                                                        
+                  D.TOOLG_ID,                                                                                                                                                          
+                    MAX(D.CREATE_TIME) AS CREATE_TIME,                                                                                                                              
+                    MAX(D.TEST_FOR) AS TEST_FOR,                                                                                                                                      
+                    MIN(D.STATUS) AS STATUS,                                                                                                                                          
+                    MAX(D.RETICLE) AS RETICLE,                                                                                                                                        
+                    MAX(D.JOB_SPEC_GROUP_ID) AS JOB_SPEC_GROUP_ID,                                                                                                                    
+                    D.FOUP_ID AS FOUP_ID,                                                                                   
+                    D.JOB_ID AS JOB_ID,                                                                                      
+                    D.CH_ID AS CH_ID,
+                    CASE WHEN MAX(D.QTY) > 25 THEN 25 ELSE MAX(D.QTY) END AS QTY                                                                                           
+             FROM OTHER_PLAN_DATA D                                                                                                                                                          
+              GROUP BY D.JOB_SPEC_ID,D.MTOOL_ID,D.TOOLG_ID,D.FOUP_ID,D.JOB_ID, D.CH_ID   
+         ),                                                                                                                                                                        
+         ALL_DATA AS (                                                                                                                                                              
+             SELECT MONTIOR_PLAN_NAME || '('|| FOUP_ID ||')' AS JOB_ID,                                                                                                             
+                   JOB_SPEC_GROUP_ID,                                                                                                                                               
+                   CREATE_TIME,                                                                                                                                                     
+                   MTOOL_ID,                                                                                                                                                        
+                   STATUS,                                                                                                                                                          
+                   RETICLE,                                                                                                                                                         
+                   TEST_FOR,                                                                                                                                                        
+                   CASE WHEN LENGTH(CH_ID) = 5 THEN CH_ID ELSE REPLACE(CH_ID,MTOOL_ID || ';','') END AS CH_ID,                                                                                                                                                              
+                   FOUP_ID,                                                                                                                                                         
+                   TOOLG_ID,
+                    QTY                                                                                                                                                                  
+             FROM MONITOR_PLAN_DATA_AGG DA                                                                                                                                              
+             UNION ALL                                                                                                                                                              
+             SELECT JOB_ID,                                                                                                                                                         
+                   JOB_SPEC_GROUP_ID,                                                                                                                                               
+                   CREATE_TIME,                                                                                                                                                     
+                   MTOOL_ID,                                                                                                                                                        
+                   STATUS,                                                                                                                                                          
+                   RETICLE,                                                                                                                                                         
+                   TEST_FOR,                                                                                                                                                        
+                   CH_ID,                                                                                                                                                           
+                   FOUP_ID,                                                                                                                                                         
+                   TOOLG_ID,
+                    QTY                                                                                                                                                                  
+             FROM ss DA1                                                                                                                                               
+         ),                                                                                                                                                                         
+         TRACKIN_DATA AS (                                                                                                                                                          
+              SELECT  H.JOB_SPEC_GROUP_ID,                                                                                                                                          
+                      H.SUB_NAME,H.MTOOL_ID,                                                                                                                                        
+                      P.FOUP_ID,                                                                                                                                                    
+                      MAX(H.PROCESS_ST_TIME) AS TRACK_IN                                                                                                                            
+              FROM APS_TMP_OCS_MAIN_H_VIEW.APS_TMP_OCS_MAIN_H_VIEW H                                                                                                                  
+              INNER JOIN APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO P                                                                                                                          
+              ON P.JOB_SPEC_GROUP_PO_ID = H.JOB_SPEC_GROUP_PO_ID                                                                                                                    
+              AND P.SUB_NAME = H.SUB_NAME                                                                                                                                           
+              AND P.MTOOL_ID = H.MTOOL_ID                                                                                                                                           
+              WHERE H.STATUS='OpeStart' AND P.STATUS = 'PRD'                                                                                                                  
+              GROUP BY H.JOB_SPEC_GROUP_PO_ID,                                                                                                                                      
+              H.SUB_NAME,H.MTOOL_ID,P.FOUP_ID,H.JOB_SPEC_GROUP_ID                                                                                                                   
+          ),                                                                                                                                                                        
+          GROUP_DATA AS (                                                                                                                                                           
+               SELECT A.JOB_ID,                                                                                                                                                     
+                   MAX(A.JOB_SPEC_GROUP_ID) AS JOB_SPEC_GROUP_ID,                                                                                                                   
+                   MAX(A.CREATE_TIME) AS CREATE_TIME,                                                                                                                               
+                   A.MTOOL_ID,                                                                                                                                                      
+                   MIN(A.STATUS) AS STATUS,                                                                                                                                         
+                   MAX(A.RETICLE) AS RETICLE,                                                                                                                                       
+                   MAX(A.TEST_FOR) AS TEST_FOR,                                                                                                                                     
+                   A.CH_ID,                                                                                                                                                         
+                   MAX(A.FOUP_ID) AS FOUP_ID,                                                                                                                                       
+                   A.TOOLG_ID,                                                                                                                                                      
+                   MAX(TD.TRACK_IN) AS TRACK_IN,
+                   MAX(A.QTY) AS QTY                                                                                                                                          
+             FROM ALL_DATA A                                                                                                                                                        
+             LEFT JOIN TRACKIN_DATA TD ON TD.JOB_SPEC_GROUP_ID = A.JOB_SPEC_GROUP_ID                                                                                                
+             ----AND TD.SUB_NAME = A.SUB_NAME                                                                                                                                       
+             AND TD.MTOOL_ID = A.MTOOL_ID                                                                                                                                           
+             GROUP BY A.MTOOL_ID,A.TOOLG_ID,A.JOB_ID,A.CH_ID                                                                                                                        
+          )                                                                                                                                                                         
+         SELECT                                                                                                                                                                     
+              '{uuid}' AS PARENTID,                                                                                                                                 
+              M.TOOLG_ID,                                                                                                                                                           
+              M.MTOOL_ID AS TOOL_ID,                                                                                                                                                
+              CASE WHEN LENGTH(M.CH_ID) > 128 THEN SUBSTRING(M.CH_ID,1,128) ELSE M.CH_ID END AS CH_ID,                                                                                 
+              CASE WHEN LENGTH(M.JOB_ID) > 512 THEN SUBSTRING(M.JOB_ID,1,512) ELSE M.JOB_ID END AS JOB_ID,                                                                                                                                                                                                                                                       
+              STRFTIME(M.CREATE_TIME, '%Y-%m-%d %H:%M:%S') AS START_DATE,                                                                                                  
+              CASE WHEN CT.JOB_SPEC_GROUP_ID IS NOT NULL AND CT.JOB_SPEC_GROUP_ID <> '' AND CT.MEASURE_CT > 0                                                                                                      
+                   --THEN TO_CHAR(M.CREATE_TIME +20/24 - CT.MEASURE_CT/24, 'YYYY-MM-DD HH24:MI:SS') ELSE TO_CHAR(M.CREATE_TIME +20/24, 'YYYY-MM-DD HH24:MI:SS') END AS END_DATE,          
+                   THEN STRFTIME(DATE_TRUNC('second', CAST(M.CREATE_TIME AS TIMESTAMP) + INTERVAL '20 hour' -  INTERVAL (CT.MEASURE_CT) HOUR),'%Y-%m-%d %H:%M:%S')
+                    ELSE STRFTIME(DATE_TRUNC('second', CAST(M.CREATE_TIME AS TIMESTAMP) + INTERVAL '20 hour' ), '%Y-%m-%d %H:%M:%S') END AS END_DATE,    
+              COALESCE(T31.ONE_WAFER_PT_TRACKER * M.QTY, T32.ONE_WAFER_PT_TRACKER * M.QTY, ZD.PROCESS_TIME, ZD32.PROCESS_TIME, 0) AS PROCESS_TIME,                                                                                                         
+              M.RETICLE AS RETICLE_ID,                                                                                                                                              
+              '' AS RECIPE,                                                                                                                                                         
+             -- DECODE(M.STATUS,'PRD','RUN','SBY','WAIT',M.STATUS) AS JOB_STATUS,
+               CASE WHEN M.STATUS = 'PRD' THEN 'RUN'
+                       WHEN M.STATUS = 'SBY' THEN 'WAIT'
+                       ELSE M.STATUS END AS JOB_STATUS,                                                                                                                         
+              CASE WHEN M.STATUS = 'PRD' AND TI.TRACK_IN >= M.CREATE_TIME THEN STRFTIME(cast(TI.TRACK_IN as timestamp), '%Y-%m-%d %H:%M:%S') END AS TRACK_IN,
+              --modify by xiecheng for version up  
+              CASE WHEN M.STATUS = 'PRD' AND M.TRACK_IN >= TI.TRACK_IN AND TI.TRACK_IN >= M.CREATE_TIME THEN STRFTIME(cast(M.TRACK_IN as timestamp), '%Y-%m-%d %H:%M:%S') END AS PROCESS_START,                                                                                                           
+             '{current_time}' AS UPDATE_TIME,                                                                                                                              
+              '' AS PARTCODE,                                                                                                              
+              CASE WHEN LENGTH(M.FOUP_ID) > 2048 THEN SUBSTRING(M.FOUP_ID,1,2048) ELSE M.FOUP_ID END AS FOUP_ID,                                                                       
+              CASE WHEN M.TEST_FOR='RT' THEN 'RT Monitor' ELSE 'Monitor' END AS JOB_TYPE,                                                                                            
+              '' AS TOOL_CODE,                                                                                                                                                      
+              '' AS FIXED_FLAG,                                                                                                                                                     
+              '' AS FIXED_TIME                                                                                                                                                      
+          FROM GROUP_DATA M      
+          LEFT JOIN APS_MID_TYPE31_RUNTIME_ALL.APS_MID_TYPE31_RUNTIME_ALL T31 ON T31.TOOLG_ID = M.TOOLG_ID                         
+            AND T31.PLAN_ID = M.JOB_ID  AND T31.TOOL_ID = M.MTOOL_ID AND T31.LESSTHAN20_FLAG = 'N'                                                                                     
+          LEFT JOIN APS_MID_TYPE32_RUNTIME_ALL.APS_MID_TYPE32_RUNTIME_ALL T32 ON T32.TOOLG_ID = M.TOOLG_ID                         
+            AND T32.LESSTHAN20_FLAG = 'N'                                                                                                                                                                                                  
+          LEFT JOIN APS_MID_TYPE31_MEDIAN.APS_MID_TYPE31_MEDIAN ZD ON  ZD.TOOLG_ID = M.TOOLG_ID                                                                                                                  
+          AND ZD.PLAN_ID = M.JOB_ID  AND ZD.TOOL_ID = M.MTOOL_ID                                                                                                                    
+          LEFT JOIN APS_MID_TYPE32_MEDIAN.APS_MID_TYPE32_MEDIAN ZD32 ON  ZD32.TOOLG_ID = M.TOOLG_ID                                                                                                                                                                                                                  
+          LEFT JOIN APS_MID_OCS_MEASURE_CT.APS_MID_OCS_MEASURE_CT CT ON  CT.JOB_SPEC_GROUP_ID = M.JOB_SPEC_GROUP_ID  
+          --modify by xiecheng for version up
+          LEFT JOIN {tempdb}APS_TMP_ETL_MONITOR_TRACKIN TI ON TI.JOB_SPEC_GROUP_ID = M.JOB_SPEC_GROUP_ID  AND TI.TOOL_ID = M.MTOOL_ID                                                                                                                                  
+        """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_MONITOR",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_MONITOR")
+
+
+def getWetPMSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+           INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_MONITOR_V1(
+                   PARENTID, TOOLG_ID, TOOL_ID, CH_ID, JOB_ID, START_DATE, END_DATE,
+                   PROCESS_TIME, RETICLE_ID, RECIPE, JOB_STATUS,TRACK_IN, UPDATE_TIME,
+                   PARTCODE, FOUP_ID, JOB_TYPE, TOOL_CODE, FIXED_FLAG, FIXED_TIME,PROP_TIME_FLAG
+          )
+           WITH EQP_INFO AS (
+                SELECT EQP_ID,MAX(EQP_G) AS TOOLG_ID,
+                       MAX(EQP_CHAMBER_FLAG) AS EQP_FLAG,
+                       MAX(PREV_E10_STATE_CODE) AS STATE_CODE,
+                       MAX(PREV_STATE) AS PREV_STATE,
+                       MAX(E10CHG_STARTTMST) AS E10CHG_STARTTMST,
+                       MAX(MODULE) AS MODULE
+                FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL T 
+                --modify by xiecheng for version up
+                where HOST_EQP_FLAG='Y'  
+                GROUP BY EQP_ID
+           ),
+           PM_DATA_F AS (
+                SELECT F.EQUIPMENT_NO,
+                        CASE WHEN E.EQP_FLAG = 'Chamber' AND TRIM(' ' FROM F.CHAMBER_NO) IS NOT NULL AND TRIM(' ' FROM F.CHAMBER_NO) <> ''
+                         THEN (F.EQUIPMENT_NO||'.'||F.CHAMBER_NO)
+                         ELSE F.EQUIPMENT_NO END AS CHAMBER_NO,
+                        F.PM_TYPE,
+                        F.TARGET_TIME,
+                        F.FORECAST_TIME,
+                        E.TOOLG_ID,
+                        E.EQP_FLAG,
+                        E.STATE_CODE,
+                        E.PREV_STATE,
+                        E.E10CHG_STARTTMST,
+                        F.TEST_TIME,
+                        E.MODULE
+                FROM APS_SYNC_TMS_EQP_PARAMETER.APS_SYNC_TMS_EQP_PARAMETER F
+                INNER JOIN EQP_INFO E
+                ON E.EQP_ID = F.EQUIPMENT_NO
+                WHERE 
+                 --TO_CHAR(TO_DATE(F.FORECAST_TIME,'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD') = TO_CHAR(SYSDATE,'YYYY-MM-DD')
+                   --   AND TO_DATE(F.FORECAST_TIME,'YYYY-MM-DD HH24:MI:SS') > SYSDATE
+                       STRFTIME(cast(F.FORECAST_TIME as DATE), '%Y-%m-%d') = STRFTIME(cast(CURRENT_TIMESTAMP as DATE),'%Y-%m-%d')
+                       --AND F.FORECAST_TIME > CURRENT_TIMESTAMP
+                     AND CAST(replace(F.FORECAST_TIME,'/','-')||':00' AS TIMESTAMP) >  CAST(CURRENT_TIMESTAMP AS TIMESTAMP)
+           -- MFG要求过滤Track借机的数据(最新需求严格按照('*D PM')过滤)
+                      AND ((SUBSTRING(F.EQUIPMENT_NO,1,1)='P' AND F.PM_TYPE LIKE ('%D PM'))  OR (SUBSTRING(F.EQUIPMENT_NO,1,1)<>'P'))
+                      AND E.MODULE='WET'  
+           ),
+           PM_DATA AS (
+                SELECT * FROM (
+                  SELECT F.EQUIPMENT_NO,
+                         F.CHAMBER_NO,
+                         F.PM_TYPE,
+                         F.TARGET_TIME,
+                         F.FORECAST_TIME,
+                         F.TOOLG_ID,
+                         F.EQP_FLAG,
+                         F.STATE_CODE,
+                         F.PREV_STATE,
+                         F.E10CHG_STARTTMST,
+                         F.TEST_TIME,
+                         F.MODULE,
+                         ROW_NUMBER() OVER (PARTITION BY F.EQUIPMENT_NO,F.CHAMBER_NO,F.PM_TYPE,F.TOOLG_ID
+                                ORDER BY F.FORECAST_TIME DESC) AS RN
+                  FROM PM_DATA_F F
+                )
+                WHERE RN = 1
+           ),
+           PROP_TIME_DATA AS (
+               SELECT EQP_ID, CASE WHEN LENGTH(P.BEGIN_TIMES) = 5 THEN    
+               STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' ' || P.BEGIN_TIMES ||':00'   
+              WHEN LENGTH(P.BEGIN_TIMES) = 4 AND position(':' in P.BEGIN_TIMES)=3 THEN                                            
+                STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' ' || SUBSTRING(P.BEGIN_TIMES,1,3)||'0'||SUBSTRING(P.BEGIN_TIMES,4,1)||':00'  
+             WHEN LENGTH(P.BEGIN_TIMES) = 4 AND position(':' IN P.BEGIN_TIMES)=2 THEN                                            
+                 STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' 0' || P.BEGIN_TIMES ||':00'                                            
+             ELSE                                                                                                          
+                 STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' 00:00:00'                                                             
+             END BEGIN_TIME,                                                                                               
+             CASE WHEN LENGTH(P.END_TIMES) = 5 THEN                                                                        
+                 STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' ' || P.END_TIMES ||':00'                                               
+             WHEN LENGTH(P.END_TIMES) = 4 AND position(':' IN P.END_TIMES)=3  THEN                                               
+                 STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' ' || SUBSTRING(P.END_TIMES,1,3)||'0'||SUBSTRING(P.END_TIMES,4,1)||':00'      
+             WHEN LENGTH(P.END_TIMES) = 4 AND position(':' IN P.END_TIMES)=2  THEN                                         
+                 STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' 0' || P.END_TIMES ||':00'                                          
+             ELSE                                                                                                    
+                 STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' 00:00:00'                                                         
+             END END_TIME,PM_TYPE                                                                                                    
+          FROM APS_SYNC_SCHE_PM_PROP_TIME.APS_SYNC_SCHE_PM_PROP_TIME P                                                       
+          WHERE P.PM_TYPE LIKE REPLACE(P.PM_TYPE,'*','%')                                                                                                                                  
+            AND P.MUDULE='WET'                                                                                             
+             AND (P.BEGIN_TIMES is not null and P.BEGIN_TIMES <> '' AND P.END_TIMES is not null and P.END_TIMES <> '')                                                                 
+           ),
+           BOOKING_INFO AS (
+              SELECT S.EQP_ID,S.PM_TYPE,
+                     S.START_TIME,
+                     S.END_TIME,
+                     S.EST_SPEC,
+                     S.FORCE_FLAG,
+                     S.UPDATE_TIME
+              FROM APS_SYNC_EQP_STATUS_BOOKING_SETTING.APS_SYNC_EQP_STATUS_BOOKING_SETTING S
+             WHERE S.E10_STATE='SDT' AND S.E10_CODE='4110'
+                 AND STRFTIME( cast(S.START_TIME  as timestamp),'%Y-%m-%d') = STRFTIME(cast(CURRENT_TIMESTAMP as timestamp),'%Y-%m-%d')
+                 AND (S.END_TIME IS NULL OR S.END_TIME = '' OR S.END_TIME > CURRENT_TIMESTAMP)
+           )
+           SELECT
+                  '{uuid}'  AS PARENTID,
+                  T.TOOLG_ID,
+                  T.EQUIPMENT_NO AS TOOL_ID,
+                  T.CHAMBER_NO AS CH_ID,
+                  T.PM_TYPE AS JOB_ID,
+                 CASE WHEN TRIM(I.EQP_ID) IS NOT NULL and TRIM(I.EQP_ID) <> '' THEN I.START_TIME  
+                    WHEN TRIM(P.EQP_ID) IS NOT NULL and TRIM(P.EQP_ID) <> '' THEN P.BEGIN_TIME  
+                    WHEN P.EQP_ID IS NOT NULL AND P.EQP_ID <> '' THEN P.BEGIN_TIME
+                   ELSE (T.FORECAST_TIME || ' 00:00:00') 
+                  END AS START_DATE,
+                 CASE WHEN I.EQP_ID IS NOT NULL AND I.EQP_ID <> '' THEN I.END_TIME 
+                      WHEN P.EQP_ID IS NOT NULL AND P.EQP_ID <> '' THEN P.END_TIME 
+                      WHEN P.EQP_ID IS NOT NULL AND P.EQP_ID <> '' THEN P.END_TIME 
+                              ELSE T.FORECAST_TIME 
+                  END AS END_DATE,
+                 COALESCE(cast(T.TARGET_TIME as integer), 0) + COALESCE(cast(T.TEST_TIME as integer), 0) AS PROCESS_TIME,                 
+                  '' AS RETICLE_ID,
+                  '' AS RECIPE,
+                  CASE WHEN T.STATE_CODE='SDT' AND T.PREV_STATE='4110'
+                            THEN 'RUN' ELSE 'WAIT' END AS JOB_STATUS,
+                  CASE WHEN T.STATE_CODE='SDT' AND T.PREV_STATE='4110'
+                            THEN STRFTIME( cast(T.E10CHG_STARTTMST as timestamp), '%Y-%m-%d %H:%M:%S')
+                             ELSE NULL END AS TRACK_IN,     
+                  '{current_time}' AS UPDATE_TIME,
+                  '' AS PARTCODE,
+                  '' AS FOUP_ID,
+                  'PM' AS JOB_TYPE,
+                  'SDT-4110' AS TOOL_CODE,
+                  CASE WHEN I.EQP_ID IS NOT NULL AND I.EQP_ID <> '' AND I.FORCE_FLAG='Y' THEN 'Y' ELSE 'N' END AS FIXED_FLAG,
+                  CASE WHEN I.EQP_ID IS NOT NULL AND I.EQP_ID <> '' AND I.FORCE_FLAG='Y'
+                          THEN STRFTIME(cast(I.UPDATE_TIME as timestamp), '%Y-%m-%d %H:%M:%S') ELSE NULL END AS FIXED_TIME,
+                  CASE WHEN TRIM(I.EQP_ID) IS NULL AND TRIM(P.EQP_ID) IS NOT NULL THEN 'Y' END PROP_TIME_FLAG
+            FROM PM_DATA T
+            LEFT JOIN PROP_TIME_DATA P                                                                                            
+            ON T.EQUIPMENT_NO LIKE REPLACE(P.EQP_ID,'*','%')                                                                      
+            AND T.PM_TYPE LIKE  REPLACE(P.PM_TYPE  ,'*','%')                                                                      
+            LEFT JOIN BOOKING_INFO I                                                                                              
+            ON I.EQP_ID = T.EQUIPMENT_NO                                                                                          
+            AND I.PM_TYPE = T.PM_TYPE 
+        """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_MONITOR_V1",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_MONITOR_V1")
+
+def getWetPMSql1(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 找出process_time 最大的安排在上午
+    sql = """
+         INSERT  /*+ append */  INTO {tempdb}APS_TMP_ETL_MONITOR_WET_V1(
+              PROCESS_TIME
+          )
+         SELECT MAX(CAST(PROCESS_TIME AS DECIMAL)) AS PROCESS_TIME
+          FROM {tempdb}APS_TMP_ETL_MONITOR_V1
+          WHERE PROP_TIME_FLAG ='Y'
+        """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_MONITOR_WET_V1",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_MONITOR_WET_V1")
+
+def getWetPMSql2(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    # 保存到monitor里边
+    sql = """
+          INSERT  /*+ append */  INTO APS_ETL_MONITOR(
+               PARENTID, TOOLG_ID, TOOL_ID, CH_ID, JOB_ID, START_DATE, END_DATE,
+               PROCESS_TIME, RETICLE_ID, RECIPE, JOB_STATUS,TRACK_IN, UPDATE_TIME,
+               PARTCODE, FOUP_ID, JOB_TYPE, TOOL_CODE, FIXED_FLAG, FIXED_TIME
+           )
+           WITH PM_DATA AS (
+               SELECT PARENTID, TOOLG_ID, TOOL_ID, CH_ID, JOB_ID, 
+                      CASE WHEN T.PROCESS_TIME IS NOT NULL AND START_DATE > cast(STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' 12:00:00' as timestamp) THEN NULL 
+                           WHEN T.PROCESS_TIME IS NULL AND  START_DATE < cast(STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' 12:00:00' as timestamp) THEN NULL 
+                               ELSE START_DATE END  START_DATE, 
+                      CASE WHEN T.PROCESS_TIME IS NOT NULL AND END_DATE > cast(STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' 12:00:00' as timestamp) THEN  NULL 
+                           WHEN T.PROCESS_TIME IS NULL AND END_DATE < cast(STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d') || ' 12:00:00' as timestamp) THEN  NULL
+                               ELSE END_DATE END  END_DATE,
+                      V.PROCESS_TIME, RETICLE_ID, RECIPE, JOB_STATUS,TRACK_IN, UPDATE_TIME,
+                      PARTCODE, FOUP_ID, JOB_TYPE, TOOL_CODE, FIXED_FLAG, FIXED_TIME
+               FROM {tempdb}APS_TMP_ETL_MONITOR_V1 V
+               LEFT JOIN {tempdb}APS_TMP_ETL_MONITOR_WET_V1 T
+               ON T.PROCESS_TIME = V.PROCESS_TIME
+               AND V.PROP_TIME_FLAG ='Y'
+          )
+          SELECT DISTINCT PARENTID, TOOLG_ID, TOOL_ID, CH_ID, JOB_ID, START_DATE, END_DATE,
+               PROCESS_TIME, RETICLE_ID, RECIPE, JOB_STATUS,TRACK_IN, UPDATE_TIME,
+               PARTCODE, FOUP_ID, JOB_TYPE, TOOL_CODE, FIXED_FLAG, FIXED_TIME
+          FROM PM_DATA 
+          WHERE START_DATE IS NOT NULL OR END_DATE IS NOT NULL
+         """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_MONITOR",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_MONITOR")
+
+
+def getPMSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO  APS_ETL_MONITOR (                                                                
+            PARENTID, TOOLG_ID, TOOL_ID, CH_ID, JOB_ID, START_DATE, END_DATE,
+            PROCESS_TIME, RETICLE_ID, RECIPE, JOB_STATUS,TRACK_IN, UPDATE_TIME,
+            PARTCODE, FOUP_ID, JOB_TYPE, TOOL_CODE, FIXED_FLAG, FIXED_TIME 
+        )                                                                                                                     
+         WITH EQP_INFO AS (                                                                                                     
+              SELECT EQP_ID,MAX(EQP_G) AS TOOLG_ID,                                                                             
+                     MAX(EQP_CHAMBER_FLAG) AS EQP_FLAG,                                                                         
+                     MAX(PREV_E10_STATE_CODE) AS STATE_CODE,                                                                    
+                     MAX(PREV_STATE) AS PREV_STATE,                                                                             
+                     MAX(E10CHG_STARTTMST) AS E10CHG_STARTTMST,                                                                 
+                     MAX(MODULE) AS MODULE                                                                                      
+              FROM  APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL T                                                                
+              WHERE  HOST_EQP_FLAG='Y'                                             
+              GROUP BY EQP_ID                                                                                                   
+         ),                                                                                                                     
+         PM_DATA_F AS (                                                                                                         
+              SELECT F.EQUIPMENT_NO,                                                                                            
+                      CASE WHEN E.EQP_FLAG = 'Chamber' AND TRIM(F.CHAMBER_NO) IS NOT NULL AND TRIM(F.CHAMBER_NO) <> ''                                         
+                       THEN (F.EQUIPMENT_NO||'.'||F.CHAMBER_NO)                                                                 
+                       ELSE F.EQUIPMENT_NO END AS CHAMBER_NO,                                                                   
+                      F.PM_TYPE,                                                                                                
+                      F.TARGET_TIME,                                                                                            
+                      F.FORECAST_TIME,                                                                                          
+                      E.TOOLG_ID,                                                                                               
+                      E.EQP_FLAG,                                                                                               
+                      E.STATE_CODE,                                                                                             
+                      E.PREV_STATE,                                                                                             
+                      E.E10CHG_STARTTMST,                                                                                       
+                      F.TEST_TIME,                                                                                              
+                      E.MODULE                                                                                                  
+              FROM  APS_SYNC_TMS_EQP_PARAMETER.APS_SYNC_TMS_EQP_PARAMETER  F                                                           
+              INNER JOIN EQP_INFO E                                                                                             
+              ON E.EQP_ID = F.EQUIPMENT_NO                                                                                      
+              WHERE 
+                    STRFTIME(cast(F.FORECAST_TIME as date), '%Y-%m-%d') = STRFTIME(CURRENT_timestamp,'%Y-%m-%d')     
+                    AND CAST(replace(F.FORECAST_TIME,'/','-') || ':00' AS TIMESTAMP)  > CAST(CURRENT_TIMESTAMP AS TIMESTAMP)                                             
+        -- MFG要求过滤Track借机的数据(最新需求严格按照('*D PM')过滤)
+                    AND ((SUBSTRING(F.EQUIPMENT_NO,1,1)='P' AND F.PM_TYPE LIKE ('%D PM'))  OR (SUBSTRING(F.EQUIPMENT_NO,1,1)<>'P'))                                                                                      
+                    AND E.MODULE<>'WET'                                                                                             
+         ),                                                                                                                     
+         PM_DATA AS (                                                                                                           
+              SELECT * FROM (                                                                                                   
+                SELECT F.EQUIPMENT_NO,                                                                                          
+                       F.CHAMBER_NO,                                                                                            
+                       F.PM_TYPE,                                                                                               
+                       F.TARGET_TIME,                                                                                           
+                       F.FORECAST_TIME,                                                                                         
+                       F.TOOLG_ID,                                                                                              
+                       F.EQP_FLAG,                                                                                              
+                       F.STATE_CODE,                                                                                            
+                       F.PREV_STATE,                                                                                            
+                       F.E10CHG_STARTTMST,                                                                                      
+                       F.TEST_TIME,                                                                                             
+                       F.MODULE,                                                                                                
+                       ROW_NUMBER() OVER (PARTITION BY F.EQUIPMENT_NO,F.CHAMBER_NO,F.PM_TYPE,F.TOOLG_ID                         
+                              ORDER BY F.FORECAST_TIME DESC) AS RN                                                              
+                FROM PM_DATA_F F                                                                                                
+              )                                                                                                                 
+              WHERE RN = 1                                                                                                      
+         ),                                                                                                                     
+         PROP_TIME_DATA1 AS (                                                                                                   
+            SELECT P.EQP_G,P.MUDULE,P.EQP_ID,P.PM_TYPE,                                                                                   
+            cast(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d') || ' ' || BEGIN_TIMES || ':00' as timestamp) AS BEGIN_TIME,                 
+            DATE_TRUNC('second', cast(STRFTIME(CURRENT_TIMESTAMP, '%Y-%m-%d') || ' ' || END_TIMES || ':00' as timestamp) - INTERVAL (cast(P.INTERVAL_DAY as integer)*24) hour ) AS END_TIME                                                                               
+            FROM APS_SYNC_SCHE_PM_PROP_TIME.APS_SYNC_SCHE_PM_PROP_TIME  P                                                                   
+            WHERE 1=1                                                                                                                                                                                                            
+            AND P.ITEM_TYPE='ACCEPT'                                                                                                      
+         ),                                                                                                                     
+         BOOKING_INFO AS (                                                                                                      
+            SELECT S.EQP_ID,S.PM_TYPE,                                                                                          
+                   S.START_TIME,                                                                                                
+                   S.END_TIME,                                                                                                  
+                   S.EST_SPEC,                                                                                                  
+                   S.FORCE_FLAG,                                                                                                
+                   S.UPDATE_TIME                                                                                                
+            FROM  APS_SYNC_EQP_STATUS_BOOKING_SETTING.APS_SYNC_EQP_STATUS_BOOKING_SETTING  S                                                    
+            WHERE S.E10_STATE='SDT' AND S.E10_CODE='4110'                                                                       
+            AND STRFTIME(S.START_TIME,'%Y-%m-%d') = STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d')                                              
+            AND (S.END_TIME IS NULL OR S.END_TIME > CURRENT_TIMESTAMP)                                                                                                                                            
+         )                                                                                                                      
+         SELECT                                                                                                                 
+                 '{uuid}' AS PARENTID,                                                                              
+                T.TOOLG_ID,                                                                                                     
+                T.EQUIPMENT_NO,                                                                                                 
+                T.CHAMBER_NO AS CH_ID,                                                                                          
+                T.PM_TYPE AS JOB_ID,                                                                                            
+                CASE WHEN I.EQP_ID IS NOT NULL THEN STRFTIME(I.START_TIME, '%Y-%m-%d %H:%M:%S') ELSE (                       
+                     CASE WHEN P.EQP_ID IS NOT NULL THEN STRFTIME(P.BEGIN_TIME, '%Y-%m-%d %H:%M:%S') ELSE (                  
+                              STRFTIME(CAST(T.FORECAST_TIME AS date),'%Y-%m-%d')|| ' 00:00:00')             
+                END) END AS START_DATE,                                                                                  
+                CASE WHEN I.EQP_ID IS NOT NULL THEN STRFTIME(I.END_TIME, '%Y-%m-%d %H:%M:%S') ELSE (                         
+                     CASE WHEN P.EQP_ID IS NOT NULL THEN STRFTIME(P.END_TIME, '%Y-%m-%d %H:%M:%S') ELSE (                    
+                               CASE WHEN LENGTH(T.FORECAST_TIME)=16 THEN STRFTIME(cast((T.FORECAST_TIME || ':00') as  TIMESTAMP), '%Y-%m-%d %H:%M:%S')
+                               ELSE T.FORECAST_TIME
+                               END)               
+                END) END AS END_DATE,                                                                                        
+                CASE WHEN T.MODULE IN ('WET','DIFF') THEN (CASE WHEN I.EQP_ID IS NOT NULL THEN cast(I.EST_SPEC as decimal) ELSE cast(T.TARGET_TIME as decimal) END)+COALESCE(cast(T.TEST_TIME as decimal),0)    
+                   ELSE (CASE WHEN I.EQP_ID IS NOT NULL THEN cast(I.EST_SPEC as decimal) ELSE cast(T.TARGET_TIME as decimal) END) END AS PROCESS_TIME,            
+                '' AS RETICLE_ID,                                                                                               
+                '' AS RECIPE,                                                                                                   
+                CASE WHEN T.STATE_CODE='SDT' AND T.PREV_STATE='4110'                                                            
+                          THEN 'RUN' ELSE 'WAIT' END AS JOB_STATUS,                                                             
+                CASE WHEN T.STATE_CODE='SDT' AND T.PREV_STATE='4110'                                                            
+                          THEN STRFTIME(cast(T.E10CHG_STARTTMST as timestamp), '%Y-%m-%d %H:%M:%S') ELSE NULL END AS TRACK_IN,        
+                                       
+                 '{current_time}'  AS UPDATE_TIME,                                                                          
+                 ''  AS PARTCODE,                                                              
+                '' AS FOUP_ID,                                                                                                  
+                'PM' AS JOB_TYPE,                                                                                               
+                'SDT-4110' AS TOOL_CODE,                                                                                        
+                CASE WHEN I.EQP_ID IS NOT NULL AND I.FORCE_FLAG='Y' THEN 'Y' ELSE 'N' END AS FIXED_FLAG,                        
+                CASE WHEN I.EQP_ID IS NOT NULL AND I.FORCE_FLAG='Y'                                                             
+                         THEN STRFTIME(I.UPDATE_TIME, '%Y-%m-%d %H:%M:%S') ELSE NULL END AS FIXED_TIME                            
+         FROM PM_DATA T                                                                                                         
+         LEFT JOIN PROP_TIME_DATA1 P                                                                                            
+         ON P.MUDULE = T.MODULE                                                                                                 
+         AND CASE WHEN P.EQP_ID = '*' THEN T.EQUIPMENT_NO  = T.EQUIPMENT_NO END                                                             
+         AND CASE WHEN P.EQP_G = '*' THEN T.TOOLG_ID = T.TOOLG_ID END                                                                      
+         AND CASE WHEN P.PM_TYPE = '*' THEN T.PM_TYPE = T.PM_TYPE END                                                                       
+         LEFT JOIN BOOKING_INFO I                                                                                               
+         ON I.EQP_ID = T.EQUIPMENT_NO                                                                                           
+         AND I.PM_TYPE = T.PM_TYPE             
+        """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_MONITOR",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_MONITOR")
+
+
+def getPhotoGuiSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO APS_ETL_MONITOR(                                                                      
+       PARENTID, TOOLG_ID, TOOL_ID, CH_ID, JOB_ID, START_DATE, END_DATE,
+       PROCESS_TIME, RETICLE_ID, RECIPE, JOB_STATUS,TRACK_IN, UPDATE_TIME,
+       PARTCODE, FOUP_ID, JOB_TYPE, TOOL_CODE, FIXED_FLAG, FIXED_TIME 
+        )                                                                                                                             
+       WITH EQP_INFO AS (                                                                                                           
+            SELECT EQP_ID,MAX(EQP_G) AS TOOLG_ID,                                                                                   
+                   MAX(EQP_CHAMBER_FLAG) AS EQP_FLAG,                                                                               
+                   MAX(PREV_E10_STATE_CODE) AS STATE_CODE,                                                                          
+                   MAX(PREV_STATE) AS PREV_STATE,                                                                                   
+                   MAX(E10CHG_STARTTMST) AS E10CHG_STARTTMST                                                                        
+            FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL                                                                       
+           WHERE HOST_EQP_FLAG='Y'                                                     
+           GROUP BY EQP_ID                                                                                                          
+       ),                                                                                                                           
+       RESULT_DATA AS (                                                                                                             
+       SELECT                                                                                                                       
+             '{uuid}'  AS PARENTID,                                                                                 
+              E.TOOLG_ID,                                                                                                           
+              S.EQP_ID,                                                                                                             
+              CASE WHEN S.CHAMBER_NO IS NOT NULL AND EXISTS (SELECT 1 FROM APS_ETL_TOOL.APS_ETL_TOOL L                
+                           WHERE L.CH_ID = S.EQP_ID || '.' || S.CHAMBER_NO)          
+                                                           THEN S.EQP_ID || '.' || S.CHAMBER_NO ELSE S.EQP_ID END AS CH_ID,         
+              CASE WHEN S.E10_STATE='SDT' AND S.E10_CODE='4110' THEN S.PM_TYPE ELSE 'ToolDown-'||S.E10_STATE END AS JOB_ID,         
+              STRFTIME(S.START_TIME, '%Y-%m-%d %H:%M:%S') AS START_DATE,                                                         
+              COALESCE(STRFTIME(S.END_TIME, '%Y-%m-%d %H:%M:%S'), STRFTIME(S.START_TIME, '%Y-%m-%d %H:%M:%S'))  AS END_DATE,       
+              S.EST_SPEC AS PROCESS_TIME,                                                                                           
+              '' AS RETICLE_ID,                                                                                                     
+              '' AS RECIPE,                                                                                                         
+              CASE WHEN E.STATE_CODE='SDT' AND E.PREV_STATE='4110' THEN 'RUN' ELSE 'WAIT' END AS JOB_STATUS,                        
+              CASE WHEN E.STATE_CODE='SDT' AND E.PREV_STATE='4110' THEN E.E10CHG_STARTTMST ELSE NULL END AS TRACK_IN,               
+              '{current_time}'  AS UPDATE_TIME,                                                                              
+              '' AS PARTCODE,                                                                  
+              '' AS FOUP_ID,                                                                                                        
+              CASE WHEN S.E10_STATE='SDT' AND S.E10_CODE='4110' THEN 'PM' ELSE 'ToolDown' END AS JOB_TYPE,                          
+              CASE WHEN S.E10_CODE IS NULL THEN S.E10_STATE ELSE (S.E10_STATE || '-' || S.E10_CODE) END AS TOOL_CODE,               
+              S.FORCE_FLAG AS FIXED_FLAG,                                                                                           
+              CASE WHEN S.FORCE_FLAG='Y' THEN S.UPDATE_TIME ELSE NULL END AS FIXED_TIME                                             
+       FROM APS_SYNC_EQP_STATUS_BOOKING_SETTING.APS_SYNC_EQP_STATUS_BOOKING_SETTING S                                                         
+       INNER JOIN EQP_INFO E ON E.EQP_ID = S.EQP_ID                                                                                 
+       WHERE STRFTIME(S.START_TIME,'%Y-%m-%d') = STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d')                                                     
+       AND (S.END_TIME IS NULL OR S.END_TIME > CURRENT_TIMESTAMP)                                                                                                              
+        -- MFG要求过滤Track借机的数据(最新需求严格按照('*D PM')过滤)
+        -- AND ((SUBSTR(S.EQP_ID,0,1)='P' AND S.PM_TYPE LIKE ('%D PM'))  OR (SUBSTR(S.EQP_ID,0,1)<>'P'))                                
+       AND NOT EXISTS (                                                                                                             
+           SELECT T.EQUIPMENT_NO                                                                                                    
+           FROM APS_SYNC_TMS_EQP_PARAMETER.APS_SYNC_TMS_EQP_PARAMETER T                                                              
+           WHERE S.EQP_ID = T.EQUIPMENT_NO                                                                                          
+           AND COALESCE(TRIM(S.CHAMBER_NO),'*') = COALESCE(TRIM(T.CHAMBER_NO),'*')                                                            
+           AND COALESCE(S.PM_TYPE,'*') = COALESCE(T.PM_TYPE,'*')                                                                                                                                                         
+           AND STRFTIME(cast(T.FORECAST_TIME as DATE),'%Y-%m-%d') = STRFTIME(CURRENT_TIMESTAMP,'%Y-%m-%d')               
+           AND CAST(replace(T.FORECAST_TIME,'/','-') || ':00' AS TIMESTAMP) > CAST(CURRENT_TIMESTAMP AS TIMESTAMP)                                                      
+       )                                                                                                                            
+       )                                                              
+       SELECT PARENTID,                                               
+              TOOLG_ID,                                               
+              EQP_ID,                                                 
+              CH_ID,                                                  
+              JOB_ID,                                                 
+              MIN(START_DATE) AS START_DATE,                          
+              MIN(END_DATE) AS END_DATE,                              
+              MAX(PROCESS_TIME) AS PROCESS_TIME,                      
+              MAX(RETICLE_ID) AS RETICLE_ID,                          
+              MAX(RECIPE) AS RECIPE,                                  
+              MAX(JOB_STATUS) AS JOB_STATUS,                          
+              MAX(TRACK_IN) AS TRACK_IN,                              
+              MAX(UPDATE_TIME) AS UPDATE_TIME,                        
+              PARTCODE,                                               
+              MAX(FOUP_ID) AS FOUP_ID,                                
+              MAX(JOB_TYPE) AS JOB_TYPE,                              
+              MAX(TOOL_CODE) AS TOOL_CODE,                            
+              MAX(FIXED_FLAG) AS FIXED_FLAG,                          
+              MAX(FIXED_TIME) AS FIXED_TIME                           
+       FROM RESULT_DATA                                               
+       WHERE JOB_ID IS NOT NULL and  JOB_ID <> ''                                   
+       GROUP BY PARENTID,TOOLG_ID,EQP_ID,CH_ID, JOB_ID,PARTCODE              
+        """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_MONITOR",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_MONITOR")
+
+
+def getDfSourceMonitorData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+         INSERT INTO {tempdb}APS_TMP_ETL_MONITOR_DF_SOURCE(
+             TOOLG_ID, FOUP_ID, TOOL_ID, CH_ID, JOB_ID, RECIPE, START_DATE, END_DATE, JOB_STATUS, JOB_TYPE, JOB_SPEC_GROUP_ID
+              --modify by xiecheng for version up
+             , CREATE_TIME
+        )
+         WITH SOURCE_DATA AS (
+             SELECT   ROW_NUMBER() OVER (PARTITION BY OP.JOB_SPEC_GROUP_ID,OP.PTOOL_ID  ORDER BY OP.SEQNO) AS RN,
+                      OP.JOB_SPEC_GROUP_ID,OP.PTOOL_ID,OP.SUB_NAME,
+                      OP.CREATE_TIME,OP.STATUS,OP.RECIPE,OP.FOUP_ID,
+                      OP.MAINTOOLFLAG
+             FROM APS_SYNC_OCS_JOB_SPEC_GROUP_PO.APS_SYNC_OCS_JOB_SPEC_GROUP_PO OP
+             WHERE
+             --modify by xiecheng for version up
+             -- TEST_FOR='RT'
+            -- AND STATUS IN ('SBY','PRD')
+             (CASE WHEN STATUS = 'SBY' AND TEST_FOR='RT' THEN 1
+                   WHEN STATUS = 'PRD' THEN 1   
+                ELSE 0 END = 1)  
+             AND POSITION('F' IN MTOOL_ID) = 1
+        -- 过滤超过三天的数据
+             AND OP.CREATE_TIME >= DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '3 day'
+         ),
+         FOUP_ID_DATA AS (
+             SELECT OP.PTOOL_ID,OP.JOB_SPEC_GROUP_ID,
+                    OP.SUB_NAME,
+                    OP.CREATE_TIME,
+                    OP.STATUS, 
+                    OP.RECIPE,
+                    (
+                         select STRING_AGG(distinct FOUP_ID,','  ORDER BY FOUP_ID)
+                         FROM SOURCE_DATA S 
+                         WHERE 1=1
+                         AND S.JOB_SPEC_GROUP_ID = OP.JOB_SPEC_GROUP_ID
+                         AND S.SUB_NAME = OP.SUB_NAME
+                         AND S.PTOOL_ID = OP.PTOOL_ID
+                     ) as FOUP_ID
+             FROM SOURCE_DATA OP
+             WHERE 1=1
+             AND OP.MAINTOOLFLAG = 'true'
+         ),
+         GROUP_DATA AS (
+             SELECT OP.PTOOL_ID,OP.JOB_SPEC_GROUP_ID,
+                    MAX(OP.SUB_NAME) AS SUB_NAME,
+                    MAX(OP.CREATE_TIME) AS CREATE_TIME,
+                    MIN(OP.STATUS) AS STATUS, 
+                    MAX(OP.RECIPE) AS RECIPE,
+                    MAX(FOUP_ID) AS FOUP_ID
+             FROM FOUP_ID_DATA OP
+             GROUP BY OP.PTOOL_ID,OP.JOB_SPEC_GROUP_ID
+         )
+         SELECT T.TOOLG_ID,
+                OP.FOUP_ID,OP.PTOOL_ID AS TOOL_ID,
+                COALESCE(T.CH_ID,OP.PTOOL_ID) AS CH_ID ,
+               JOB_SPEC_GROUP_ID || '(' || SUB_NAME || ')' AS JOB_ID,
+               OP.RECIPE,STRFTIME(OP.CREATE_TIME, '%Y-%m-%d %H:%M:%S') AS START_DATE,
+        -- 针对过期时间：当天白天建的(7:30-19:30)，要在当班做完(7:30-次日7：30).如果是晚上建的(19:30-次日7：30)，则顺延一天（次日7：30- 第三日7：30）
+                CASE WHEN (STRFTIME(OP.CREATE_TIME,'%H:%M:%S') >= '00:00:00') AND STRFTIME(OP.CREATE_TIME,'%H:%M:%S') <= '19:30:00'
+               THEN STRFTIME( DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '1 day', '%Y-%m-%d') || ' 07:30:00'
+              
+               ELSE STRFTIME( DATE_TRUNC('second', CURRENT_TIMESTAMP) + INTERVAL '2 day', '%Y-%m-%d') || ' 07:30:00' END AS END_DATE,
+               --DECODE(OP.STATUS,'PRD','RUN','SBY','WAIT',OP.STATUS) AS JOB_STATUS,
+               CASE WHEN OP.STATUS = 'PRD' THEN 'RUN'
+                    WHEN OP.STATUS = 'SBY' THEN 'WAIT'
+                    ELSE OP.STATUS END  AS JOB_STATUS,
+               'RT Monitor' AS JOB_TYPE, JOB_SPEC_GROUP_ID
+                --modify by xiecheng for version up
+               , OP.CREATE_TIME
+         FROM GROUP_DATA OP
+         INNER JOIN APS_ETL_TOOL.APS_ETL_TOOL T
+         ON T.MODULE_ID ='DIFF'
+         AND (T.TOOL_ID = OP.PTOOL_ID
+         OR OP.PTOOL_ID || '.' || OP.SUB_NAME = T.CH_ID)
+          """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_MONITOR_DF_SOURCE",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_MONITOR_DF_SOURCE")
+
+
+def getDfProcessMonitorData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT INTO  {tempdb}APS_TMP_ETL_MONITOR_DF_PROCESS (
+              TOOLG_ID, FOUP_ID, TOOL_ID, CH_ID, JOB_ID, RECIPE, START_DATE, END_DATE, JOB_STATUS, JOB_TYPE, JOB_SPEC_GROUP_ID, PROCESS_TIME, CREATE_TIME
+        )
+         SELECT T.TOOLG_ID,
+                T.FOUP_ID,T.TOOL_ID,
+                T.CH_ID,
+                T.JOB_ID,
+                T.RECIPE,T.START_DATE,
+               CASE WHEN CT.JOB_SPEC_GROUP_ID IS NOT NULL AND CT.JOB_SPEC_GROUP_ID <> '' AND CT.MEASURE_CT > 0                                                                     
+               THEN STRFTIME(CAST(T.END_DATE AS timestamp) - INTERVAL '12 hours','%Y-%m-%d %H:%M:%S')                        
+               ELSE T.END_DATE END AS END_DATE,  
+                T.JOB_STATUS,
+                T.JOB_TYPE,T.JOB_SPEC_GROUP_ID,
+                COALESCE(ZD.PROCESS_TIME,COALESCE(ZD32.PROCESS_TIME,0)) AS PROCESS_TIME,
+                 T.CREATE_TIME
+         FROM  {tempdb}APS_TMP_ETL_MONITOR_DF_SOURCE  T
+         LEFT JOIN APS_MID_TYPE31_MEDIAN.APS_MID_TYPE31_MEDIAN ZD ON ZD.TOOLG_ID = T.TOOLG_ID
+         AND ZD.PLAN_ID = T.JOB_SPEC_GROUP_ID  AND ZD.TOOL_ID = T.TOOL_ID
+         LEFT JOIN  APS_MID_TYPE32_MEDIAN.APS_MID_TYPE32_MEDIAN  ZD32 ON ZD32.TOOLG_ID = T.TOOLG_ID
+         LEFT JOIN APS_MID_OCS_MEASURE_CT.APS_MID_OCS_MEASURE_CT CT ON CT.JOB_SPEC_GROUP_ID = T.JOB_SPEC_GROUP_ID  
+         """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_MONITOR_DF_PROCESS",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_MONITOR_DF_PROCESS")
+
+
+def getDfMonitorProcessStartData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT INTO  {tempdb}APS_TMP_ETL_MONITOR_DF_PT (                                          
+         JOB_SPEC_GROUP_ID, TOOL_ID, TRACK_IN, TRACK_OUT                                                             
+         )                                                                            
+          SELECT W.JOB_SPEC_GROUP_ID, W.TOOL_ID,                                                                                      
+          MAX(H.PROCESS_ST_TIME) AS TRACK_IN,                                                                                         
+          MAX(H.PROCESS_ED_TIME) AS TRACK_OUT                                                                                         
+          FROM  {tempdb}APS_TMP_ETL_MONITOR_DF_PROCESS  W                                                                          
+          INNER JOIN  APS_TMP_OCS_MAIN_H_VIEW.APS_TMP_OCS_MAIN_H_VIEW  H                                                                  
+          ON W.JOB_SPEC_GROUP_ID = H.JOB_SPEC_GROUP_ID AND W.TOOL_ID = H.MTOOL_ID                                                     
+          AND H.STATUS='OpeStart' AND W.JOB_STATUS = 'RUN' AND H.STATUS_TIME >  DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '5 day'                                              
+          GROUP BY  W.JOB_SPEC_GROUP_ID, W.TOOL_ID                     
+          """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_MONITOR_DF_PT",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_MONITOR_DF_PT")
+
+
+def getDfMonitorData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+          INSERT INTO APS_ETL_MONITOR (
+           --modify by xiecheng for version up
+               TOOLG_ID, FOUP_ID, TOOL_ID, CH_ID, JOB_ID, RECIPE, START_DATE, END_DATE, JOB_STATUS, JOB_TYPE,
+               PROCESS_TIME, TRACK_IN, PROCESS_START, PARENTID, UPDATE_TIME, PARTCODE
+         )
+          WITH TRACK_IN_DATA AS (
+                 SELECT W.JOB_SPEC_GROUP_ID, W.TOOL_ID,
+                 --modify by xiecheng for version up
+                 --MAX(H.PROCESS_ST_TIME) AS TRACK_IN,               
+                 --MAX(H.PROCESS_ED_TIME) AS TRACK_OUT
+                 MAX(H.START_TIME) AS TRACK_IN,  
+                 MAX(W.CREATE_TIME) AS CREATE_TIME  
+                 FROM {tempdb}APS_TMP_ETL_MONITOR_DF_PROCESS  W
+                 --modify by xiecheng for version up
+                 --INNER JOIN APS_TMP_OCS_MAIN_H_VIEW.APS_TMP_OCS_MAIN_H_VIEW H
+                 INNER JOIN APS_MID_OCS_JOB_GROUP_PO_STATE_H_VIEW.APS_MID_OCS_JOB_GROUP_PO_STATE_H_VIEW H
+                 ON W.JOB_SPEC_GROUP_ID = H.JOB_SPEC_GROUP_ID AND  W.TOOL_ID = H.TOOL_ID    
+                 AND H.STATUS='OpeStart' AND W.JOB_STATUS = 'RUN' AND H.END_TIME > DATE_TRUNC('second', CURRENT_TIMESTAMP) - INTERVAL '5 day'
+                 GROUP BY W.JOB_SPEC_GROUP_ID, W.TOOL_ID
+          ),
+           WIP_DATA AS (
+                 SELECT MAX(W.LOT_ID) AS LOT_ID,W.EQP_ID,
+                 W.CASSETE_ID,MAX(W.OPE_NO_START_TIME) AS OPE_NO_START_TIME
+                 --modify by xiecheng for version up
+                 ,MAX(W.PROCESS_START_TIME) AS PROCESS_START_TIME  
+                 FROM APS_SYNC_WIP.APS_SYNC_WIP  W
+                 WHERE
+                 LOT_TYPE ='Process Monitor'
+                 AND W.EQP_ID IS NOT NULL AND W.EQP_ID <> ''
+                 GROUP BY EQP_ID,CASSETE_ID
+          )
+          SELECT T.TOOLG_ID,
+                 T.FOUP_ID,T.TOOL_ID,
+                 T.CH_ID,
+                 T.JOB_ID,
+                 T.RECIPE,T.START_DATE,
+                 T.END_DATE,
+                 CASE WHEN W.EQP_ID IS NOT NULL AND W.EQP_ID <> '' THEN 'RUN' ELSE T.JOB_STATUS END AS JOB_STATUS,
+                 T.JOB_TYPE,
+                 T.PROCESS_TIME,
+                 CASE WHEN W.EQP_ID IS NOT NULL AND W.EQP_ID <> '' THEN STRFTIME(W.OPE_NO_START_TIME, '%Y-%m-%d %H:%M:%S') ELSE
+                  --modify by xiecheng for version up
+                 -- (CASE WHEN T.JOB_STATUS ='RUN' AND TRACK_OUT < TRACK_IN THEN STRFTIME(D.TRACK_IN, '%Y-%m-%d %H:%M:%S') END) END AS TRACK_IN,
+                 (CASE WHEN T.JOB_STATUS ='RUN' AND  D.TRACK_IN > D.CREATE_TIME THEN STRFTIME(CAST(D.TRACK_IN AS TIMESTAMP), '%Y-%m-%d %H:%M:%S') END) END AS TRACK_IN,    
+                 CASE WHEN W.EQP_ID IS NOT NULL AND W.EQP_ID <> '' THEN STRFTIME(CAST(W.PROCESS_START_TIME AS TIMESTAMP), '%Y-%m-%d %H:%M:%S') ELSE
+                 (CASE WHEN T.JOB_STATUS ='RUN' AND DP.TRACK_IN > D.TRACK_IN AND (DP.TRACK_OUT IS NULL OR DP.TRACK_OUT = '' OR DP.TRACK_IN > DP.TRACK_OUT) 
+                 THEN STRFTIME(CAST(DP.TRACK_IN AS TIMESTAMP), '%Y-%m-%d %H:%M:%S') END) END AS PROCESS_START,  
+                 '{uuid}' AS PARENTID,
+                 '{current_time}' AS UPDATE_TIME,
+                 '' AS PARTCODE
+          FROM  {tempdb}APS_TMP_ETL_MONITOR_DF_PROCESS  T
+          LEFT JOIN TRACK_IN_DATA D
+          ON D.JOB_SPEC_GROUP_ID = T.JOB_SPEC_GROUP_ID AND T.TOOL_ID = D.TOOL_ID
+          LEFT JOIN WIP_DATA W
+          ON W.EQP_ID = T.TOOL_ID AND POSITION(W.CASSETE_ID IN T.FOUP_ID) > 0
+          LEFT JOIN {tempdb}APS_TMP_ETL_MONITOR_DF_PT DP
+          ON DP.JOB_SPEC_GROUP_ID = T.JOB_SPEC_GROUP_ID AND T.TOOL_ID = DP.TOOL_ID 
+              """.format(uuid=uuid, current_time=current_time, tempdb=my_duck.get_temp_table_mark())
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_MONITOR",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_MONITOR")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_ETL_MONITOR_10M"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_ETL_MONITOR"
+    used_table_list = ['APS_SYNC_OCS_JOB_SPEC_GROUP_PO',
+                       'APS_SYNC_ETL_TOOL',
+                       'APS_TMP_OCS_MAIN_H_VIEW',
+                       'APS_MID_TYPE31_MEDIAN',
+                       'APS_MID_TYPE32_MEDIAN',
+                       'APS_SYNC_TMS_EQP_PARAMETER',
+                       'APS_SYNC_SCHE_PM_PROP_TIME',
+                       'APS_SYNC_EQP_STATUS_BOOKING_SETTING',
+                       'APS_SYNC_WIP',
+                       'APS_ETL_TOOL',
+                       'APS_MID_OCS_MEASURE_CT',
+                       'APS_MID_OCS_JOB_GROUP_PO_STATE_H_VIEW',
+                       'APS_MID_TYPE31_RUNTIME_ALL',
+                       'APS_MID_TYPE32_RUNTIME_ALL'
+                       ]
+    target_table_sql = """
+        create table {}APS_ETL_MONITOR
+        (
+            parentid      VARCHAR(60) not null,
+            toolg_id      VARCHAR(60) not null,
+            tool_id       VARCHAR(60) not null,
+            ch_id         VARCHAR(60) not null,
+            job_id        VARCHAR(60) not null,
+            start_date    VARCHAR(60) not null,
+            end_date      VARCHAR(60) not null,
+            process_time  VARCHAR(60) not null,
+            reticle_id    VARCHAR(60),
+            recipe        VARCHAR(60),
+            job_status    VARCHAR(60),
+            track_in      VARCHAR(60),
+            update_time   VARCHAR(60) not null,
+            partcode      VARCHAR(60) not null,
+            foup_id       VARCHAR(500),
+            job_type      VARCHAR(60),
+            tool_code     VARCHAR(60),
+            fixed_flag    VARCHAR(1),
+            fixed_time    VARCHAR(60),
+            process_start VARCHAR(64),
+            PRIMARY KEY (PARENTID, TOOLG_ID, TOOL_ID, JOB_ID, CH_ID, PARTCODE)
+        )
+    """.format("")  # 注意:这里一定要这么写 [create {table_type} table 表名] => [create {table_type} table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    # -------------------------- 内存模式改成文件模式
+    _temp_db_path = os.path.join(config.g_mem_speed_etl_output_path, target_table, "inprocess")
+    if not os.path.exists(_temp_db_path):
+        os.makedirs(_temp_db_path)
+
+    temp_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + "_temp.db")
+    # 处理中文件
+    in_process_db_file = os.path.join(_temp_db_path, target_table + "_" + current_time_short + ".db")
+    # 结果文件
+    target_db_file = os.path.join(config.g_mem_etl_output_path, target_table,
+                                  target_table + "_" + current_time_short + ".db")
+    # --------------------------
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # -------------------------- 内存模式改成文件模式
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_file(_temp_db_path, in_process_db_file, target_table_sql)
+        duck_db_memory.sql('SET threads TO 4')
+        if not os.path.exists(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)):
+            os.makedirs(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid))
+        duck_db_memory.execute(
+            "SET temp_directory='{}'".format(os.path.join(config.g_mem_speed_etl_output_path, 'duck_temp', uuid)))
+
+        if not config.g_debug_mode:
+            create_temp_table(duck_db_memory)
+        else:
+            duck_db_temp = my_duck.create_duckdb_for_temp_table(_temp_db_path, temp_db_file)
+            # 创建Temp表
+            create_temp_table(duck_db_temp)
+            duck_db_temp.commit()
+            duck_db_temp.close()
+            my_duck.attach_temp_db_write_able(duck_db_memory, "TEMPDB", temp_db_file)
+        # --------------------------
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+        # 获取TrackIn的资料信息
+        getTrackInTimeSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        # 获取MONITOR QTY的资料信息
+        getMonitorQty1Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 获取MONITOR QTY的资料信息
+        getMonitorQty2Sql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 写入monitor数据
+        getSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # 放入PM和TOOLDOWN的数据
+        # ①存在V_TMS_EQP_PARAMETER的PM信息
+        # 将WET区Monitor从整体中拆分出来
+        getWetPMSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        getWetPMSql1(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        getWetPMSql2(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+        getPMSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # ②（厂内GUI设定资料）ToolDown及其他PM
+        getPhotoGuiSql(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        # ③ 针对DF区Monitor的情况
+        getDfSourceMonitorData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        getDfProcessMonitorData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        getDfMonitorProcessStartData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        getDfMonitorData(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        if config.g_copy_to_pg:
+            select_sql_in_duck = """select CASE WHEN parentid='' THEN NULL ELSE parentid END AS parentid,
+                                           CASE WHEN toolg_id='' THEN NULL ELSE toolg_id END AS toolg_id,
+                                           CASE WHEN tool_id='' THEN NULL ELSE tool_id END AS tool_id,
+                                           CASE WHEN ch_id='' THEN NULL ELSE ch_id END AS ch_id,
+                                           CASE WHEN job_id='' THEN NULL ELSE job_id END AS job_id,
+                                           CASE WHEN start_date='' THEN NULL ELSE start_date END AS start_date,
+                                           CASE WHEN end_date='' THEN NULL ELSE end_date END AS end_date,
+                                           CASE WHEN process_time='' THEN NULL ELSE process_time END AS process_time,
+                                           CASE WHEN reticle_id='' THEN NULL ELSE reticle_id END AS reticle_id,
+                                           CASE WHEN recipe='' THEN NULL ELSE recipe END AS recipe,
+                                           CASE WHEN job_status='' THEN NULL ELSE job_status END AS job_status,
+                                           CASE WHEN track_in='' THEN NULL ELSE track_in END AS track_in,
+                                           CASE WHEN update_time='' THEN NULL ELSE update_time END AS update_time,
+                                           CASE WHEN foup_id='' THEN NULL ELSE foup_id END AS foup_id,
+                                           CASE WHEN job_type='' THEN NULL ELSE job_type END AS job_type,
+                                           CASE WHEN tool_code='' THEN NULL ELSE tool_code END AS tool_code,
+                                           CASE WHEN fixed_flag='' THEN NULL ELSE fixed_flag END AS fixed_flag,
+                                           CASE WHEN fixed_time='' THEN NULL ELSE fixed_time END AS fixed_time,
+                                           CASE WHEN process_start ='' THEN NULL ELSE process_start  END AS process_start 
+                                     from APS_ETL_MONITOR
+                                     """
+            postgres_table_define = """etl_monitor(parentid,toolg_id,tool_id,ch_id,job_id, start_date,end_date,
+                                                   process_time,reticle_id,recipe,job_status,track_in,update_time,
+                                                    foup_id,job_type,tool_code,fixed_flag,fixed_time,process_start)
+                                         """
+            my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                                duckdb=duck_db_memory,
+                                                table_name_in_duckdb=target_table,
+                                                table_name_in_pg="etl_monitor",  # 要小写
+                                                select_sql_in_duck=select_sql_in_duck,
+                                                postgres_table_define=postgres_table_define,
+                                                oracle_conn=oracle_conn,
+                                                ETL_Proc_Name=ETL_Proc_Name)
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                                   in_process_db_file=in_process_db_file,
+                                                                                   target_table=target_table,
+                                                                                   current_time=current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file, current_time_short)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file,
+                                   cons_error_code.APS_ETL_MONITOR_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        # 导出到目标文件中
+        my_duck.export_result_duck_file_and_close_duck_db_memory2(duck_db_memory,
+                                                                  in_process_db_file=in_process_db_file,
+                                                                  target_table=target_table,
+                                                                  current_time=current_time_short)
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        # 删除TMP目录:LQN:2023/08/21
+        if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+            os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        if os.path.exists(temp_db_file) and not config.g_debug_mode:
+            os.remove(temp_db_file)
+        gc.collect()  # 内存释放
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()

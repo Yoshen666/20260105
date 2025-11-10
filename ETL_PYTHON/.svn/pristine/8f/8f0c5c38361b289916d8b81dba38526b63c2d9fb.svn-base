@@ -1,0 +1,647 @@
+import gc
+import logging
+import os
+
+from xinxiang import config
+from xinxiang.util import my_duck, my_oracle, my_date, cons_error_code, cons, my_postgres
+
+
+def create_temp_table(duck_db):
+    '''
+    这里在内存中创建使用到的临时表
+    '''
+    sql = """
+    create table APS_TMP_ETL_SEASON_RULE_DUMMY
+    (
+        process_time VARCHAR(64),
+        toolid       VARCHAR(64),
+        prodid       VARCHAR(64),
+        caseid       VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+    sql = """
+    create table APS_TMP_ETL_SEASON_RULE_TOOL
+    (
+        eqp_id VARCHAR(64),
+        eqp_g  VARCHAR(64)
+    )
+    """
+    duck_db.sql(sql)
+    sql = """
+      create table APS_TMP_ETL_SEASON_RULE_DUMMY2
+      (
+        process_time VARCHAR(64),
+        prodid       VARCHAR(64),
+        caseid       VARCHAR(64)
+      )
+      """
+    duck_db.sql(sql)
+
+    sql = """
+      create table APS_TMP_ETL_SEASON_RULE_DUMMY3
+      (
+        process_time VARCHAR(64),
+        rn           VARCHAR(64)
+      )
+      """
+    duck_db.sql(sql)
+
+    sql = """
+        create table APS_TMP_ETL_SEASON_DUMMY_SEASON
+        (
+            toolg_id               VARCHAR(64),
+            tool_id                VARCHAR(64),
+            ch_id                  VARCHAR(64),
+            seq                    VARCHAR(64),
+            rule_name              VARCHAR(64),
+            run_dummy              VARCHAR(64),
+            dmy_prodid             VARCHAR(64),
+            caseid                 VARCHAR(64),
+            ppid_last              VARCHAR(256),
+            ppid_next              VARCHAR(256),
+            ppid_last_mode         VARCHAR(64),
+            ppid_next_mode         VARCHAR(64),
+            recipe_setup_last      VARCHAR(256),
+            recipe_setup_next      VARCHAR(256),
+            recipe_setup_last_mode VARCHAR(64),
+            recipe_setup_next_mode VARCHAR(64)
+        )
+        """
+    duck_db.sql(sql)
+
+def biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+         INSERT  /*+ append */  INTO APS_TMP_ETL_SEASON_RULE_TOOL( 
+        EQP_ID, EQP_G                                                                   
+        )                                                                                  
+        SELECT EQP_ID,                                                                 
+               MAX(EQP_G) AS EQP_G                                                          
+         FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL L                                    
+         WHERE L.HOST_EQP_FLAG = 'Y'
+         GROUP BY EQP_ID
+    """.format(uuid=uuid, current_time=current_time)
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_SEASON_RULE_TOOL",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_SEASON_RULE_TOOL")
+
+
+def biz_method_02(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO APS_ETL_SEASON_RULE(                                                                  
+            PARENTID, TOOLG_ID, TOOL_ID, CH_ID, SEQ, PROCESS_TIME,
+            LOT_TYPE, RECIPE_LAST, RECIPE_LAST_MODE, RECIPE_NEXT,
+            RECIPE_NEXT_MODE, IDLETIME_FROM, IDLETIME_TO, RUN_LIMIT,
+            RUN_QTY, UPDATE_TIME, PARTCODE                                                                                                     
+        )                                                                                                                        
+          WITH TOOLG_CHAMBER AS (                                                                                                                                                                                                    
+               SELECT MAX(EQP_G) AS EQP_G, EQP_ID, MAX(HOST_EQP_FLAG) AS HOST_EQP_FLAG                                                                                
+               FROM APS_SYNC_ETL_TOOL.APS_SYNC_ETL_TOOL                                                                                                 
+               --WHERE EQP_CHAMBER_FLAG = 'Chamber'                                                                                                 
+               GROUP BY EQP_ID                                                                                                    
+          ),                                                                                          
+          --modify by xiecheng for version up                                                                                                              
+          --TYPE3_DATE AS(                                                                                                          
+           --   SELECT T.TOOLG_ID,                                                                                                  
+               --      T.TOOL_ID,T.PPID,                                                                                            
+                    -- ROUND(CEIL((TO_DATE(T.PROCESS_END,'YYYY-MM-DD HH24:MI:SS') -                                                 
+                    --  TO_DATE(T.PROCESS_START,'YYYY-MM-DD HH24:MI:SS'))*24*60*60)/3600,2) AS PROCESS_TIME  
+           --            ROUND((extract(epoch from( CAST(T.PROCESS_END AS datetime ) 
+            --           - (CAST(T.PROCESS_START AS datetime)) ))) / 3600.0, 2) AS PROCESS_TIME                     
+            --    FROM APS_TR_TYPE3.APS_TR_TYPE3 T                                                                                               
+       --   ),                                                                                                                      
+         -- ZWS_DATA_3 AS (                                                                                                         
+            --   SELECT TOOLG_ID,TOOL_ID,PPID,                                                                                      
+         --             AVG(PROCESS_TIME) AS PROCESS_TIME                                                                           
+          --     FROM (                                                                                                             
+           --      SELECT DISTINCT TOOLG_ID,TOOL_ID,PPID,PROCESS_TIME                                                               
+            --     FROM(                                                                                                            
+             --        SELECT TEM.*, MEDIAN(R_NUM) OVER(PARTITION BY TOOLG_ID,TOOL_ID,PPID) MED                                     
+            --         FROM(                                                                                                        
+                --       SELECT E.*, ROW_NUMBER() OVER(PARTITION BY TOOLG_ID,TOOL_ID,PPID ORDER BY PROCESS_TIME) R_NUM              
+                --       FROM TYPE3_DATE E                                                                                          
+                --     )TEM                                                                                                         
+                --    )                                                                                                             
+              --   WHERE ABS(cast(R_NUM as decimal) - cast(MED as decimal)) <=0.5                                                                                     
+            --   )                                                                                                                  
+            --   GROUP BY TOOLG_ID,TOOL_ID,PPID                                                                                     
+       --   ),                                                                                                                      
+        --  TYPE33_DATE AS(                                                                                                         
+          --    SELECT T.TOOLG_ID,                                                                                                  
+                    -- ROUND(CEIL((TO_DATE(T.PROCESS_END,'YYYY-MM-DD HH24:MI:SS') -                                                 
+                    --          TO_DATE(T.PROCESS_START,'YYYY-MM-DD HH24:MI:SS'))*24*60*60)/3600,2) AS PROCESS_TIME                                 
+               --      ROUND((extract(epoch from( CAST(T.PROCESS_END AS datetime ) 
+              --         - (CAST(T.PROCESS_START AS datetime)) ))) / 3600.0, 2) AS PROCESS_TIME            
+             --   FROM APS_TR_TYPE3.APS_TR_TYPE3 T                                                                                               
+        --  ),                                                                                                                      
+         -- ZWS_DATA_33 AS (                                                                                                        
+           --    SELECT TOOLG_ID,                                                                                                   
+               --       AVG(PROCESS_TIME) AS PROCESS_TIME                                                                           
+            --   FROM (                                                                                                             
+             --    SELECT DISTINCT TOOLG_ID,PROCESS_TIME                                                                            
+              --   FROM(                                                                                                            
+               --      SELECT TEM.*, MEDIAN(R_NUM) OVER(PARTITION BY TOOLG_ID) MED                                                  
+                 --    FROM(                                                                                                        
+                  --     SELECT E.*, ROW_NUMBER() OVER(PARTITION BY TOOLG_ID ORDER BY PROCESS_TIME) R_NUM                           
+                   --    FROM TYPE33_DATE E                                                                                         
+                  --   )TEM                                                                                                         
+                 --   )                                                                                                             
+               --    WHERE ABS(cast(R_NUM as decimal) - cast(MED as decimal)) <=0.5                                                                                  
+             --  )                                                                                                                  
+            --   GROUP BY TOOLG_ID                                                                                                  
+       --   ),                                                                                                                      
+          SPEC_INFO_CHAMBER AS (                                                                                                          
+             SELECT TL.EQP_G AS TOOLG_ID,                                                                                         
+                    SP.EQPID AS TOOL_ID,    
+                    --modify by xiecheng for version up                                                                                      
+                    --SP.EQPID||'.'||SP.CHAMBER AS CH_ID,     
+                    CASE WHEN EXISTS (SELECT 1 FROM TOOLG_CHAMBER T WHERE T.EQP_ID = SP.EQPID||'.'||SP.CHAMBER) THEN SP.EQPID||'.'||SP.CHAMBER ELSE SP.EQPID END AS CH_ID,                                                                                      
+                    '1' AS SEQ,                                                                                                   
+                    '' AS LOT_TYPE,                                                                                               
+                    '' AS RECIPE_LAST,                                                                                            
+                    '' AS RECIPE_LAST_MODE,                                                                                       
+                    '' AS RECIPE_NEXT,                                                                                            
+                    '' AS RECIPE_NEXT_MODE,                                                                                       
+                   (COALESCE(CAST(SP.IDLETIMESPEC AS INTEGER),0)*60) AS IDLETIME_FROM,                                                                  
+                   '' AS IDLETIME_TO,                                                                                             
+                   '' AS RUN_LIMIT,                                                                                               
+                   '' AS RUN_QTY                                                                                                  
+            FROM APS_SYNC_IDLE_DUMMY_SPEC.APS_SYNC_IDLE_DUMMY_SPEC SP                                                                                             
+            INNER JOIN TOOLG_CHAMBER TL                                                                                                   
+            ON TL.EQP_ID = SP.EQPID AND TL.HOST_EQP_FLAG = 'Y'                                                                                                                                                            
+          )                                                                                                                    
+         SELECT '{uuid}' AS PARENTID,                                                                                                                                                            
+                 SP.TOOLG_ID,                                                                                                     
+                 SP.TOOL_ID,                                                                                                      
+                 SP.CH_ID,                                                                                                        
+                 CAST(SP.SEQ AS INTEGER),                                                                                                          
+                 -- CAST(COALESCE(ZD.PROCESS_TIME,COALESCE(ZD33.PROCESS_TIME,0)) AS DECIMAL) AS PROCESS_TIME,
+                 COALESCE(ZD.PROCESS_TIME,COALESCE(ZD33.PROCESS_TIME,0)) AS PROCESS_TIME,                                                      
+                 SP.LOT_TYPE,                                                                                                     
+                 SP.RECIPE_LAST,                                                                                                  
+                 SP.RECIPE_LAST_MODE,                                                                                             
+                 SP.RECIPE_NEXT,                                                                                                  
+                 SP.RECIPE_NEXT_MODE,                                                                                             
+                 -- CAST(SP.IDLETIME_FROM AS DECIMAL(18,3)),                                                                                                
+                 -- CAST(SP.IDLETIME_TO AS DECIMAL(18,3)),                                                                                                  
+                 -- CAST(SP.RUN_LIMIT AS DECIMAL(18,3)),                                                                                                    
+                 -- CAST(SP.RUN_QTY AS DECIMAL(18,3)), 
+                 SP.IDLETIME_FROM  ,
+                 SP.IDLETIME_TO,
+                 SP.RUN_LIMIT ,
+                 SP.RUN_QTY ,
+                 '{current_time}' AS UPDATE_TIME,
+                 '' AS PARTCODE                                                                                                                              
+          FROM SPEC_INFO_CHAMBER SP                                                                                  
+          --modify by xiecheng for version up                                                                                                 
+          LEFT JOIN APS_MID_IDLE_DUMMY11_MEDIAN.APS_MID_IDLE_DUMMY11_MEDIAN ZD                                                                                                 
+             ON  ZD.TOOLG_ID = SP.TOOLG_ID                                                                                      
+          AND ZD.TOOL_ID = SP.TOOL_ID                                                                                                 
+             --modify by xiecheng for version up                                                                                              
+          LEFT JOIN APS_MID_IDLE_DUMMY12_MEDIAN.APS_MID_IDLE_DUMMY12_MEDIAN ZD33                                                                                              
+          ON ZD33.TOOLG_ID = SP.TOOLG_ID                                                                                           
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_SEASON_RULE",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_SEASON_RULE")
+
+
+def biz_method_03(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+          INSERT  /*+ append */  INTO APS_TMP_ETL_SEASON_RULE_DUMMY(                                   
+        PROCESS_TIME, TOOLID, PRODID, CASEID                                                                                
+        )                                                                                              
+         WITH COMPLETE_DATA AS (                                                                       
+              SELECT C.TOOLID,C.PRODID,C.CASEID,                                                       
+              --ROUND((C.SYS_DATE - C.STARTTIME)*24,3) AS PROCESS_TIME    
+              round((extract(epoch from(cast(C.SYS_DATE as datetime) - cast(C.STARTTIME as datetime)))) / 3600.0, 3) AS PROCESS_TIME                             
+              FROM APS_SYNC_OCS_AUTODUMMY_COMPLETE.APS_SYNC_OCS_AUTODUMMY_COMPLETE C                           
+              WHERE C.SELECTTYPE='PRDCHG'                 
+              AND C.JOBSTATE='End'                                                                     
+         ),                                                                                           
+          RANKED_DATA AS(
+            SELECT TOOLID,PRODID,CASEID,PROCESS_TIME,ROW_NUMBER() 
+            OVER(PARTITION BY TOOLID,PRODID,CASEID ORDER BY PROCESS_TIME) AS rn,
+            COUNT(*) OVER(PARTITION BY TOOLID, PRODID, CASEID) as total_rows from COMPLETE_DATA
+         )
+         select TOOLID,PRODID,CASEID,AVG(COALESCE(PROCESS_TIME,0)) as PROCESS_TIME from RANKED_DATA WHERE rn in 
+                (FLOOR(total_rows * 0.5),CEIL(total_rows * 0.5)) 
+         GROUP BY TOOLID,PRODID,CASEID                                                                             
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_SEASON_RULE_DUMMY",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_SEASON_RULE_DUMMY")
+
+
+# modify by xiecheng for version up
+def biz_method_03_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """                 
+        INSERT  /*+ append */  INTO APS_TMP_ETL_SEASON_RULE_DUMMY2(                                 
+         PROCESS_TIME, PRODID, CASEID                                                                               
+        )                                                                                            
+         WITH COMPLETE_DATA AS (                                                                    
+              SELECT C.PRODID,C.CASEID,                                                             
+            --  ROUND((C.SYS_DATE - C.STARTTIME)*24,3) AS PROCESS_TIME   
+               ROUND((extract(epoch from( CAST(C.SYS_DATE AS datetime ) 
+                       - (CAST(C.STARTTIME AS datetime)) ))) / 3600.0, 3) AS PROCESS_TIME                                    
+              FROM APS_SYNC_OCS_AUTODUMMY_COMPLETE.APS_SYNC_OCS_AUTODUMMY_COMPLETE C                        
+              WHERE C.SELECTTYPE='PRDCHG'               
+              AND C.JOBSTATE='End'                                                                  
+         ),    
+           RANKED_DATA AS(
+            SELECT PRODID,CASEID,PROCESS_TIME,ROW_NUMBER() 
+            OVER(PARTITION BY PRODID,CASEID ORDER BY PROCESS_TIME) AS rn,
+            COUNT(*) OVER(PARTITION BY PRODID,CASEID) as total_rows from COMPLETE_DATA
+         )
+         select AVG(COALESCE(PROCESS_TIME,0)) as PROCESS_TIME,PRODID,CASEID from RANKED_DATA WHERE rn in 
+                (FLOOR(total_rows * 0.5),CEIL(total_rows * 0.5)) 
+         GROUP BY PRODID,CASEID                                                                          
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_SEASON_RULE_DUMMY2",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_SEASON_RULE_DUMMY2")
+
+
+# modify by xiecheng for version up
+def biz_method_03_02(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """                          
+        INSERT  /*+ append */  INTO APS_TMP_ETL_SEASON_RULE_DUMMY3(                                   
+            PROCESS_TIME, RN                                                                                
+       )                                                                                              
+        WITH COMPLETE_DATA AS (                                                                      
+             SELECT                                                                                  
+             --ROUND((C.SYS_DATE - C.STARTTIME)*24,3) AS PROCESS_TIME      
+               ROUND((extract(epoch from( CAST(C.SYS_DATE AS datetime ) 
+                       - (CAST(C.STARTTIME AS datetime)) ))) / 3600.0, 3) AS PROCESS_TIME                               
+             FROM APS_SYNC_OCS_AUTODUMMY_COMPLETE.APS_SYNC_OCS_AUTODUMMY_COMPLETE C                          
+             WHERE C.SELECTTYPE='PRDCHG'              
+             AND C.JOBSTATE='End'                                                                    
+        ),
+          RANKED_DATA AS(
+            SELECT PROCESS_TIME,ROW_NUMBER() 
+            OVER(PARTITION BY '1' ORDER BY PROCESS_TIME) AS row_number,
+            COUNT(*) OVER(PARTITION BY '1') as total_rows from COMPLETE_DATA
+         )
+         select '1' AS RN,AVG(COALESCE(PROCESS_TIME,0)) as PROCESS_TIME from RANKED_DATA WHERE row_number in 
+               (FLOOR(total_rows * 0.5),CEIL(total_rows * 0.5))  
+          GROUP BY '1'                                                                        
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_SEASON_RULE_DUMMY3",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_SEASON_RULE_DUMMY3")
+
+
+# modify by xiecheng for version up
+def biz_method_03_03(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """                          
+       INSERT  /*+ append */  INTO APS_TMP_ETL_SEASON_DUMMY_SEASON(                                     
+             TOOLG_ID, TOOL_ID, CH_ID, SEQ, RULE_NAME, RUN_DUMMY, DMY_PRODID, CASEID, PPID_LAST, PPID_NEXT, PPID_LAST_MODE,
+             PPID_NEXT_MODE, RECIPE_SETUP_LAST, RECIPE_SETUP_NEXT, RECIPE_SETUP_LAST_MODE, RECIPE_SETUP_NEXT_MODE                                                                      
+        )                                                                                             
+         SELECT                                                                                       
+                D.EQP_G,P.TOOLID,P.TOOLID AS CH_ID,                                                   
+                --'1' AS SEQ,'NPW_' || P.COL_NAME AS RULE_NAME,  
+                --modify by xiecheng for version up    
+                '1' AS SEQ,'NPW_' || TRIM(P.COL_NAME) AS RULE_NAME,                                   
+                P.RUN_DUMMY,P.DMY_PRODID,P.CASEID,                                                    
+                CASE WHEN P.COL_NAME='RECIPE' AND LENGTH(SUBSTR(P.PRE_VALUE, 1, position('.' in P.PRE_VALUE)-1)) > 2                       
+                     THEN REPLACE(SUBSTR(P.PRE_VALUE, position('.' in P.PRE_VALUE)+1),'*','%')           
+                     WHEN P.COL_NAME='RECIPE' THEN REPLACE(P.PRE_VALUE,'*','%')                       
+                   END AS PPID_LAST,                                                                  
+                CASE WHEN P.COL_NAME='RECIPE'  AND LENGTH(SUBSTR(P.CUR_VALUE, 1, position('.' in P.CUR_VALUE)-1)) > 2                       
+                     THEN REPLACE(SUBSTR(P.CUR_VALUE,  position('.' in P.CUR_VALUE)+1),'*','%')           
+                     WHEN P.COL_NAME='RECIPE' THEN REPLACE(P.CUR_VALUE,'*','%')                       
+                   END AS PPID_NEXT,                                                                  
+                CASE WHEN P.COL_NAME='RECIPE' THEN 'IN'                                               
+                   END AS PPID_LAST_MODE,                                                             
+                CASE WHEN P.COL_NAME='RECIPE' THEN 'IN'                                               
+                   END AS PPID_NEXT_MODE,                                                             
+                CASE WHEN P.COL_NAME='RECIPEGROUP' THEN REPLACE(P.PRE_VALUE,'%','*')                  
+                     WHEN P.COL_NAME='GAS' THEN REPLACE(P.PRE_VALUE,'*','%')                          
+                     END AS RECIPE_SETUP_LAST,                                                        
+                CASE WHEN P.COL_NAME='RECIPEGROUP' THEN REPLACE(P.CUR_VALUE,'%','*')                  
+                     WHEN P.COL_NAME='GAS' THEN REPLACE(P.CUR_VALUE,'*','%')                          
+                   END AS RECIPE_SETUP_NEXT,                                                          
+                CASE WHEN P.COL_NAME<>'RECIPE' THEN 'IN'                                              
+                   END AS RECIPE_SETUP_LAST_MODE,                                                     
+                CASE WHEN P.COL_NAME<>'RECIPE' THEN 'IN'                                              
+                   END AS RECIPE_SETUP_NEXT_MODE                                                      
+         FROM APS_SYNC_RECIPE_NPW_RULEMAP.APS_SYNC_RECIPE_NPW_RULEMAP P                                   
+         INNER JOIN APS_TMP_ETL_SEASON_RULE_TOOL D                                                         
+         ON D.EQP_ID = P.TOOLID                                                                       
+         WHERE P.TYPE ='PRDCHG'                                                               
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_SEASON_DUMMY_SEASON",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_SEASON_DUMMY_SEASON")
+
+
+# modify by xiecheng for version up
+def biz_method_04_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO APS_ETL_SEASON_RULE(
+          PARENTID, TOOLG_ID, TOOL_ID, CH_ID, SEQ, RULE_NAME, PROCESS_TIME, PPID_LAST, PPID_NEXT, PPID_LAST_MODE, PPID_NEXT_MODE,
+          RECIPE_SETUP_LAST, RECIPE_SETUP_NEXT, RECIPE_SETUP_LAST_MODE, RECIPE_SETUP_NEXT_MODE, UPDATE_TIME, PARTCODE
+ )  
+  SELECT DISTINCT  '{uuid}'  AS PARENTID,  
+               P.TOOLG_ID,P.TOOL_ID,P.CH_ID,                                                       
+               P.SEQ,P.RULE_NAME,                                                                  
+               CASE WHEN P.RUN_DUMMY <> 'Y' THEN CAST('0.0' AS DECIMAL)                                               
+                    WHEN C.TOOLID IS NOT NULL THEN CAST(COALESCE(C.PROCESS_TIME,0) AS DECIMAL)                                  
+                    WHEN C2.PRODID IS NOT NULL THEN CAST(COALESCE(C2.PROCESS_TIME,0) AS DECIMAL)                                
+                    WHEN C3.RN IS NOT NULL THEN CAST(COALESCE(C3.PROCESS_TIME,0) AS DECIMAL)                                    
+                    END AS PROCESS_TIME,                                                           
+               P.PPID_LAST,                                                                        
+               P.PPID_NEXT,                                                                        
+               P.PPID_LAST_MODE,                                                                   
+               P.PPID_NEXT_MODE,                                                                   
+               P.RECIPE_SETUP_LAST,                                                                
+               P.RECIPE_SETUP_NEXT,                                                                
+               P.RECIPE_SETUP_LAST_MODE,                                                           
+               P.RECIPE_SETUP_NEXT_MODE,             
+           '{current_time}'  AS UPDATE_TIME, 
+         '' AS PARTCODE  
+         FROM APS_TMP_ETL_SEASON_DUMMY_SEASON P 
+         LEFT JOIN APS_TMP_ETL_SEASON_RULE_DUMMY C                                                         
+        ON C.TOOLID = P.TOOL_ID                                                                       
+        AND C.PRODID = P.DMY_PRODID                                                                  
+        AND C.CASEID = P.CASEID                                                                      
+        LEFT JOIN APS_TMP_ETL_SEASON_RULE_DUMMY2 C2                                                       
+        ON C2.PRODID = P.DMY_PRODID                                                                  
+        AND C2.CASEID = P.CASEID                                                                     
+        LEFT JOIN APS_TMP_ETL_SEASON_RULE_DUMMY3 C3                                                       
+        ON C3.RN = 1                                                                                                                                                               
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_SEASON_RULE",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_SEASON_RULE")
+
+
+def biz_method_05(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name):
+    sql = """
+        INSERT  /*+ append */  INTO APS_ETL_SEASON_RULE(                                 
+             PARENTID, TOOLG_ID, TOOL_ID, CH_ID, SEQ, RULE_NAME, PROCESS_TIME, PROD_ID_LAST, PROD_ID_LAST_MODE, PROD_ID_NEXT,
+             PROD_ID_NEXT_MODE, LOT_ID_LAST, LOT_ID_LAST_MODE, LOT_ID_NEXT, LOT_ID_NEXT_MODE,PRODG_ID_LAST,PRODG_ID_LAST_MODE,
+             PRODG_ID_NEXT,PRODG_ID_NEXT_MODE,RECIPE_LAST,RECIPE_LAST_MODE,RECIPE_NEXT,RECIPE_NEXT_MODE,LAYER_LAST, LAYER_LAST_MODE,LAYER_NEXT,LAYER_NEXT_MODE,
+             STAGE_LAST,STAGE_LAST_MODE,STAGE_NEXT,STAGE_NEXT_MODE,CONSEC_UNIT,CONSEC_CNT,CONSEC_CNT_MODE, UPDATE_TIME, PARTCODE                                                                              
+        )                                                                                           
+         SELECT DISTINCT  '{uuid}' AS PARENTID,                                                                                             
+                CASE WHEN POSITION('*' IN N.EQP_ID)>0 THEN '%' ELSE TD.EQP_G END AS TOOLG_ID,                                                                 
+                REPLACE(N.EQP_ID,'*','%') AS TOOL_ID,                                                                                                   
+                '' AS CH_ID,                                                                                                                            
+                CAST('1' AS INTEGER) AS SEQ,                                                                                                                             
+                'SPECIAL_LOT_CTRL' AS RULE_NAME,                                                                                                        
+                CASE WHEN N.NEED_TIME = '*' OR N.NEED_TIME IS NULL THEN CAST('0' AS DECIMAL) ELSE CAST(COALESCE(N.NEED_TIME,0) AS DECIMAL) END AS PROCESS_TIME,                                                             
+                CASE WHEN N.CONTROL_TYPE='1' THEN REPLACE(REPLACE(N.CONTROL_ITEM,'*','%'),'!','') END AS PROD_ID_LAST,                                  
+                CASE WHEN N.CONTROL_TYPE='1' THEN (CASE WHEN POSITION('!' IN N.CONTROL_ITEM) =1 THEN 'NOT IN' ELSE 'IN' END) END AS PROD_ID_LAST_MODE,         
+                CASE WHEN N.CONTROL_TYPE='1' THEN REPLACE(REPLACE(N.TO_ITEM,'*','%'),'!','') END AS PROD_ID_NEXT,                                       
+                CASE WHEN N.CONTROL_TYPE='1' THEN (CASE WHEN POSITION('!' IN N.TO_ITEM) =1 THEN 'NOT IN' ELSE 'IN' END)  END AS PROD_ID_NEXT_MODE,             
+                CASE WHEN N.CONTROL_TYPE='2' THEN REPLACE(REPLACE(N.CONTROL_ITEM,'*','%'),'.','') END AS LOT_ID_LAST,                                   
+                CASE WHEN N.CONTROL_TYPE='2' THEN 'IN' END AS LOT_ID_LAST_MODE,                                                                         
+                CASE WHEN N.CONTROL_TYPE='2' THEN REPLACE(REPLACE(N.TO_ITEM,'*','%'),'.','') END AS LOT_ID_NEXT,                                        
+                CASE WHEN N.CONTROL_TYPE='2' THEN 'IN' END AS LOT_ID_NEXT_MODE,                                                                         
+                CASE WHEN N.CONTROL_TYPE='3' THEN REPLACE(REPLACE(REPLACE(N.CONTROL_ITEM,'*','%'),'!',''),'/',',') END AS PRODG_ID_LAST,                
+                CASE WHEN N.CONTROL_TYPE='3' THEN (CASE WHEN POSITION('!' IN N.CONTROL_ITEM)=1 THEN 'NOT IN' ELSE 'IN' END) END AS PRODG_ID_LAST_MODE,        
+                CASE WHEN N.CONTROL_TYPE='3' THEN REPLACE(REPLACE(REPLACE(N.TO_ITEM,'*','%'),'!',''),'/',',')  END AS PRODG_ID_NEXT,                    
+                CASE WHEN N.CONTROL_TYPE='3' THEN (CASE WHEN POSITION('!' IN N.TO_ITEM)=1 THEN 'NOT IN' ELSE 'IN' END) END AS PRODG_ID_NEXT_MODE,             
+                CASE WHEN N.CONTROL_TYPE='4' THEN REPLACE(REPLACE(N.CONTROL_ITEM,'*','%'),'!','') END AS RECIPE_LAST,                                   
+                CASE WHEN N.CONTROL_TYPE='4' THEN (CASE WHEN POSITION('!' IN N.CONTROL_ITEM)=1 THEN 'NOT IN' ELSE 'IN' END) END AS RECIPE_LAST_MODE,          
+                CASE WHEN N.CONTROL_TYPE='4' THEN REPLACE(REPLACE(N.TO_ITEM,'*','%'),'!','') END AS RECIPE_NEXT,                                        
+                CASE WHEN N.CONTROL_TYPE='4' THEN (CASE WHEN POSITION('!' IN N.TO_ITEM)=1 THEN 'NOT IN' ELSE 'IN' END) END AS RECIPE_NEXT_MODE,               
+                CASE WHEN N.CONTROL_OPE = '*' THEN '' ELSE SUBSTRING(N.CONTROL_OPE, 1, POSITION('.' IN N.CONTROL_OPE)-1) END AS LAYER_LAST,                   
+                CASE WHEN N.CONTROL_OPE = '*' THEN '' ELSE 'IN' END AS LAYER_LAST_MODE,                                                                 
+                CASE WHEN N.CONTROL_OPE = '*' THEN '' ELSE SUBSTRING(N.CONTROL_OPE, 1,  POSITION('.' IN N.CONTROL_OPE)-1) END AS LAYER_NEXT,                   
+                CASE WHEN N.CONTROL_OPE = '*' THEN '' ELSE 'IN' END AS LAYER_NEXT_MODE,                                                                 
+                CASE WHEN N.CONTROL_OPE = '*' THEN '' ELSE SUBSTRING(N.CONTROL_OPE,  POSITION('.' IN N.CONTROL_OPE)+1) END AS STAGE_LAST,                      
+                CASE WHEN N.CONTROL_OPE = '*' THEN '' ELSE 'IN' END AS STAGE_LAST_MODE,                                                                 
+                CASE WHEN N.CONTROL_OPE = '*' THEN '' ELSE SUBSTRING(N.CONTROL_OPE,  POSITION('.' IN N.CONTROL_OPE)+1) END AS STAGE_NEXT,                      
+                CASE WHEN N.CONTROL_OPE = '*' THEN '' ELSE 'IN' END AS STAGE_NEXT_MODE,                                                                 
+                CASE WHEN N.MIN_MOVE_PCS = '*' OR N.MIN_MOVE_PCS IS NULL THEN NULL ELSE 'WAFER' END AS CONSEC_UNIT,                                                               
+                CASE WHEN N.MIN_MOVE_PCS = '*' OR N.MIN_MOVE_PCS IS NULL THEN NULL ELSE CAST(N.MIN_MOVE_PCS AS DECIMAL) END AS CONSEC_CNT,                                                         
+                CASE WHEN N.MIN_MOVE_PCS = '*' OR N.MIN_MOVE_PCS IS NULL THEN NULL ELSE 'LARGER' END AS CONSEC_CNT_MODE,                                                          
+                '{current_time}' AS UPDATE_TIME,                                                                                                  
+                '' AS PARTCODE                                                                                       
+         FROM APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW.APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW N                                                                           
+         LEFT JOIN APS_TMP_ETL_SEASON_RULE_TOOL TD                                                                                                           
+         ON TD.EQP_ID = N.EQP_ID                                                                                                                        
+         WHERE 1=1                                                                                               
+         AND 
+        --  DECODE(N.END_TIME,NULL,TO_DATE('1901-01-01 00:00','YYYY-MM-DD HH24:MI:SS'),TO_DATE(N.END_TIME,'YYYY-MM-DD HH24:MI:SS'))                     
+         --  >= DECODE(N.END_TIME,NULL,TO_DATE('1901-01-01 00:00','YYYY-MM-DD HH24:MI:SS'),SYSDATE)             
+        -- N.END_TIME  >=  CURRENT_DATE 
+         (case when N.END_TIME IS NULL then '1901-01-01 00:00' else  N.END_TIME end  )  >= (case when N.END_TIME IS NULL then '1901-01-01 00:00' else  CURRENT_DATE end  )                                                          
+         --AND DECODE(N.START_TIME,NULL,TO_DATE('1901-01-01 00:00','YYYY-MM-DD HH24:MI:SS'),TO_DATE(N.START_TIME,'YYYY-MM-DD HH24:MI:SS'))                   
+        -- <= DECODE(N.START_TIME,NULL,TO_DATE('1901-01-01 00:00','YYYY-MM-DD HH24:MI:SS'),SYSDATE)            
+        --AND  N.START_TIME <=   CURRENT_DATE       
+         AND    (case when N.START_TIME IS NULL then '1901-01-01 00:00' else  N.START_TIME end  )  <= (case when N.START_TIME IS NULL then '1901-01-01 00:00' else  CURRENT_DATE end  )                                                                                                                      
+    """.format(uuid=uuid, current_time=current_time)
+
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_ETL_SEASON_RULE",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_ETL_SEASON_RULE")
+
+
+def execute():
+    ###############################################################
+    ### 以下参数必须定义
+    ### ETL_Proc_Name    : ETL 名称
+    ### current_time     ：请直接拷贝
+    ### current_time_short ：请直接拷贝
+    ### uuid             ：请直接拷贝
+    ### target_table     : 该ETL输出表名
+    ### used_table_list  : 该ETL使用到的，参考到的表名(中间表不算)
+    ### target_table_sql ： 该ETL输出表定义SQL
+    ###############################################################
+    ETL_Proc_Name = "APS_ETL_BR.APS_ETL_SEASON_RULE_10M"
+    current_time = my_date.date_time_second_str()
+    current_time_short = my_date.date_time_second_short_str()
+    uuid = my_oracle.UUID()
+
+    target_table = "APS_ETL_SEASON_RULE"
+    used_table_list = ['APS_SYNC_ETL_TOOL',
+                       'APS_SYNC_IDLE_DUMMY_SPEC',
+                       'APS_SYNC_OCS_AUTODUMMY_COMPLETE',
+                       'APS_SYNC_RECIPE_NPW_RULEMAP',
+                       'APS_TR_TYPE3',
+                       'APS_SYNC_RTD_WET_SPECIAL_LOT_CTRL_NEW',
+                       'APS_MID_IDLE_DUMMY11_MEDIAN',
+                       'APS_MID_IDLE_DUMMY12_MEDIAN']
+    target_table_sql = """      
+    create table {}APS_ETL_SEASON_RULE
+    (
+        parentid               VARCHAR(60) not null,
+        toolg_id               VARCHAR(60) not null,
+        tool_id                VARCHAR(60) not null,
+        ch_id                  VARCHAR(60),
+        seq                    INTEGER not null,
+        process_time           VARCHAR(60),
+        lot_type               VARCHAR(255),
+        recipe_last            VARCHAR(255),
+        recipe_last_mode       VARCHAR(60),
+        recipe_next            VARCHAR(255),
+        recipe_next_mode       VARCHAR(60),
+        idletime_from          VARCHAR(60),
+        idletime_to            VARCHAR(60),
+        run_limit              VARCHAR(60),
+        run_qty                VARCHAR(60),
+        update_time            VARCHAR(60) not null,
+        partcode               VARCHAR(60) not null,
+        rule_name              VARCHAR(64),
+        ppid_last              VARCHAR(256),
+        ppid_next              VARCHAR(256),
+        ppid_last_mode         VARCHAR(64),
+        ppid_next_mode         VARCHAR(64),
+        recipe_setup_last      VARCHAR(256),
+        recipe_setup_next      VARCHAR(256),
+        recipe_setup_last_mode VARCHAR(64),
+        recipe_setup_next_mode VARCHAR(64),
+        prod_id_last           VARCHAR(256),
+        prod_id_last_mode      VARCHAR(64),
+        prod_id_next           VARCHAR(256),
+        prod_id_next_mode      VARCHAR(64),
+        lot_id_last            VARCHAR(256),
+        lot_id_last_mode       VARCHAR(64),
+        lot_id_next            VARCHAR(256),
+        lot_id_next_mode       VARCHAR(64),
+        prodg_id_last          VARCHAR(256),
+        prodg_id_last_mode     VARCHAR(64),
+        prodg_id_next          VARCHAR(256),
+        prodg_id_next_mode     VARCHAR(64),
+        recipe_last_next_mode  VARCHAR(64),
+        layer_last             VARCHAR(256),
+        layer_next             VARCHAR(256),
+        stage_last             VARCHAR(256),
+        stage_next             VARCHAR(256),
+        consec_unit            VARCHAR(5),
+        consec_cnt             VARCHAR(60),
+        consec_cnt_mode        VARCHAR(64),
+        stage_next_mode        VARCHAR(64),
+        layer_next_mode        VARCHAR(64),
+        layer_last_mode        VARCHAR(64),
+        stage_last_mode        VARCHAR(64)
+    )
+    """.format("")  # 注意:这里一定要这么写 [create table 表名] => [create table {}表名]
+    target_db_file = my_duck.get_target_file_name(target_table, current_time_short)
+
+    oracle_conn = None
+    try:
+        oracle_conn = my_oracle.oracle_get_connection()
+        # 开始日志
+        my_oracle.StartCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+        # 创建DuckDB
+        duck_db_memory = my_duck.create_duckdb_in_momory(target_table_sql)
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            duck_db_memory.sql('SET threads TO 2')
+            # 加上TMP目录:LQN:2023/08/21
+            duck_db_memory.execute("SET temp_directory='{}'".format(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)))
+        # 创建Temp表
+        create_temp_table(duck_db_memory)
+        # Attach用到的表
+        my_duck.attach_used_table(oracle_conn, duck_db_memory, used_table_list)
+        ################################################################################################################
+        ## 以下为业务逻辑
+        ################################################################################################################
+
+        biz_method_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        biz_method_02(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        biz_method_03(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        biz_method_03_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        biz_method_03_02(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        biz_method_03_03(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        biz_method_04_01(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+        biz_method_05(duck_db_memory, uuid, current_time, oracle_conn, ETL_Proc_Name)
+
+
+        ################################################################################################################
+        ## 以上为业务逻辑
+        ################################################################################################################
+        if config.g_copy_to_pg:
+            select_sql_in_duck = """select  parentid,toolg_id,tool_id,ch_id,seq,process_time,lot_type,recipe_last,recipe_last_mode,
+                                            recipe_next,recipe_next_mode,idletime_from,idletime_to,run_limit,run_qty,update_time,
+                                            ppid_last, ppid_last_mode,ppid_next,ppid_next_mode, recipe_setup_last,recipe_setup_last_mode,
+                                            recipe_setup_next,recipe_setup_next_mode,prod_id_last,prod_id_last_mode, prod_id_next,prod_id_next_mode,
+                                            lot_id_last,lot_id_last_mode,lot_id_next,lot_id_next_mode,prodg_id_last,prodg_id_last_mode,prodg_id_next,
+                                            prodg_id_next_mode,layer_last,layer_last_mode,layer_next,layer_next_mode,stage_last,stage_last_mode,stage_next,
+                                            stage_next_mode,consec_unit,consec_cnt,consec_cnt_mode,rule_name from APS_ETL_SEASON_RULE
+                                 """
+            postgres_table_define = """etl_season_rule( parentid,toolg_id,tool_id,ch_id,seq,process_time,lot_type,recipe_last,recipe_last_mode,
+                                                        recipe_next,recipe_next_mode,idletime_from,idletime_to,run_limit,run_qty,update_time,
+                                                        ppid_last, ppid_last_mode,ppid_next,ppid_next_mode, recipe_setup_last,recipe_setup_last_mode,
+                                                        recipe_setup_next,recipe_setup_next_mode,prod_id_last,prod_id_last_mode, prod_id_next,prod_id_next_mode,
+                                                        lot_id_last,lot_id_last_mode,lot_id_next,lot_id_next_mode,prodg_id_last,prodg_id_last_mode,prodg_id_next,
+                                                        prodg_id_next_mode,layer_last,layer_last_mode,layer_next,layer_next_mode,stage_last,stage_last_mode,stage_next,
+                                                        stage_next_mode,consec_unit,consec_cnt,consec_cnt_mode,rule_name)
+                                    """
+            my_postgres.copy_duckdb_to_postgres(uuid=uuid,
+                                                duckdb=duck_db_memory,
+                                                table_name_in_duckdb=target_table,
+                                                table_name_in_pg="etl_season_rule",  # 要小写
+                                                csv_delimiter="<",
+                                                select_sql_in_duck=select_sql_in_duck,
+                                                postgres_table_define=postgres_table_define)
+        # 导出到目标文件中
+        target_db_file = my_duck.export_result_duck_file_and_close_duck_db_memory(duck_db_memory,
+                                                                                  target_table,
+                                                                                  target_table_sql.format("file_db."),
+                                                                                  current_time_short)
+        # 写版本号
+        my_oracle.HandlingVerControl(oracle_conn, uuid, target_table, target_db_file)
+        # 写完成日志
+        my_oracle.EndCleanUpAndLog(oracle_conn, ETL_Proc_Name, current_time)
+    except Exception as e:
+        # 写警告日志
+        my_oracle.SaveAlarmLogData(oracle_conn, ETL_Proc_Name, e, target_db_file,
+                                   cons_error_code.APS_ETL_SEASON_RULE_CODE_XX_ETL)
+        logging.exception("{ETL_Proc_Name} 處理出錯 : {e}".format(ETL_Proc_Name=ETL_Proc_Name, e=e))
+        raise e
+    finally:
+        oracle_conn.commit()
+        oracle_conn.close()
+        if config.g_thread_and_memory_limit:  # 是否手动管理内存和进程
+            # 删除TMP目录:LQN:2023/08/21
+            if os.path.exists(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid)):
+                os.remove(os.path.join(config.g_mem_etl_output_path, 'duck_temp', uuid))
+        gc.collect()  # 内存释放
+
+if __name__ == '__main__':
+    # 单JOB测试用
+    print("start")
+    execute()
