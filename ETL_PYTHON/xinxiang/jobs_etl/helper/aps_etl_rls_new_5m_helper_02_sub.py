@@ -22,26 +22,66 @@ def getRcpInhibit(temp_process_db_file=None, ETL_Proc_Name=""):
                     FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_RESULT W
                 )                                                                                                                                                                             
                  SELECT  W.PROD_ID,W.M_RECIPE,W.EQP_ID,W.SUB_LOT_TYPE                                                                                                   
-                      ,CASE WHEN CONCAT_WS('',MAX(ERI1.EQP_ID),MAX(ERI2.EQP_ID),MAX(ERI4.EQP_ID),MAX(ERI5.EQP_ID),MAX(ERI6.EQP_ID),MAX(ERI7.EQP_ID))<>''  THEN 'EqpRcpInhibit;' END AS SET_STATUS2                                                                                                                                                                                                                                                              
+                      ,CASE WHEN CONCAT_WS('',
+                            MAX(ERI1.product_id), MAX(ERI2.eqp_id), MAX(ERI3.eqp_id), MAX(ERI4.eqp_id),
+                            MAX(ERI5.recipe_id), MAX(ERI7.eqp_id), MAX(ERI8.eqp_id), MAX(ERI9.eqp_id),
+                            MAX(ERI10.eqp_id), MAX(ERI11.eqp_id), MAX(ERI12.eqp_id)
+                        ) <> ''
+                        THEN 'EqpRcpInhibit;'
+                        END AS SET_STATUS2                                                                                                                                                                                                                                                              
                  FROM GROUP_APC_PILOT W                                                                                                                                                       
-                 LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT1 ERI1 ON  ERI1.PRODUCT_ID = W.PROD_ID 
-                                                             AND ERI1.EQP_ID = W.EQP_ID 
-                                                             AND INSTR(W.M_RECIPE,ERI1.RECIPE_ID)>0                                             
-                                                             --AND position(ERI1.RECIPE_ID in W.M_RECIPE)>0                                                                                                                                  
-                 LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT2 ERI2 ON ERI2.EQP_ID = W.EQP_ID   
-                                                             AND INSTR(W.M_RECIPE,ERI2.RECIPE_ID)>0                                                 
-                                                            -- AND position(ERI2.RECIPE_ID in W.M_RECIPE)>0                                      
-                 LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT4 ERI4 ON ERI4.SUB_LOT_TYPE = W.SUB_LOT_TYPE                                        
-                                                             AND ERI4.EQP_ID = W.EQP_ID                                                  
-                 LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT5 ERI5 ON ERI5.SUB_LOT_TYPE = W.SUB_LOT_TYPE                                        
-                                                             AND position(ERI5.RECIPE_ID in W.M_RECIPE)>0                                      
-                 LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT6 ERI6 ON ERI6.EQP_ID = W.EQP_ID  
-                                                             AND ERI6.SUB_LOT_TYPE = W.SUB_LOT_TYPE                                                   
-                                                             AND position(ERI6.RECIPE_ID in W.M_RECIPE)>0                                                                          
-                 LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT7 ERI7 ON  ERI7.PRODUCT_ID = (case when ERI7.PRODUCT_ID = '*' then '*' else W.PROD_ID end)                  
-                                                             AND ERI7.EQP_ID = (case when ERI7.EQP_ID = '*' then '*' else W.EQP_ID end)                    
-                                                             AND ERI7.SUB_LOT_TYPE =(case when ERI7.SUB_LOT_TYPE = '*' then '*' else W.SUB_LOT_TYPE end)   
-                                                             AND position(ERI7.RECIPE_ID in (case when ERI7.RECIPE_ID = '*' then '*' else W.M_RECIPE end))>0 
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT1 ERI1
+                        ON ERI1.product_id = W.PROD_ID
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT2 ERI2
+                        ON ERI2.route_id = W.ROUTE_ID
+                        AND ERI2.ope_no = W.OPE_NO
+                        AND ERI2.product_id = W.PROD_ID
+                        AND ERI2.eqp_id = W.EQP_ID
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT3 ERI3
+                        ON ERI3.route_id = W.ROUTE_ID
+                        AND ERI3.ope_no = W.OPE_NO
+                        AND ERI3.product_id = W.PROD_ID
+                        AND ERI3.eqp_id = W.EQP_ID
+                        AND ERI3.chamber_id = W.CHAMBER_ID
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT4 ERI4
+                        ON ERI4.route_id = W.ROUTE_ID
+                        AND ERI4.ope_no = W.OPE_NO
+                        AND ERI4.product_id = W.PROD_ID
+                        AND ERI4.eqp_id = W.EQP_ID
+                        AND INSTR(W.M_RECIPE, ERI4.recipe_id) > 0
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT5 ERI5
+                        ON INSTR(W.M_RECIPE, ERI5.recipe_id) > 0
+
+                    -- INHIBIT6: Reticle 暫時略過
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT7 ERI7
+                        ON ERI7.eqp_id = W.EQP_ID
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT8 ERI8
+                        ON ERI8.eqp_id = W.EQP_ID
+                        AND INSTR(W.M_RECIPE, ERI8.recipe_id) > 0
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT9 ERI9
+                        ON ERI9.eqp_id = W.EQP_ID
+                        AND ERI9.chamber_id = W.CHAMBER_ID
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT10 ERI10
+                        ON ERI10.eqp_id = W.EQP_ID
+                        AND ERI10.chamber_id = W.CHAMBER_ID
+                        AND ERI10.product_id = W.PROD_ID
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT11 ERI11
+                        ON ERI11.eqp_id = W.EQP_ID
+                        AND ERI11.product_id = W.PROD_ID
+                        AND INSTR(W.M_RECIPE, ERI11.recipe_id) > 0
+
+                    LEFT JOIN {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT12 ERI12
+                        ON ERI12.product_id = W.PROD_ID
+                        AND ERI12.eqp_id = W.EQP_ID
                  GROUP BY W.PROD_ID,W.M_RECIPE,W.EQP_ID,W.SUB_LOT_TYPE 
                 """.format(tempdb="")
         # my_duck.exec_sql(oracle_conn=oracle_conn,

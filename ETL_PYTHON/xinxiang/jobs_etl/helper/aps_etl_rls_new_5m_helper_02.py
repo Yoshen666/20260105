@@ -152,8 +152,6 @@ def InsertMultiLotDataView2Temp(duck_db_memory=None, uuid="", current_time="", o
             L.CAST_ID, 
             L.OPE_NO
     FROM APS_SYNC_MLIF_HOLD_LOT.APS_SYNC_MLIF_HOLD_LOT AS L
-    WHERE L.MULTI_LOT_TYPE LIKE 'ML%'
-    AND L.MLIF_ACTION ='STOP'
     """.format(tempdb=my_duck.get_temp_table_mark())
     my_duck.exec_sql(oracle_conn=oracle_conn,
                      duck_db_memory=duck_db_memory,
@@ -1468,14 +1466,57 @@ def apsEtlTmpRlsData(duck_db_memory=None, uuid="", current_time="", oracle_conn=
 
 def InsertEqpRcpInhibit2Temp(duck_db_memory=None, uuid="", current_time="", oracle_conn=None, ETL_Proc_Name="",
                              used_table_dict=None):
-    # 产品 + 机台 + RECIPE都不为 * ----总数量44124
+    """
+    從 APS_TMP_INHIBIT_TOTAL 讀取數據，按照 12 層規則分類到不同的 INHIBIT 表
+    """
+    
+    # 串接 APS_SYNC_FRENTINHBT_ENTTY、APS_SYNC_FRENTINHBT_SLOTTP、APS_SYNC_FRENTINHBT_EXPLOT
     sql = """
-          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT1                       
-             SELECT PRODUCT_ID,EQP_ID,RECIPE_ID,'*','*'                                 
-             FROM APS_SYNC_EQP_RCP_INHIBIT.APS_SYNC_EQP_RCP_INHIBIT I                  
-             WHERE I.PRODUCT_ID <> '*'                                                
-             AND I.EQP_ID <> '*'                                                      
-             AND I.RECIPE_ID <> '*'  
+          INSERT INTO {tempdb}APS_TMP_INHIBIT_TOTAL
+          (cfg_prod_id, cfg_route_id, cfg_ope_no, cfg_eqp_id, cfg_recipe_id, cfg_chamber_id, cfg_sub_lot_type, exclude_lot_id)
+             SELECT
+                 A.PRODUCT_ID,
+                 A.ROUTE_ID,
+                 A.OPE_NO,
+                 A.EQP_ID,
+                 A.RECIPE_ID,
+                 A.CHAMBER,
+                 B.sub_lot_type,
+                 C.EXCEPT_LOT_ID
+             FROM APS_SYNC_FRENTINHBT_ENTTY.APS_SYNC_FRENTINHBT_ENTTY A
+             LEFT JOIN APS_SYNC_FRENTINHBT_SLOTTP.APS_SYNC_FRENTINHBT_SLOTTP B
+             ON A.d_thesystemkey = B.d_thesystemkey
+             LEFT JOIN APS_SYNC_FRENTINHBT_EXPLOT.APS_SYNC_FRENTINHBT_EXPLOT C
+             ON A.d_thesystemkey = C.d_thesystemkey
+            
+    """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_INHIBIT_TOTAL",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_INHIBIT_TOTAL")
+                     
+    # INHIBIT1: Product 單獨產品限制
+    sql = """
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT1
+             SELECT
+                 cfg_prod_id AS product_id,
+                 COALESCE(cfg_eqp_id, '*') AS eqp_id,
+                 COALESCE(cfg_recipe_id, '*') AS recipe_id,
+                 COALESCE(cfg_route_id, '*') AS route_id,
+                 COALESCE(cfg_ope_no, '*') AS ope_no,
+                 COALESCE(cfg_chamber_id, '*') AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_prod_id IS NOT NULL
+             AND cfg_prod_id <> '*'
+             AND (cfg_eqp_id IS NULL OR cfg_eqp_id = '*')
+             AND (cfg_recipe_id IS NULL OR cfg_recipe_id = '*')
+             AND (cfg_route_id IS NULL OR cfg_route_id = '*')
+             AND (cfg_chamber_id IS NULL OR cfg_chamber_id = '*')
     """.format(tempdb=my_duck.get_temp_table_mark())
     my_duck.exec_sql(oracle_conn=oracle_conn,
                      duck_db_memory=duck_db_memory,
@@ -1484,16 +1525,27 @@ def InsertEqpRcpInhibit2Temp(duck_db_memory=None, uuid="", current_time="", orac
                      sql=sql,
                      current_time=current_time,
                      update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT1")
-    # 机台+RECIPE都不为*  ----总数量126724
+
+    # INHIBIT2: Route+OP+Product+EQP
     sql = """
-            INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT2                       
-             SELECT '*',EQP_ID,RECIPE_ID,'*','*'                                      
-             FROM APS_SYNC_EQP_RCP_INHIBIT.APS_SYNC_EQP_RCP_INHIBIT I                  
-             WHERE I.PRODUCT_ID = '*'                                                 
-             AND I.EQP_ID <> '*'                                                      
-             AND (I.SUB_LOT_TYPE IS NULL OR I.SUB_LOT_TYPE = '')                                             
-             AND I.RECIPE_ID <> '*'   
-       """.format(tempdb=my_duck.get_temp_table_mark())
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT2
+             SELECT
+                 cfg_prod_id AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 COALESCE(cfg_recipe_id, '*') AS recipe_id,
+                 cfg_route_id AS route_id,
+                 cfg_ope_no AS ope_no,
+                 COALESCE(cfg_chamber_id, '*') AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_route_id IS NOT NULL AND cfg_route_id <> '*'
+             AND cfg_ope_no IS NOT NULL AND cfg_ope_no <> '*'
+             AND cfg_prod_id IS NOT NULL AND cfg_prod_id <> '*'
+             AND cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND (cfg_recipe_id IS NULL OR cfg_recipe_id = '*')
+             AND (cfg_chamber_id IS NULL OR cfg_chamber_id = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
     my_duck.exec_sql(oracle_conn=oracle_conn,
                      duck_db_memory=duck_db_memory,
                      ETL_Proc_Name=ETL_Proc_Name,
@@ -1502,20 +1554,26 @@ def InsertEqpRcpInhibit2Temp(duck_db_memory=None, uuid="", current_time="", orac
                      current_time=current_time,
                      update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT2")
 
-    # 除了1和2 case 还是512
+    # INHIBIT3: Route+OP+Product+EQP+Chamber
     sql = """
-              INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT3                               
-              SELECT I.PRODUCT_ID,I.EQP_ID,I.RECIPE_ID,I.REASON_CODE,
-              CASE WHEN I.SUB_LOT_TYPE IS NULL OR I.SUB_LOT_TYPE ='' THEN '*' ELSE I.SUB_LOT_TYPE END AS SUB_LOT_TYPE     
-              FROM APS_SYNC_EQP_RCP_INHIBIT.APS_SYNC_EQP_RCP_INHIBIT I                         
-              WHERE 1=1                                            
-              AND NOT EXISTS (SELECT 1 FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT1 N      
-              WHERE N.PRODUCT_ID = I.PRODUCT_ID AND N.EQP_ID = I.EQP_ID                       
-              AND N.RECIPE_ID = I.RECIPE_ID)                                                  
-              AND NOT EXISTS (SELECT 1 FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT2 N2     
-              WHERE  N2.EQP_ID = I.EQP_ID                                                     
-              AND N2.RECIPE_ID = I.RECIPE_ID)  
-       """.format(tempdb=my_duck.get_temp_table_mark())
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT3
+             SELECT
+                 cfg_prod_id AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 COALESCE(cfg_recipe_id, '*') AS recipe_id,
+                 cfg_route_id AS route_id,
+                 cfg_ope_no AS ope_no,
+                 cfg_chamber_id AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_route_id IS NOT NULL AND cfg_route_id <> '*'
+             AND cfg_ope_no IS NOT NULL AND cfg_ope_no <> '*'
+             AND cfg_prod_id IS NOT NULL AND cfg_prod_id <> '*'
+             AND cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND cfg_chamber_id IS NOT NULL AND cfg_chamber_id <> '*'
+             AND (cfg_recipe_id IS NULL OR cfg_recipe_id = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
     my_duck.exec_sql(oracle_conn=oracle_conn,
                      duck_db_memory=duck_db_memory,
                      ETL_Proc_Name=ETL_Proc_Name,
@@ -1523,14 +1581,26 @@ def InsertEqpRcpInhibit2Temp(duck_db_memory=None, uuid="", current_time="", orac
                      sql=sql,
                      current_time=current_time,
                      update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT3")
-    # 从case3再分出来
+
+    # INHIBIT4: Route+OP+Product+EQP+Recipe (最精確匹配)
     sql = """
-           INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT4                           
-              SELECT '*',I.EQP_ID,'*','*',I.SUB_LOT_TYPE                                                
-              FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT3 I                           
-              WHERE EQP_ID <> '*' AND I.SUB_LOT_TYPE <> '*'                               
-              AND I.PRODUCT_ID='*' AND I.RECIPE_ID='*'  
-       """.format(tempdb=my_duck.get_temp_table_mark())
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT4
+             SELECT
+                 cfg_prod_id AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 cfg_recipe_id AS recipe_id,
+                 cfg_route_id AS route_id,
+                 cfg_ope_no AS ope_no,
+                 COALESCE(cfg_chamber_id, '*') AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_route_id IS NOT NULL AND cfg_route_id <> '*'
+             AND cfg_ope_no IS NOT NULL AND cfg_ope_no <> '*'
+             AND cfg_prod_id IS NOT NULL AND cfg_prod_id <> '*'
+             AND cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND cfg_recipe_id IS NOT NULL AND cfg_recipe_id <> '*'
+    """.format(tempdb=my_duck.get_temp_table_mark())
     my_duck.exec_sql(oracle_conn=oracle_conn,
                      duck_db_memory=duck_db_memory,
                      ETL_Proc_Name=ETL_Proc_Name,
@@ -1539,13 +1609,23 @@ def InsertEqpRcpInhibit2Temp(duck_db_memory=None, uuid="", current_time="", orac
                      current_time=current_time,
                      update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT4")
 
+    # INHIBIT5: Recipe 單獨配方限制
     sql = """
-              INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT5                           
-              SELECT '*','*',I.RECIPE_ID,'*',I.SUB_LOT_TYPE                               
-              FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT3 I                           
-              WHERE EQP_ID = '*' AND I.SUB_LOT_TYPE <> '*'                                
-              AND I.PRODUCT_ID='*' AND I.RECIPE_ID <> '*' 
-       """.format(tempdb=my_duck.get_temp_table_mark())
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT5
+             SELECT
+                 COALESCE(cfg_prod_id, '*') AS product_id,
+                 COALESCE(cfg_eqp_id, '*') AS eqp_id,
+                 cfg_recipe_id AS recipe_id,
+                 COALESCE(cfg_route_id, '*') AS route_id,
+                 COALESCE(cfg_ope_no, '*') AS ope_no,
+                 COALESCE(cfg_chamber_id, '*') AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_recipe_id IS NOT NULL AND cfg_recipe_id <> '*'
+             AND (cfg_prod_id IS NULL OR cfg_prod_id = '*')
+             AND (cfg_eqp_id IS NULL OR cfg_eqp_id = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
     my_duck.exec_sql(oracle_conn=oracle_conn,
                      duck_db_memory=duck_db_memory,
                      ETL_Proc_Name=ETL_Proc_Name,
@@ -1554,37 +1634,27 @@ def InsertEqpRcpInhibit2Temp(duck_db_memory=None, uuid="", current_time="", orac
                      current_time=current_time,
                      update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT5")
 
-    sql = """
-            INSERT INTO  {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT6                           
-              SELECT '*',I.EQP_ID,I.RECIPE_ID,'*',I.SUB_LOT_TYPE                          
-              FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT3 I                           
-              WHERE EQP_ID <> '*' AND I.SUB_LOT_TYPE <> '*'                               
-              AND I.RECIPE_ID <> '*'                                                      
-              AND I.PRODUCT_ID = '*'  
-       """.format(tempdb=my_duck.get_temp_table_mark())
-    my_duck.exec_sql(oracle_conn=oracle_conn,
-                     duck_db_memory=duck_db_memory,
-                     ETL_Proc_Name=ETL_Proc_Name,
-                     methodName="Insert Into APS_TMP_ETL_RLS_EQPRCP_INHIBIT6",
-                     sql=sql,
-                     current_time=current_time,
-                     update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT6")
+    # INHIBIT6: Reticle 暫時略過 (需要額外數據源)
+    # 如果需要，可以從其他表關聯 RETICLE 信息
 
+    # INHIBIT7: EQP 單獨機台限制
     sql = """
-              INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT7                               
-              SELECT I.PRODUCT_ID,I.EQP_ID,I.RECIPE_ID,I.REASON_CODE,I.SUB_LOT_TYPE                              
-              FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT3 I                               
-              WHERE 1=1                                                                       
-              AND NOT EXISTS (SELECT 1 FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT4 N4     
-              WHERE N4.EQP_ID = I.EQP_ID                                                      
-              AND N4.SUB_LOT_TYPE = I.SUB_LOT_TYPE)                                           
-              AND NOT EXISTS (SELECT 1 FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT5 N5     
-              WHERE  N5.SUB_LOT_TYPE = I.SUB_LOT_TYPE                                         
-              AND N5.RECIPE_ID = I.RECIPE_ID)                                                 
-              AND NOT EXISTS (SELECT 1 FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT6 N6     
-              WHERE  N6.EQP_ID = I.EQP_ID AND N6.SUB_LOT_TYPE = I.SUB_LOT_TYPE                
-              AND N6.RECIPE_ID = I.RECIPE_ID)    
-       """.format(tempdb=my_duck.get_temp_table_mark())
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT7
+             SELECT
+                 COALESCE(cfg_prod_id, '*') AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 COALESCE(cfg_recipe_id, '*') AS recipe_id,
+                 COALESCE(cfg_route_id, '*') AS route_id,
+                 COALESCE(cfg_ope_no, '*') AS ope_no,
+                 COALESCE(cfg_chamber_id, '*') AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND (cfg_prod_id IS NULL OR cfg_prod_id = '*')
+             AND (cfg_recipe_id IS NULL OR cfg_recipe_id = '*')
+             AND (cfg_chamber_id IS NULL OR cfg_chamber_id = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
     my_duck.exec_sql(oracle_conn=oracle_conn,
                      duck_db_memory=duck_db_memory,
                      ETL_Proc_Name=ETL_Proc_Name,
@@ -1592,6 +1662,139 @@ def InsertEqpRcpInhibit2Temp(duck_db_memory=None, uuid="", current_time="", orac
                      sql=sql,
                      current_time=current_time,
                      update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT7")
+
+    # INHIBIT8: EQP+Recipe
+    sql = """
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT8
+             SELECT
+                 COALESCE(cfg_prod_id, '*') AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 cfg_recipe_id AS recipe_id,
+                 COALESCE(cfg_route_id, '*') AS route_id,
+                 COALESCE(cfg_ope_no, '*') AS ope_no,
+                 COALESCE(cfg_chamber_id, '*') AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND cfg_recipe_id IS NOT NULL AND cfg_recipe_id <> '*'
+             AND (cfg_prod_id IS NULL OR cfg_prod_id = '*')
+             AND (cfg_chamber_id IS NULL OR cfg_chamber_id = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_RLS_EQPRCP_INHIBIT8",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT8")
+
+    # INHIBIT9: EQP+Chamber
+    sql = """
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT9
+             SELECT
+                 COALESCE(cfg_prod_id, '*') AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 COALESCE(cfg_recipe_id, '*') AS recipe_id,
+                 COALESCE(cfg_route_id, '*') AS route_id,
+                 COALESCE(cfg_ope_no, '*') AS ope_no,
+                 cfg_chamber_id AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND cfg_chamber_id IS NOT NULL AND cfg_chamber_id <> '*'
+             AND (cfg_prod_id IS NULL OR cfg_prod_id = '*')
+             AND (cfg_recipe_id IS NULL OR cfg_recipe_id = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_RLS_EQPRCP_INHIBIT9",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT9")
+
+    # INHIBIT10: EQP+Chamber+Product
+    sql = """
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT10
+             SELECT
+                 cfg_prod_id AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 COALESCE(cfg_recipe_id, '*') AS recipe_id,
+                 COALESCE(cfg_route_id, '*') AS route_id,
+                 COALESCE(cfg_ope_no, '*') AS ope_no,
+                 cfg_chamber_id AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND cfg_chamber_id IS NOT NULL AND cfg_chamber_id <> '*'
+             AND cfg_prod_id IS NOT NULL AND cfg_prod_id <> '*'
+             AND (cfg_recipe_id IS NULL OR cfg_recipe_id = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_RLS_EQPRCP_INHIBIT10",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT10")
+
+    # INHIBIT11: EQP+Product+Recipe (原本的 INHIBIT1 類型)
+    sql = """
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT11
+             SELECT
+                 cfg_prod_id AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 cfg_recipe_id AS recipe_id,
+                 COALESCE(cfg_route_id, '*') AS route_id,
+                 COALESCE(cfg_ope_no, '*') AS ope_no,
+                 COALESCE(cfg_chamber_id, '*') AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND cfg_prod_id IS NOT NULL AND cfg_prod_id <> '*'
+             AND cfg_recipe_id IS NOT NULL AND cfg_recipe_id <> '*'
+             AND (cfg_route_id IS NULL OR cfg_route_id = '*')
+             AND (cfg_ope_no IS NULL OR cfg_ope_no = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_RLS_EQPRCP_INHIBIT11",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT11")
+
+    # INHIBIT12: Product+EQP (原本的 INHIBIT2 類型)
+    sql = """
+          INSERT INTO {tempdb}APS_TMP_ETL_RLS_EQPRCP_INHIBIT12
+             SELECT
+                 cfg_prod_id AS product_id,
+                 cfg_eqp_id AS eqp_id,
+                 COALESCE(cfg_recipe_id, '*') AS recipe_id,
+                 COALESCE(cfg_route_id, '*') AS route_id,
+                 COALESCE(cfg_ope_no, '*') AS ope_no,
+                 COALESCE(cfg_chamber_id, '*') AS chamber_id,
+                 COALESCE(cfg_sub_lot_type, '*') AS sub_lot_type,
+                 exclude_lot_id
+             FROM {tempdb}APS_TMP_INHIBIT_TOTAL
+             WHERE cfg_prod_id IS NOT NULL AND cfg_prod_id <> '*'
+             AND cfg_eqp_id IS NOT NULL AND cfg_eqp_id <> '*'
+             AND (cfg_recipe_id IS NULL OR cfg_recipe_id = '*')
+             AND (cfg_route_id IS NULL OR cfg_route_id = '*')
+             AND (cfg_ope_no IS NULL OR cfg_ope_no = '*')
+             AND (cfg_chamber_id IS NULL OR cfg_chamber_id = '*')
+    """.format(tempdb=my_duck.get_temp_table_mark())
+    my_duck.exec_sql(oracle_conn=oracle_conn,
+                     duck_db_memory=duck_db_memory,
+                     ETL_Proc_Name=ETL_Proc_Name,
+                     methodName="Insert Into APS_TMP_ETL_RLS_EQPRCP_INHIBIT12",
+                     sql=sql,
+                     current_time=current_time,
+                     update_table="APS_TMP_ETL_RLS_EQPRCP_INHIBIT12")
 
 
 def getAllComingMeasureWipData(duck_db_memory=None, uuid="", current_time="", oracle_conn=None, ETL_Proc_Name="",
@@ -2366,7 +2569,7 @@ def InsertEQPRecipe2Temp(duck_db_memory=None, uuid="", current_time="", oracle_c
      TARGET_TOOLG_ID, EQP_ID, QTY, M_RECIPE, PHYSICAL_RECIPE_ID, RECIPE_ID_C, FLOW_RECIPE, PPID, LOT_EQP_STATUS,EQP_CHAMBER_FLAG,
      CREATETIME, TRANS_STATE, BATCH_NAME, CASSETE_ID, LCRECIPE_ID, BATCH_ID,SUB_LOT_TYPE,MODULE,LOT_PROC_STATE
      --modify by xiecheng for version up 
-     ,MAX_BATCH_SIZE,MONITOR_FLAG
+     ,MAX_BATCH_SIZE,MONITOR_FLAG,CHAMBER_ID
       )                                                                                                    
      SELECT ''                                                                                                                   
            ,W.LOT_ID                                                                                                                         
@@ -2399,7 +2602,7 @@ def InsertEQPRecipe2Temp(duck_db_memory=None, uuid="", current_time="", oracle_c
            ,W.SUB_LOT_TYPE                                                                                                                   
            ,W.MODULE,W.LOT_PROC_STATE    
             ---DF 和 WET的都不需要V_PF_PO_N1来看MAX_BATCH_SIZE
-           ,CAST(0 AS INT)AS MAX_BATCH_SIZE,W.MONITOR_FLAG                                                                                                                       
+           ,CAST(0 AS INT)AS MAX_BATCH_SIZE,W.MONITOR_FLAG,NULL AS CHAMBER_ID                                                                                                                      
      FROM {tempdb}APS_TMP_ETL_RLS_EQPRCP_RESULT3  W                                                                                              
      LEFT JOIN {tempdb}APS_TMP_ETL_RLS_LOT_TO_EQP_V LE ON W.LOT_ID = LE.LOT_ID 
      AND W.TARGET_OPE_NO = LE.OPE_NO
